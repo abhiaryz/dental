@@ -47,7 +47,10 @@ const Services = () => {
   ];
 
   return (
-    <section id="services" className="py-20 bg-background">
+    <section id="services" className="py-20 bg-background relative">
+      {/* decorative gradient blobs */}
+      <div className="pointer-events-none absolute -top-20 -left-20 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-10 -right-10 h-72 w-72 rounded-full bg-accent/10 blur-3xl" />
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
@@ -64,9 +67,9 @@ const Services = () => {
             return (
               <div 
                 key={index} 
-                className="bg-card p-6 rounded-lg shadow-card hover:shadow-lg transition-all hover:-translate-y-1"
+                className="bg-card p-6 rounded-lg shadow-card hover:shadow-lg transition-all hover:-translate-y-1 border border-border/60 group"
               >
-                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/15 transition-colors">
                   <Icon className="w-7 h-7 text-primary" />
                 </div>
                 <h3 className="text-xl font-semibold mb-3 text-primary">

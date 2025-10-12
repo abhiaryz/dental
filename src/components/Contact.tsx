@@ -1,9 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
+import { useState } from "react";
+import AppointmentModal from "@/components/AppointmentModal";
 
 const Contact = () => {
+  const [open, setOpen] = useState(false);
   return (
-    <section id="contact" className="py-20 bg-secondary">
+    <section id="contact" className="py-20 bg-secondary relative">
+      <div className="pointer-events-none absolute inset-x-0 -top-10 h-24 bg-gradient-to-b from-accent/10 to-transparent" />
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
@@ -22,10 +26,10 @@ const Contact = () => {
               </div>
               <div>
                 <h3 className="font-semibold text-lg text-primary mb-1">Location</h3>
-                <p className="text-foreground">
-                  123 Healthcare Boulevard<br />
-                  Medical District<br />
-                  City, State 12345
+                <p className="text-foreground"> 
+                  Block N, 527/19<br />
+                  Saurabh Vihar, Badarpur<br />
+                  New Delhi, 110044
                 </p>
               </div>
             </div>
@@ -37,7 +41,7 @@ const Contact = () => {
               <div>
                 <h3 className="font-semibold text-lg text-primary mb-1">Phone</h3>
                 <a href="tel:+1234567890" className="text-foreground hover:text-accent transition-colors">
-                  (123) 456-7890
+                  9999 354-083
                 </a>
               </div>
             </div>
@@ -69,15 +73,15 @@ const Contact = () => {
             </div>
 
             <div className="pt-4">
-              <Button variant="cta" size="lg" className="w-full sm:w-auto">
+              <Button onClick={() => setOpen(true)} variant="cta" size="lg" className="w-full sm:w-auto shadow-button hover:shadow-lg transition hover:-translate-y-0.5">
                 Schedule Appointment
               </Button>
             </div>
           </div>
 
-          <div className="bg-card rounded-lg overflow-hidden shadow-card h-[400px]">
+          <div className="bg-card rounded-lg overflow-hidden shadow-card h-[400px] border border-border/60">
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d15137.254524772642!2d73.8397!3d18.5196!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTjCsDMxJzEwLjYiTiA3M8KwNTAnMjIuOSJF!5e0!3m2!1sen!2sin!4v1234567890"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3506.0367408834923!2d77.3189426!3d28.5085423!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390ce7a92e09584d%3A0x7dd67f0bdf2dd443!2sshivaji%20health%20and%20dental%20care!5e0!3m2!1sen!2sin!4v1760295852261!5m2!1sen!2sin"
               width="100%"
               height="100%"
               style={{ border: 0 }}
@@ -85,9 +89,11 @@ const Contact = () => {
               loading="lazy"
               title="Shivaji Health and Dental Care Location"
             ></iframe>
+          
           </div>
         </div>
       </div>
+      <AppointmentModal open={open} onOpenChange={setOpen} />
     </section>
   );
 };

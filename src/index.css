@@ -94,4 +94,10 @@ All colors MUST be HSL.
   .text-balance {
     text-wrap: balance;
   }
+  .btn-pressable {
+    @apply active:scale-[0.98] transition-transform;
+  }
+  .glass {
+    @apply bg-background/60 backdrop-blur-md border border-border/60;
+  }
 }

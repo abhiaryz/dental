@@ -2,7 +2,8 @@ import { Heart } from "lucide-react";
 
 const Footer = () => {
   return (
-    <footer className="bg-card border-t border-border py-12">
+    <footer className="bg-card border-t border-border py-12 relative">
+      <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           <div className="md:col-span-2">
@@ -30,7 +31,7 @@ const Footer = () => {
               <li>
                 <button 
                   onClick={() => document.getElementById("services")?.scrollIntoView({ behavior: "smooth" })}
-                  className="text-foreground hover:text-accent transition-colors"
+                  className="text-foreground hover:text-accent transition-colors hover:underline"
                 >
                   Services
                 </button>
@@ -38,7 +39,7 @@ const Footer = () => {
               <li>
                 <button 
                   onClick={() => document.getElementById("team")?.scrollIntoView({ behavior: "smooth" })}
-                  className="text-foreground hover:text-accent transition-colors"
+                  className="text-foreground hover:text-accent transition-colors hover:underline"
                 >
                   Our Team
                 </button>
@@ -46,7 +47,7 @@ const Footer = () => {
               <li>
                 <button 
                   onClick={() => document.getElementById("testimonials")?.scrollIntoView({ behavior: "smooth" })}
-                  className="text-foreground hover:text-accent transition-colors"
+                  className="text-foreground hover:text-accent transition-colors hover:underline"
                 >
                   Testimonials
                 </button>
@@ -54,7 +55,7 @@ const Footer = () => {
               <li>
                 <button 
                   onClick={() => document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" })}
-                  className="text-foreground hover:text-accent transition-colors"
+                  className="text-foreground hover:text-accent transition-colors hover:underline"
                 >
                   Contact
                 </button>
@@ -65,11 +66,11 @@ const Footer = () => {
           <div>
             <h4 className="font-semibold text-primary mb-4">Contact Info</h4>
             <ul className="space-y-2 text-foreground">
-              <li>123 Healthcare Blvd</li>
-              <li>City, State 12345</li>
+              <li>N-527/19 Sourabh Vihar</li>
+              <li>Badarpur, Delhi 110044</li>
               <li className="pt-2">
                 <a href="tel:+1234567890" className="hover:text-accent transition-colors">
-                  (123) 456-7890
+                  9999 354-083
                 </a>
               </li>
               <li>

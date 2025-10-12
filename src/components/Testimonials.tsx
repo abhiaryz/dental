@@ -38,7 +38,8 @@ const Testimonials = () => {
   ];
 
   return (
-    <section id="testimonials" className="py-20 bg-background">
+    <section id="testimonials" className="py-20 bg-background relative">
+      <div className="pointer-events-none absolute inset-x-0 -top-10 h-24 bg-gradient-to-b from-primary/5 to-transparent" />
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
@@ -54,7 +55,7 @@ const Testimonials = () => {
             {testimonials.map((testimonial, index) => (
               <div 
                 key={index} 
-                className="bg-secondary p-8 rounded-lg shadow-card hover:shadow-lg transition-shadow flex-shrink-0 w-[350px] snap-center"
+                className="bg-secondary p-8 rounded-lg shadow-card hover:shadow-lg transition-transform hover:-translate-y-1 flex-shrink-0 w-[350px] snap-center border border-border/60"
               >
                 <div className="flex items-center gap-4 mb-4">
                   <img 
@@ -88,6 +89,9 @@ const Testimonials = () => {
               scrollbar-width: none;
             }
           `}</style>
+          {/* fade edges */}
+          <div className="pointer-events-none absolute left-0 top-0 h-full w-16 bg-gradient-to-r from-background to-transparent" />
+          <div className="pointer-events-none absolute right-0 top-0 h-full w-16 bg-gradient-to-l from-background to-transparent" />
         </div>
       </div>
     </section>

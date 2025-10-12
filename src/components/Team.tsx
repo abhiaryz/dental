@@ -6,7 +6,7 @@ import { Facebook, Twitter, Linkedin, Instagram } from "lucide-react";
 const Team = () => {
   const teamMembers = [
     {
-      name: "Dr. Rajesh Shivaji",
+      name: "Dr. Chandan Singh",
       role: "Lead Dentist & Founder",
       image: dentistImage,
       bio: "With over 15 years of experience, Dr. Shivaji is dedicated to providing compassionate, patient-centered care using the latest dental technologies.",
@@ -18,8 +18,8 @@ const Team = () => {
       }
     },
     {
-      name: "Sarah Williams",
-      role: "Dental Hygienist",
+      name: "Abhishek",
+      role: "Dentist",
       image: hygienistImage,
       bio: "Sarah specializes in preventive care and patient education, ensuring every visit leaves you with a healthier, brighter smile.",
       social: {
@@ -29,7 +29,7 @@ const Team = () => {
       }
     },
     {
-      name: "Michael Chen",
+      name: "Umesh Pandey",
       role: "Dental Assistant",
       image: assistantImage,
       bio: "Michael's friendly demeanor and attention to detail make every patient feel comfortable and well-cared for during their visit.",
@@ -57,14 +57,16 @@ const Team = () => {
           {teamMembers.map((member, index) => (
             <div 
               key={index} 
-              className="bg-card rounded-lg overflow-hidden shadow-card hover:shadow-lg transition-shadow"
+              className="bg-card rounded-lg overflow-hidden shadow-card hover:shadow-lg transition-all hover:-translate-y-1 border border-border/60"
             >
-              <div className="aspect-square overflow-hidden">
+              <div className="aspect-square overflow-hidden relative">
                 <img 
                   src={member.image} 
                   alt={member.name}
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                 />
+                {/* gradient overlay + social reveal */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity" />
               </div>
               <div className="p-6">
                 <h3 className="text-2xl font-semibold mb-1 text-primary">
