@@ -1,6 +1,7 @@
 import dentistImage from "@/assets/team-dentist-1.jpg";
 import hygienistImage from "@/assets/team-hygienist.jpg";
 import assistantImage from "@/assets/team-assistant.jpg";
+import { Facebook, Twitter, Linkedin, Instagram } from "lucide-react";
 
 const Team = () => {
   const teamMembers = [
@@ -9,18 +10,34 @@ const Team = () => {
       role: "Lead Dentist & Founder",
       image: dentistImage,
       bio: "With over 15 years of experience, Dr. Shivaji is dedicated to providing compassionate, patient-centered care using the latest dental technologies.",
+      social: {
+        facebook: "#",
+        twitter: "#",
+        linkedin: "#",
+        instagram: "#"
+      }
     },
     {
       name: "Sarah Williams",
       role: "Dental Hygienist",
       image: hygienistImage,
       bio: "Sarah specializes in preventive care and patient education, ensuring every visit leaves you with a healthier, brighter smile.",
+      social: {
+        facebook: "#",
+        linkedin: "#",
+        instagram: "#"
+      }
     },
     {
       name: "Michael Chen",
       role: "Dental Assistant",
       image: assistantImage,
       bio: "Michael's friendly demeanor and attention to detail make every patient feel comfortable and well-cared for during their visit.",
+      social: {
+        twitter: "#",
+        linkedin: "#",
+        instagram: "#"
+      }
     },
   ];
 
@@ -56,9 +73,31 @@ const Team = () => {
                 <p className="text-accent font-medium mb-3">
                   {member.role}
                 </p>
-                <p className="text-foreground leading-relaxed">
+                <p className="text-foreground leading-relaxed mb-4">
                   {member.bio}
                 </p>
+                <div className="flex gap-3 pt-2">
+                  {member.social.facebook && (
+                    <a href={member.social.facebook} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors">
+                      <Facebook className="w-4 h-4 text-primary" />
+                    </a>
+                  )}
+                  {member.social.twitter && (
+                    <a href={member.social.twitter} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors">
+                      <Twitter className="w-4 h-4 text-primary" />
+                    </a>
+                  )}
+                  {member.social.linkedin && (
+                    <a href={member.social.linkedin} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors">
+                      <Linkedin className="w-4 h-4 text-primary" />
+                    </a>
+                  )}
+                  {member.social.instagram && (
+                    <a href={member.social.instagram} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors">
+                      <Instagram className="w-4 h-4 text-primary" />
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
           ))}

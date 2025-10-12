@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Phone } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Header = () => {
   const scrollToSection = (id: string) => {
@@ -54,9 +55,16 @@ const Header = () => {
             <Phone className="w-4 h-4" />
             <span className="font-medium">(123) 456-7890</span>
           </a>
-          <Button variant="cta" onClick={() => scrollToSection("contact")}>
-            Book Appointment
-          </Button>
+          <Link to="/login">
+            <Button variant="outline" size="sm">
+              Login
+            </Button>
+          </Link>
+          <Link to="/signup">
+            <Button variant="cta" size="sm">
+              Sign Up
+            </Button>
+          </Link>
         </div>
       </nav>
     </header>

@@ -1,4 +1,4 @@
-import { Smile, Sparkles, AlertCircle, Stethoscope } from "lucide-react";
+import { Smile, Sparkles, AlertCircle, Stethoscope, Scissors, Droplet, Zap } from "lucide-react";
 
 const Services = () => {
   const services = [
@@ -15,6 +15,24 @@ const Services = () => {
       items: ["Teeth Whitening", "Veneers", "Bonding", "Smile Makeovers"],
     },
     {
+      icon: Scissors,
+      title: "Hair Transplant",
+      description: "Advanced hair restoration procedures using the latest FUE and FUT techniques for natural-looking results.",
+      items: ["FUE Technique", "FUT Method", "Hairline Design", "Post-Care Support"],
+    },
+    {
+      icon: Droplet,
+      title: "PRP Therapy",
+      description: "Platelet-Rich Plasma treatments for skin rejuvenation, hair restoration, and anti-aging benefits.",
+      items: ["Facial Rejuvenation", "Hair Growth", "Skin Tightening", "Collagen Boost"],
+    },
+    {
+      icon: Zap,
+      title: "Laser & Derma",
+      description: "State-of-the-art laser treatments and dermatological procedures for skin health and beauty.",
+      items: ["Laser Hair Removal", "Skin Resurfacing", "Pigmentation Treatment", "Acne Therapy"],
+    },
+    {
       icon: AlertCircle,
       title: "Emergency Care",
       description: "Immediate attention when you need it most. We're here to help with dental emergencies.",
@@ -23,7 +41,7 @@ const Services = () => {
     {
       icon: Stethoscope,
       title: "Specialized Treatments",
-      description: "Advanced procedures performed with precision and care for complex dental needs.",
+      description: "Advanced dental procedures performed with precision and care for complex needs.",
       items: ["Root Canals", "Extractions", "Crowns & Bridges", "Dental Implants"],
     },
   ];
@@ -40,7 +58,7 @@ const Services = () => {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto">
           {services.map((service, index) => {
             const Icon = service.icon;
             return (
