@@ -413,6 +413,7 @@ model Invoice {
   discountAmount Float         @default(0)
   totalAmount    Float
   status         String        @default("PENDING") // PENDING, PAID, OVERDUE, CANCELLED
+  paidDate       DateTime?
   dueDate        DateTime
   notes          String?
   createdAt      DateTime      @default(now())
@@ -520,6 +521,7 @@ model StockMovement {
   previousQty Int
   newQty      Int
   reason      String?
+  reference   String?
   createdAt   DateTime @default(now())
 
   item        InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)

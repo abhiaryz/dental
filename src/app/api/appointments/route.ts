@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth, AuthenticatedRequest, getPatientWhereClause } from "@/lib/auth-middleware";
 import { Permissions } from "@/lib/rbac";
-import { AppError, ErrorCodes, createErrorResponse } from "@/lib/api-errors";
+import { createErrorResponse } from "@/lib/api-errors";
 
 // GET - Fetch all appointments based on role
 export const GET = withAuth(

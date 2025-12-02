@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { withSuperAdminAuth, AuthenticatedSuperAdminRequest, logSuperAdminAction } from "@/lib/super-admin-auth";
 import { prisma } from "@/lib/prisma";
 
@@ -81,10 +81,6 @@ async function patchHandler(
 
     const {
       subscriptionStatus,
-      subscriptionStartDate,
-      subscriptionEndDate,
-      billingEmail,
-      mrr,
       isActive,
     } = body;
 

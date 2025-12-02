@@ -69,7 +69,7 @@ function useInitialTooth(): Tooth {
 
 export default function DentalExplorerPage() {
   const defaultTooth = useInitialTooth();
-  const [selectedTooth, setSelectedTooth] = useState<Tooth>(defaultTooth);
+  const [selectedTooth] = useState<Tooth>(defaultTooth);
   const [activeTab, setActiveTab] = useState<ToothTab>("overview");
 
   return (

@@ -5,7 +5,7 @@ import { createAuditLog, AuditActions } from "@/lib/audit-logger";
 
 
 // GET - Get user profile
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await auth();
     

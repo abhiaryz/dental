@@ -5,8 +5,6 @@
 
 import {
   createTestInvoice,
-  createTestPatient,
-  createTestTreatment,
   mockPrismaClient,
   resetAllMocks,
 } from '../utils/test-helpers';

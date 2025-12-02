@@ -4,12 +4,9 @@
  */
 
 import {
-  createTestUser,
-  createTestClinic,
   createTestPatient,
   mockPrismaClient,
   resetAllMocks,
-  createMockSession,
 } from '../utils/test-helpers';
 
 jest.mock('@/lib/prisma', () => ({

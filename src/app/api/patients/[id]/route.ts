@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth, AuthenticatedRequest, verifyPatientAccess } from "@/lib/auth-middleware";
 import { Permissions } from "@/lib/rbac";
@@ -10,7 +10,7 @@ export const GET = withAuth(
       const { id } = await params;
       
       // Verify patient access based on role and clinic
-      const { patient: patientCheck, error } = await verifyPatientAccess(
+      const { error } = await verifyPatientAccess(
         id,
         req.user.id,
         req.user.role,
@@ -86,7 +86,7 @@ export const PUT = withAuth(
       const { id } = await params;
       
       // Verify patient access based on role
-      const { patient: existingPatient, error } = await verifyPatientAccess(
+      const { error } = await verifyPatientAccess(
         id,
         req.user.id,
         req.user.role,
@@ -126,7 +126,7 @@ export const DELETE = withAuth(
       const { id } = await params;
       
       // Verify patient access based on role
-      const { patient: existingPatient, error } = await verifyPatientAccess(
+      const { error } = await verifyPatientAccess(
         id,
         req.user.id,
         req.user.role,

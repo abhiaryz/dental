@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,10 +35,8 @@ import {
 import {
   DollarSign,
   TrendingUp,
-  TrendingDown,
   FileText,
   Download,
-  Send,
   Search,
   Filter,
   Plus,
@@ -49,7 +47,6 @@ import {
   Clock,
   AlertCircle,
   Eye,
-  Edit,
   Printer,
   Loader2,
   Trash2,
@@ -91,8 +88,8 @@ interface Payment {
 
 export default function FinancePage() {
   const router = useRouter();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedPeriod, setSelectedPeriod] = useState("month");
+  // const [searchTerm, setSearchTerm] = useState("");
+  // const [selectedPeriod, setSelectedPeriod] = useState("month");
   const [invoices, setInvoices] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

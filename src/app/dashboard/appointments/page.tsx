@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -78,7 +78,7 @@ export default function AppointmentsPage() {
   
   // Calendar view state
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [calendarView, setCalendarView] = useState<"month" | "week">("week");
+  // const [calendarView, setCalendarView] = useState<"month" | "week">("week");
 
   // Form state
   const [formData, setFormData] = useState({
@@ -92,12 +92,7 @@ export default function AppointmentsPage() {
 
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchAppointments();
-    fetchPatients();
-  }, []);
-
-  const fetchAppointments = async () => {
+  const fetchAppointments = useCallback(async () => {
     try {
       setLoading(true);
       const data = await appointmentsAPI.getAll();
@@ -111,16 +106,21 @@ export default function AppointmentsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const fetchPatients = async () => {
+  const fetchPatients = useCallback(async () => {
     try {
       const data = await patientsAPI.getAll({ limit: 1000 });
       setPatients(data.patients || []);
     } catch (error) {
       console.error("Error fetching patients:", error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchAppointments();
+    fetchPatients();
+  }, [fetchAppointments, fetchPatients]);
 
   const handleCreate = async () => {
     if (!formData.patientId || !formData.date || !formData.time || !formData.type) {

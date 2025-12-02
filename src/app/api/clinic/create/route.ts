@@ -1,7 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { withAuth, AuthenticatedRequest } from "@/lib/auth-middleware";
 import { prisma } from "@/lib/prisma";
-import { Permissions } from "@/lib/rbac";
 import { generateClinicCode } from "@/lib/utils";
 
 export const POST = withAuth(

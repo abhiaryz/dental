@@ -65,7 +65,7 @@ export const GET = withAuth(
         balanceAmount: (invoice.totalAmount - paidAmount).toString(),
         paymentStatus: invoice.status,
         paymentMode: invoice.payments.length > 0
-          ? invoice.payments[invoice.payments.length - 1].paymentMethod
+          ? invoice.payments[invoice.payments.length - 1].method
           : "N/A",
         paymentDate: invoice.payments.length > 0
           ? invoice.payments[invoice.payments.length - 1].paymentDate.toISOString().split("T")[0]

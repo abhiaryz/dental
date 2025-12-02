@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 
 
 // GET - Get notification preferences
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await auth();
 

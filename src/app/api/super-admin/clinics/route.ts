@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { withSuperAdminAuth, AuthenticatedSuperAdminRequest, logSuperAdminAction } from "@/lib/super-admin-auth";
+import { NextResponse } from "next/server";
+import { withSuperAdminAuth, AuthenticatedSuperAdminRequest } from "@/lib/super-admin-auth";
 import { prisma } from "@/lib/prisma";
 
 async function handler(req: AuthenticatedSuperAdminRequest) {

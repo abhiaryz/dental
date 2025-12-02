@@ -25,10 +25,10 @@ describe('Multi-Tenancy & Data Isolation Tests', () => {
   describe('Clinic Isolation', () => {
     test('should isolate patient data between clinics', async () => {
       const clinic1 = createTestClinic({ id: 'clinic-1', clinicCode: 'CLINIC1' });
-      const clinic2 = createTestClinic({ id: 'clinic-2', clinicCode: 'CLINIC2' });
+      const _clinic2 = createTestClinic({ id: 'clinic-2', clinicCode: 'CLINIC2' });
       
       const patient1 = createTestPatient({ clinicId: clinic1.id });
-      const patient2 = createTestPatient({ clinicId: clinic2.id });
+      createTestPatient({ clinicId: _clinic2.id });
 
       // Clinic 1 user should only see clinic 1 patients
       mockPrismaClient.patient.findMany.mockResolvedValue([patient1]);
@@ -45,7 +45,7 @@ describe('Multi-Tenancy & Data Isolation Tests', () => {
       const clinic1 = createTestClinic({ id: 'clinic-1', clinicCode: 'CLINIC1' });
       const clinic2 = createTestClinic({ id: 'clinic-2', clinicCode: 'CLINIC2' });
       
-      const patient = createTestPatient({ 
+      createTestPatient({ 
         id: 'patient-1',
         clinicId: clinic1.id 
       });
@@ -123,7 +123,7 @@ describe('Multi-Tenancy & Data Isolation Tests', () => {
 
     test('should filter inventory by clinic', async () => {
       const clinic1 = createTestClinic({ id: 'clinic-1' });
-      const clinic2 = createTestClinic({ id: 'clinic-2' });
+      createTestClinic({ id: 'clinic-2' });
 
       const item1 = {
         id: 'item-1',
@@ -176,7 +176,7 @@ describe('Multi-Tenancy & Data Isolation Tests', () => {
         userId: externalDoctor.id,
       });
 
-      const otherPatient = createTestPatient({
+      createTestPatient({
         id: 'patient-2',
         userId: 'other-doctor-id',
       });
@@ -299,7 +299,9 @@ describe('Multi-Tenancy & Data Isolation Tests', () => {
     });
 
     test('should reject expired invitation', async () => {
-      const expiredInvitation = {
+      createTestClinic({ id: 'clinic-1' });
+      
+      const _expiredInvitation = {
         id: 'invitation-1',
         token: 'expired-token',
         expiresAt: new Date(Date.now() - 1000),
@@ -464,7 +466,7 @@ describe('Multi-Tenancy & Data Isolation Tests', () => {
 
   describe('Inactive Clinic Handling', () => {
     test('should prevent login to inactive clinic', async () => {
-      const inactiveClinic = createTestClinic({
+      createTestClinic({
         clinicCode: 'INACTIVE',
         isActive: false,
       });
