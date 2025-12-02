@@ -70,12 +70,26 @@ export default function ClinicDetailPage({ params }: { params: Promise<{ id: str
   const fetchClinicDetails = async () => {
     try {
       const response = await fetch(`/api/super-admin/clinics/${resolvedParams.id}`);
-      const data = await response.json();
       
-      setClinic(data.clinic);
-      setSubscriptionStatus(data.clinic.subscriptionStatus);
-      setMrr(data.clinic.mrr.toString());
-      setBillingEmail(data.clinic.billingEmail || "");
+      if (!response.ok) {
+         throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const text = await response.text();
+      if (!text) {
+         throw new Error("Empty response received");
+      }
+
+      const data = JSON.parse(text);
+      
+      if (data.clinic) {
+        setClinic(data.clinic);
+        setSubscriptionStatus(data.clinic.subscriptionStatus || "ACTIVE");
+        setMrr((data.clinic.mrr || 0).toString());
+        setBillingEmail(data.clinic.billingEmail || "");
+      } else {
+         throw new Error(data.error || "Failed to load clinic data");
+      }
     } catch (error) {
       console.error("Failed to fetch clinic details:", error);
     } finally {

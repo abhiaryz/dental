@@ -9,10 +9,19 @@ export const GET = withAuth(
       const clinicId = req.user.clinicId;
 
       if (!clinicId) {
-        return NextResponse.json(
-          { error: "No clinic associated with user" },
-          { status: 400 }
-        );
+        return NextResponse.json({
+          isNew: true,
+          name: "",
+          logo: null,
+          address: "",
+          city: "",
+          state: "",
+          pinCode: "",
+          phone: "",
+          email: "",
+          website: "",
+          registrationNumber: "",
+        });
       }
 
       const clinic = await prisma.clinic.findUnique({
@@ -49,7 +58,7 @@ export const GET = withAuth(
     }
   },
   {
-    requiredPermissions: [Permissions.CLINIC_READ],
+    requiredPermissions: [Permissions.SETTINGS_READ],
   }
 );
 

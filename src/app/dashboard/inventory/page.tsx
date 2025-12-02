@@ -163,7 +163,7 @@ export default function InventoryPage() {
           quantity: parseInt(formData.quantity as any),
           minQuantity: parseInt(formData.minQuantity as any),
           maxQuantity: formData.maxQuantity ? parseInt(formData.maxQuantity as any) : null,
-          supplierId: formData.supplierId || null,
+          supplierId: (formData.supplierId && formData.supplierId !== "unassigned") ? formData.supplierId : null,
         }),
       });
 
@@ -204,7 +204,7 @@ export default function InventoryPage() {
           unitPrice: parseFloat(formData.unitPrice as any),
           minQuantity: parseInt(formData.minQuantity as any),
           maxQuantity: formData.maxQuantity ? parseInt(formData.maxQuantity as any) : null,
-          supplierId: formData.supplierId || null,
+          supplierId: (formData.supplierId && formData.supplierId !== "unassigned") ? formData.supplierId : null,
         }),
       });
 
@@ -317,7 +317,7 @@ export default function InventoryPage() {
       minQuantity: item.minQuantity,
       maxQuantity: item.maxQuantity?.toString() || "",
       unitPrice: item.unitPrice,
-      supplierId: item.supplier?.id || "",
+      supplierId: item.supplier?.id || "unassigned",
       location: item.location || "",
       expiryDate: item.expiryDate || "",
       batchNumber: item.batchNumber || "",
@@ -635,7 +635,7 @@ export default function InventoryPage() {
                     <SelectValue placeholder="Select supplier" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="unassigned">None</SelectItem>
                     {suppliers.map((supplier) => (
                       <SelectItem key={supplier.id} value={supplier.id}>
                         {supplier.name}
@@ -801,7 +801,7 @@ export default function InventoryPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="unassigned">None</SelectItem>
                     {suppliers.map((supplier) => (
                       <SelectItem key={supplier.id} value={supplier.id}>
                         {supplier.name}

@@ -28,7 +28,6 @@ async function getHandler(
             patients: true,
             users: true,
             invoices: true,
-            inventoryItems: true,
           },
         },
       },
@@ -58,7 +57,8 @@ async function getHandler(
         patientCount: clinic._count.patients,
         userCount: clinic._count.users,
         invoiceCount: clinic._count.invoices,
-        inventoryCount: clinic._count.inventoryItems,
+        inventoryCount: 0, // Mock as inventory is not yet implemented
+        subscriptionStatus: clinic.planType === "free" ? "TRIAL" : "ACTIVE",
       },
       recentActivity,
     });
@@ -90,23 +90,16 @@ async function patchHandler(
 
     const updateData: any = {};
 
-    if (subscriptionStatus !== undefined) {
-      updateData.subscriptionStatus = subscriptionStatus;
-    }
-    if (subscriptionStartDate !== undefined) {
-      updateData.subscriptionStartDate = subscriptionStartDate ? new Date(subscriptionStartDate) : null;
-    }
-    if (subscriptionEndDate !== undefined) {
-      updateData.subscriptionEndDate = subscriptionEndDate ? new Date(subscriptionEndDate) : null;
-    }
-    if (billingEmail !== undefined) {
-      updateData.billingEmail = billingEmail;
-    }
-    if (mrr !== undefined) {
-      updateData.mrr = parseFloat(mrr);
-    }
     if (isActive !== undefined) {
       updateData.isActive = isActive;
+    }
+    
+    // Map subscriptionStatus to planType if needed (simple mock logic)
+    if (subscriptionStatus === "TRIAL") {
+       updateData.planType = "free";
+    } else if (subscriptionStatus === "ACTIVE") {
+       // Preserve existing plan or default to premium if currently free
+       // updateData.planType = "premium"; 
     }
 
     const clinic = await prisma.clinic.update({

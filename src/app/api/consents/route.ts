@@ -1,12 +1,10 @@
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
-import { existsSync } from "fs";
 import { withAuth, AuthenticatedRequest, getPatientWhereClause } from "@/lib/auth-middleware";
 import { prisma } from "@/lib/prisma";
 import { Permissions } from "@/lib/rbac";
 import { AppError, ErrorCodes, createErrorResponse } from "@/lib/api-errors";
 import jsPDF from "jspdf";
+import { uploadToBlob, generateBlobPath } from "@/lib/vercel-blob";
 
 // Get patient consents
 export const GET = withAuth(
@@ -24,7 +22,8 @@ export const GET = withAuth(
         const patientWhere = getPatientWhereClause(
           req.user.id,
           req.user.role,
-          req.user.isExternal
+          req.user.isExternal,
+          req.user.clinicId
         );
         const patient = await prisma.patient.findFirst({
           where: {
@@ -106,7 +105,8 @@ export const POST = withAuth(
       const patientWhere = getPatientWhereClause(
         req.user.id,
         req.user.role,
-        req.user.isExternal
+        req.user.isExternal,
+        req.user.clinicId
       );
       const patient = await prisma.patient.findFirst({
         where: {
@@ -128,38 +128,57 @@ export const POST = withAuth(
         throw new AppError("Template not found", ErrorCodes.NOT_FOUND, 404);
       }
 
-      // Create upload directory
-      const consentDir = join(process.cwd(), "public", "uploads", "consents");
-      if (!existsSync(consentDir)) {
-        await mkdir(consentDir, { recursive: true });
+      // Get clinic details if applicable
+      let clinic = null;
+      if (req.user.clinicId) {
+        clinic = await prisma.clinic.findUnique({
+          where: { id: req.user.clinicId },
+        });
       }
 
-      let signatureUrl: string | undefined;
-      let pdfUrl: string | undefined;
+      // Helper to replace placeholders
+      const replacePlaceholders = (text: string) => {
+        let result = text;
+        
+        // Patient details
+        result = result.replace(/{{PATIENT_NAME}}/g, `${patient.firstName} ${patient.lastName}`);
+        result = result.replace(/{{PATIENT_DOB}}/g, patient.dateOfBirth ? new Date(patient.dateOfBirth).toLocaleDateString() : "N/A");
+        result = result.replace(/{{PATIENT_ADDRESS}}/g, patient.address || "N/A");
+        result = result.replace(/{{PATIENT_MOBILE}}/g, patient.mobileNumber || "N/A");
+        
+        // Clinic details
+        result = result.replace(/{{CLINIC_NAME}}/g, clinic?.name || req.user.clinicName || "Clinic");
+        result = result.replace(/{{CLINIC_ADDRESS}}/g, clinic?.address || "");
+        result = result.replace(/{{CLINIC_PHONE}}/g, clinic?.phone || "");
+        
+        // Other details
+        result = result.replace(/{{DOCTOR_NAME}}/g, req.user.name || "Doctor");
+        result = result.replace(/{{SIGNED_BY}}/g, signedBy);
+        result = result.replace(/{{DATE}}/g, new Date().toLocaleDateString());
+        
+        return result;
+      };
 
-      // Save signature if provided
+      const processedBody = replacePlaceholders(template.body);
+      const processedTitle = replacePlaceholders(template.title);
+
+      let signatureUrl: string | undefined;
+      // Save signature to Vercel Blob if provided
       if (signatureFile) {
-        const timestamp = Date.now();
-        const signatureFilename = `sig_${patientId}_${timestamp}.png`;
-        const signaturePath = join(consentDir, signatureFilename);
-        const bytes = await signatureFile.arrayBuffer();
-        await writeFile(signaturePath, Buffer.from(bytes));
-        signatureUrl = `/uploads/consents/${signatureFilename}`;
+        const signatureBlobPath = generateBlobPath("consent-signatures", patientId, `signature_${Date.now()}.png`);
+        signatureUrl = await uploadToBlob(signatureFile, signatureBlobPath, "image/png");
       }
 
       // Generate PDF
       const doc = new jsPDF();
-      const timestamp = Date.now();
-      const pdfFilename = `consent_${patientId}_${timestamp}.pdf`;
-      const pdfPath = join(consentDir, pdfFilename);
-
+      
       // Add content to PDF
       doc.setFontSize(18);
-      doc.text(template.title, 20, 20);
+      doc.text(processedTitle, 20, 20);
       doc.setFontSize(12);
       
       // Add template body (simple text wrapping)
-      const lines = doc.splitTextToSize(template.body, 170);
+      const lines = doc.splitTextToSize(processedBody, 170);
       doc.text(lines, 20, 40);
 
       // Add signature info
@@ -168,10 +187,10 @@ export const POST = withAuth(
       doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, yPos + 10);
       doc.text(`Patient: ${patient.firstName} ${patient.lastName}`, 20, yPos + 20);
 
-      // Save PDF
+      // Convert PDF to buffer and upload to Vercel Blob
       const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
-      await writeFile(pdfPath, pdfBuffer);
-      pdfUrl = `/uploads/consents/${pdfFilename}`;
+      const pdfBlobPath = generateBlobPath("consent-pdfs", patientId, `consent_${Date.now()}.pdf`);
+      const pdfUrl = await uploadToBlob(pdfBuffer, pdfBlobPath, "application/pdf");
 
       // Create consent record
       const consent = await prisma.patientConsent.create({
@@ -186,7 +205,7 @@ export const POST = withAuth(
           pdfUrl,
           status: "SIGNED",
           notes: notes || undefined,
-          ipAddress: req.ip || undefined,
+          ipAddress: req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || undefined,
           userAgent: req.headers.get('user-agent') || undefined,
         },
         include: {

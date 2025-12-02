@@ -128,6 +128,7 @@ export default function FinancePage() {
     amount: "",
     paymentMethod: "CASH",
     paymentDate: new Date().toISOString().split("T")[0],
+    reference: "",
     notes: "",
   });
   const [paymentErrors, setPaymentErrors] = useState<Record<string, string>>({});
@@ -166,16 +167,20 @@ export default function FinancePage() {
       
       if (data.invoices) {
         // Transform invoices to match UI format
-        const transformedInvoices = data.invoices.map((inv: any) => ({
-          id: inv.id,
-          patientName: `${inv.patient.firstName} ${inv.patient.lastName}`,
-          invoiceNumber: inv.invoiceNumber,
-          amount: inv.totalAmount,
-          status: inv.status.toLowerCase(),
-          date: inv.createdAt,
-          dueDate: inv.dueDate,
-          items: inv.items || [],
-        }));
+        const transformedInvoices = data.invoices.map((inv: any) => {
+          const paidAmount = inv.payments?.reduce((sum: number, p: any) => sum + p.amount, 0) || 0;
+          return {
+            id: inv.id,
+            patientName: `${inv.patient.firstName} ${inv.patient.lastName}`,
+            invoiceNumber: inv.invoiceNumber,
+            amount: inv.totalAmount,
+            paidAmount: paidAmount,
+            status: inv.status.toLowerCase(),
+            date: inv.createdAt,
+            dueDate: inv.dueDate,
+            items: inv.items || [],
+          };
+        });
         
         setInvoices(transformedInvoices);
         
@@ -344,6 +349,7 @@ export default function FinancePage() {
         amount: parseFloat(paymentFormData.amount),
         paymentMethod: paymentFormData.paymentMethod as any,
         paymentDate: paymentFormData.paymentDate,
+        reference: paymentFormData.reference,
         notes: paymentFormData.notes,
       };
 
@@ -388,6 +394,7 @@ export default function FinancePage() {
       amount: "",
       paymentMethod: "CASH",
       paymentDate: new Date().toISOString().split("T")[0],
+      reference: "",
       notes: "",
     });
     setPaymentErrors({});
@@ -1583,6 +1590,19 @@ export default function FinancePage() {
               {paymentErrors.paymentMethod && (
                 <p className="text-sm text-red-500">{paymentErrors.paymentMethod}</p>
               )}
+            </div>
+
+            {/* Reference / Transaction ID */}
+            <div className="space-y-2">
+              <Label htmlFor="paymentReference">Reference / Transaction ID (Optional)</Label>
+              <Input
+                id="paymentReference"
+                placeholder="e.g., UPI-123456, CHQ-789"
+                value={paymentFormData.reference}
+                onChange={(e) =>
+                  setPaymentFormData({ ...paymentFormData, reference: e.target.value })
+                }
+              />
             </div>
 
             {/* Payment Date */}

@@ -31,6 +31,7 @@ export default function SettingsPage() {
 
   // Clinic state
   const [clinic, setClinic] = useState<any>(null);
+  const [isNewClinic, setIsNewClinic] = useState(false);
   const [clinicLoading, setClinicLoading] = useState(false);
   const [clinicSaving, setClinicSaving] = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
@@ -156,6 +157,13 @@ export default function SettingsPage() {
       const response = await fetch("/api/clinic/settings");
       if (!response.ok) throw new Error("Failed to fetch clinic settings");
       const data = await response.json();
+      
+      if (data.isNew) {
+        setIsNewClinic(true);
+      } else {
+        setIsNewClinic(false);
+      }
+
       setClinic(data);
       setClinicFormData({
         name: data.name || "",
@@ -182,24 +190,34 @@ export default function SettingsPage() {
   const handleSaveClinic = async () => {
     try {
       setClinicSaving(true);
-      const response = await fetch("/api/clinic/update", {
-        method: "PATCH",
+      
+      const endpoint = isNewClinic ? "/api/clinic/create" : "/api/clinic/update";
+      const method = isNewClinic ? "POST" : "PATCH";
+
+      const response = await fetch(endpoint, {
+        method: method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(clinicFormData),
       });
       
-      if (!response.ok) throw new Error("Failed to update clinic");
+      if (!response.ok) throw new Error(isNewClinic ? "Failed to create clinic" : "Failed to update clinic");
       
       toast({
         title: "Success",
-        description: "Clinic settings updated successfully",
+        description: isNewClinic ? "Clinic created successfully" : "Clinic settings updated successfully",
       });
+      
+      if (isNewClinic) {
+        // Refresh session to get new clinicId
+        await update();
+        setIsNewClinic(false);
+      }
       
       await fetchClinicSettings();
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to update clinic settings",
+        description: error.message || "Failed to save clinic settings",
         variant: "destructive",
       });
     } finally {
@@ -411,8 +429,9 @@ export default function SettingsPage() {
                       type="file" 
                       accept="image/*"
                       onChange={handleLogoUpload}
-                      disabled={logoUploading}
+                      disabled={logoUploading || isNewClinic}
                     />
+                    {isNewClinic && <p className="text-xs text-muted-foreground mt-1">Save clinic details first to upload logo</p>}
                     {logoUploading && <p className="text-xs text-muted-foreground">Uploading...</p>}
                   </div>
                   

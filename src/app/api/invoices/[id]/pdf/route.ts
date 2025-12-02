@@ -45,6 +45,9 @@ export const GET = withAuth(
         pinCode: invoice.patient.pinCode,
       };
 
+      // Calculate paid amount from payments
+      const paidAmount = invoice.payments.reduce((sum, payment) => sum + payment.amount, 0);
+
       // Prepare invoice/treatment data for PDF generator
       const treatmentData = {
         id: invoice.id,
@@ -58,9 +61,12 @@ export const GET = withAuth(
         instructions: invoice.notes || "",
         receiptNumber: invoice.invoiceNumber,
         treatmentCost: invoice.totalAmount.toString(),
-        amountPaid: invoice.paidAmount.toString(),
-        balanceAmount: (invoice.totalAmount - invoice.paidAmount).toString(),
+        amountPaid: paidAmount.toString(),
+        balanceAmount: (invoice.totalAmount - paidAmount).toString(),
         paymentStatus: invoice.status,
+        paymentMode: invoice.payments.length > 0
+          ? invoice.payments[invoice.payments.length - 1].paymentMethod
+          : "N/A",
         paymentDate: invoice.payments.length > 0
           ? invoice.payments[invoice.payments.length - 1].paymentDate.toISOString().split("T")[0]
           : undefined,
@@ -92,6 +98,6 @@ export const GET = withAuth(
       );
     }
   },
-  { requiredRole: null }
+  {}
 );
 

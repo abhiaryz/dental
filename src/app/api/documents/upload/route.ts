@@ -12,7 +12,12 @@ export const POST = withAuth(
   async (req: AuthenticatedRequest) => {
     // Apply rate limiting for file uploads
     const rateLimit = await checkRateLimit(req as any, 'upload');
-    if (!rateLimit.allowed) return rateLimit.error;
+    if (!rateLimit.allowed) {
+      return rateLimit.error || NextResponse.json(
+        { error: "Rate limit exceeded" },
+        { status: 429 }
+      );
+    }
 
     try {
       const formData = await req.formData();
@@ -72,7 +77,6 @@ export const POST = withAuth(
           type,
           url: `/uploads/documents/${filename}`,
           notes: notes || undefined,
-          uploadedBy: req.user.id,
         },
       });
 

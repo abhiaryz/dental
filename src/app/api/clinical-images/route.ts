@@ -1,18 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
-import { existsSync } from "fs";
 import { withAuth, AuthenticatedRequest, getPatientWhereClause } from "@/lib/auth-middleware";
 import { prisma } from "@/lib/prisma";
 import { Permissions } from "@/lib/rbac";
 import { checkRateLimit } from "@/lib/rate-limiter";
 import { AppError, ErrorCodes, createErrorResponse } from "@/lib/api-errors";
+import { uploadToBlob, generateBlobPath } from "@/lib/vercel-blob";
 
 // Upload clinical image
 export const POST = withAuth(
   async (req: AuthenticatedRequest) => {
     const rateLimit = await checkRateLimit(req as any, 'upload');
-    if (!rateLimit.allowed) return rateLimit.error;
+    if (!rateLimit.allowed) {
+      return rateLimit.error || NextResponse.json(
+        { error: "Rate limit exceeded" },
+        { status: 429 }
+      );
+    }
 
     try {
       const formData = await req.formData();
@@ -55,22 +58,9 @@ export const POST = withAuth(
         throw new AppError("Patient not found or access denied", ErrorCodes.NOT_FOUND, 404);
       }
 
-      // Create upload directory
-      const uploadDir = join(process.cwd(), "public", "uploads", "clinical-images");
-      if (!existsSync(uploadDir)) {
-        await mkdir(uploadDir, { recursive: true });
-      }
-
-      // Generate unique filename
-      const timestamp = Date.now();
-      const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-      const filename = `${patientId}_${timestamp}_${sanitizedFileName}`;
-      const filepath = join(uploadDir, filename);
-
-      // Save file
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      await writeFile(filepath, buffer);
+      // Generate blob path and upload to Vercel Blob
+      const blobPath = generateBlobPath("clinical-images", patientId, file.name);
+      const fileUrl = await uploadToBlob(file, blobPath, file.type);
 
       // Create database record
       const clinicalImage = await prisma.clinicalImage.create({
@@ -81,7 +71,7 @@ export const POST = withAuth(
           title,
           toothNumber: toothNumber || undefined,
           notes: notes || undefined,
-          fileUrl: `/uploads/clinical-images/${filename}`,
+          fileUrl,
           fileSize: file.size,
           mimeType: file.type,
           capturedBy: req.user.id,

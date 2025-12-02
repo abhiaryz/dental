@@ -16,9 +16,21 @@ export const GET = withAuth(
       const startDate = searchParams.get("startDate");
       const endDate = searchParams.get("endDate");
 
-      const where: any = {
-        userId: req.user.id,
-      };
+      // Build treatment filter based on role
+      const where: any = {};
+
+      // Individual doctors can only see their own treatments
+      if (req.user.isExternal || req.user.role === "EXTERNAL_DOCTOR") {
+        where.userId = req.user.id;
+      } else {
+        // Clinic users can see treatments for patients in their clinic
+        // Ensure we only fetch treatments where the patient belongs to the user's clinic
+        if (req.user.clinicId) {
+           where.patient = {
+             clinicId: req.user.clinicId
+           };
+        }
+      }
 
       // If filtering by patient, verify patient access
       if (patientId) {
@@ -31,7 +43,13 @@ export const GET = withAuth(
         }
 
         // Check if user can access this patient's treatments
-        const patientWhere = getPatientWhereClause(req.user.id, req.user.role, req.user.isExternal);
+        const patientWhere = getPatientWhereClause(
+          req.user.id, 
+          req.user.role, 
+          req.user.isExternal,
+          req.user.clinicId
+        );
+        
         const hasAccess = await prisma.patient.findFirst({
           where: {
             id: patientId,
@@ -124,7 +142,12 @@ export const POST = withAuth(
       }
 
       // Verify patient access based on role
-      const patientWhere = getPatientWhereClause(req.user.id, req.user.role, req.user.isExternal);
+      const patientWhere = getPatientWhereClause(
+        req.user.id, 
+        req.user.role, 
+        req.user.isExternal,
+        req.user.clinicId
+      );
       const patient = await prisma.patient.findFirst({
         where: {
           id: body.patientId,

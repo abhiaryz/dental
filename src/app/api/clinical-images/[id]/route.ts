@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
-import { unlink } from "fs/promises";
-import { join } from "path";
 import { withAuth, AuthenticatedRequest, getPatientWhereClause } from "@/lib/auth-middleware";
 import { prisma } from "@/lib/prisma";
 import { Permissions } from "@/lib/rbac";
 import { AppError, ErrorCodes, createErrorResponse } from "@/lib/api-errors";
+import { deleteFromBlob } from "@/lib/vercel-blob";
 
 // Get single clinical image
 export const GET = withAuth(
@@ -93,12 +92,14 @@ export const DELETE = withAuth(
         throw new AppError("Access denied", ErrorCodes.FORBIDDEN, 403);
       }
 
-      // Delete file
+      // Delete file from Vercel Blob
       try {
-        const filepath = join(process.cwd(), "public", image.fileUrl);
-        await unlink(filepath);
+        // Check if it's a blob URL (starts with https://) or local path
+        if (image.fileUrl.startsWith("https://")) {
+          await deleteFromBlob(image.fileUrl);
+        }
       } catch (error) {
-        console.error("Failed to delete file:", error);
+        console.error("Failed to delete file from blob:", error);
         // Continue with database deletion even if file deletion fails
       }
 

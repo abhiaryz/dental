@@ -60,7 +60,7 @@ export function UserMenu() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>Change Password</DropdownMenuItem>
+       
         <DropdownMenuItem onClick={handleSignOut} className="text-destructive cursor-pointer">
           Sign Out
         </DropdownMenuItem>

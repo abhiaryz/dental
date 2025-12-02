@@ -8,7 +8,7 @@
  *   npx tsx scripts/migrate-users.ts
  */
 
-import { PrismaClient, Role } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 

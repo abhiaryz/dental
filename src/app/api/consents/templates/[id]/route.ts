@@ -51,7 +51,7 @@ export const PATCH = withAuth(
     }
   },
   {
-    requiredPermissions: [Permissions.SETTINGS_WRITE],
+    requiredPermissions: [Permissions.SETTINGS_UPDATE],
   }
 );
 
@@ -72,7 +72,7 @@ export const DELETE = withAuth(
     }
   },
   {
-    requiredPermissions: [Permissions.SETTINGS_WRITE],
+    requiredPermissions: [Permissions.SETTINGS_UPDATE],
   }
 );
 

@@ -10,14 +10,17 @@ async function handler(req: AuthenticatedSuperAdminRequest) {
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
-    // Total clinics by status
-    const clinicsByStatus = await prisma.clinic.groupBy({
-      by: ["subscriptionStatus"],
+    // Total clinics by status (using planType as a proxy since subscriptionStatus is missing)
+    const clinicsByPlan = await prisma.clinic.groupBy({
+      by: ["planType"],
       _count: true,
     });
 
-    const statusCounts = clinicsByStatus.reduce((acc, item) => {
-      acc[item.subscriptionStatus] = item._count;
+    const statusCounts = clinicsByPlan.reduce((acc, item) => {
+      // Map plan types to status-like categories for the dashboard
+      // free -> TRIAL, premium -> ACTIVE, etc.
+      const status = item.planType === "free" ? "TRIAL" : "ACTIVE";
+      acc[status] = (acc[status] || 0) + item._count;
       return acc;
     }, {} as Record<string, number>);
 
@@ -48,22 +51,30 @@ async function handler(req: AuthenticatedSuperAdminRequest) {
       },
     });
 
-    // Calculate MRR
-    const mrrData = await prisma.clinic.aggregate({
+    // Calculate MRR (Mock calculation as mrr field is missing)
+    // Assuming "premium" plan is $50/mo, "enterprise" is $100/mo
+    const mrrData = await prisma.clinic.findMany({
       where: {
-        subscriptionStatus: "ACTIVE",
+        isActive: true,
+        planType: { not: "free" }
       },
-      _sum: {
-        mrr: true,
-      },
+      select: {
+        planType: true
+      }
     });
 
-    const totalMRR = mrrData._sum.mrr || 0;
+    const totalMRR = mrrData.reduce((sum, clinic) => {
+       // This is a placeholder logic. Adjust based on your real pricing model.
+       if (clinic.planType === "premium") return sum + 50;
+       if (clinic.planType === "enterprise") return sum + 100;
+       return sum;
+    }, 0);
 
     // Calculate churn rate (clinics that became inactive this month)
+    // Using isActive flag and updatedAt as proxy
     const churnedThisMonth = await prisma.clinic.count({
       where: {
-        subscriptionStatus: "CANCELLED",
+        isActive: false,
         updatedAt: {
           gte: startOfMonth,
         },
@@ -81,21 +92,21 @@ async function handler(req: AuthenticatedSuperAdminRequest) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const monthKey = date.toISOString().slice(0, 7);
       
-      const monthMRR = await prisma.clinic.aggregate({
+      // MRR Trend (Mock)
+      const monthMRR = await prisma.clinic.count({
         where: {
-          subscriptionStatus: "ACTIVE",
+          isActive: true,
+          planType: { not: "free" },
           createdAt: {
             lte: new Date(date.getFullYear(), date.getMonth() + 1, 0),
           },
         },
-        _sum: {
-          mrr: true,
-        },
       });
 
+      // Simple mock: count * 50
       mrrTrend.push({
         month: monthKey,
-        value: monthMRR._sum.mrr || 0,
+        value: monthMRR * 50,
       });
     }
 

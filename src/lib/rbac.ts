@@ -173,10 +173,12 @@ export const RolePermissions: Record<Role, Permission[]> = {
   ],
   
   EXTERNAL_DOCTOR: [
-    // Segregated EDR access (only own patients)
+    // Individual Doctor (Full access to own data)
     Permissions.PATIENT_CREATE,
-    Permissions.PATIENT_READ, // Only own patients
-    Permissions.PATIENT_UPDATE, // Only own patients
+    Permissions.PATIENT_READ,
+    Permissions.PATIENT_UPDATE,
+    Permissions.PATIENT_DELETE,
+    Permissions.PATIENT_READ_ALL, // Access to all own patients
     Permissions.TREATMENT_CREATE,
     Permissions.TREATMENT_READ,
     Permissions.TREATMENT_UPDATE,
@@ -186,9 +188,14 @@ export const RolePermissions: Record<Role, Permission[]> = {
     Permissions.APPOINTMENT_CREATE,
     Permissions.APPOINTMENT_READ,
     Permissions.APPOINTMENT_UPDATE,
-    Permissions.RAG_DIAGNOSIS, // With filtered context
-    Permissions.RAG_TREATMENT_PLAN, // With filtered context
-    Permissions.RAG_CLINICAL_SUMMARY, // With filtered context
+    Permissions.APPOINTMENT_DELETE,
+    Permissions.FINANCE_READ,
+    Permissions.FINANCE_CREATE_INVOICE,
+    Permissions.FINANCE_FINALIZE_INVOICE,
+    Permissions.FINANCE_PROCESS_PAYMENT,
+    Permissions.RAG_DIAGNOSIS,
+    Permissions.RAG_TREATMENT_PLAN,
+    Permissions.RAG_CLINICAL_SUMMARY,
     Permissions.RAG_BASIC_QUESTIONS,
     Permissions.RAG_PATIENT_EDUCATION,
     Permissions.DOCUMENT_CREATE,
@@ -243,7 +250,7 @@ export function getRoleName(role: Role): string {
     CLINIC_DOCTOR: "Clinic Doctor",
     HYGIENIST: "Hygienist/Assistant",
     RECEPTIONIST: "Receptionist/Staff",
-    EXTERNAL_DOCTOR: "External Doctor",
+    EXTERNAL_DOCTOR: "Individual Doctor",
   };
   return roleNames[role];
 }
@@ -255,7 +262,7 @@ export function getRoleDescription(role: Role): string {
     CLINIC_DOCTOR: "Full clinical access. Can manage patient records, treatments, and access all AI features.",
     HYGIENIST: "Limited clinical access. Can input vitals, create notes, and access patient education.",
     RECEPTIONIST: "Operational access. Can manage appointments, billing, and view patient demographics.",
-    EXTERNAL_DOCTOR: "Segregated access. Can only manage own patients with full AI features.",
+    EXTERNAL_DOCTOR: "Full access to own patients, appointments, and finance. Independent of any clinic.",
   };
   return descriptions[role];
 }

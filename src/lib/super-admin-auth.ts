@@ -93,9 +93,9 @@ export function clearSuperAdminCookie(response: NextResponse): void {
  * Middleware to protect super admin routes
  */
 export function withSuperAdminAuth(
-  handler: (req: AuthenticatedSuperAdminRequest) => Promise<NextResponse>
+  handler: (req: AuthenticatedSuperAdminRequest, ...args: any[]) => Promise<NextResponse>
 ) {
-  return async (req: NextRequest): Promise<NextResponse> => {
+  return async (req: NextRequest, ...args: any[]): Promise<NextResponse> => {
     try {
       const session = await getSuperAdminSession(req);
 
@@ -129,7 +129,7 @@ export function withSuperAdminAuth(
       const authenticatedReq = req as AuthenticatedSuperAdminRequest;
       authenticatedReq.superAdmin = session;
 
-      return handler(authenticatedReq);
+      return handler(authenticatedReq, ...args);
     } catch (error) {
       console.error("Super admin auth middleware error:", error);
       return NextResponse.json(

@@ -46,6 +46,6 @@ export const PATCH = withAuth(
     }
   },
   {
-    requiredPermissions: [Permissions.CLINIC_UPDATE],
+    requiredPermissions: [Permissions.SETTINGS_UPDATE],
   }
 );

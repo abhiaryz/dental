@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,8 +64,9 @@ import { DentalChart } from "@/components/clinical/dental-chart";
 import { PrescriptionGenerator } from "@/components/clinical/prescription-generator";
 import { MultiVisitTracker } from "@/components/clinical/multi-visit-tracker";
 
-export default function PatientDetailPage({ params }: { params: { id: string } }) {
+export default function PatientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  const { id } = use(params);
   const [patient, setPatient] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -81,12 +82,12 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
 
   useEffect(() => {
     fetchPatient();
-  }, [params.id]);
+  }, [id]);
 
   const fetchPatient = async () => {
     try {
       setLoading(true);
-      const data = await patientsAPI.getById(params.id);
+      const data = await patientsAPI.getById(id);
       setPatient(data);
     } catch (err: any) {
       setError(err.message);
@@ -137,7 +138,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
       setUploading(true);
       const formData = new FormData();
       formData.append("file", selectedFile);
-      formData.append("patientId", params.id);
+      formData.append("patientId", id);
       formData.append("name", documentName);
       formData.append("type", documentType);
       formData.append("notes", documentNotes);
@@ -259,13 +260,13 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
           </div>
         </div>
         <div className="flex gap-2">
-          <Link href={`/dashboard/patients/${params.id}/add-treatment`}>
+          <Link href={`/dashboard/patients/${id}/add-treatment`}>
             <Button className="bg-primary">
               <FileText className="mr-2 size-4" />
               Add Treatment
             </Button>
           </Link>
-          <Link href={`/dashboard/patients/${params.id}/edit`}>
+          <Link href={`/dashboard/patients/${id}/edit`}>
             <Button variant="outline">
               <Edit className="mr-2 size-4" />
               Edit Patient
@@ -501,7 +502,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Link href={`/dashboard/patients/${params.id}/treatment/${treatment.id}`}>
+                          <Link href={`/dashboard/patients/${id}/treatment/${treatment.id}`}>
                             <Button variant="outline" size="sm">View</Button>
                           </Link>
                         </TableCell>
@@ -512,7 +513,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
               ) : (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground">No treatments yet</p>
-                  <Link href={`/dashboard/patients/${params.id}/add-treatment`}>
+                  <Link href={`/dashboard/patients/${id}/add-treatment`}>
                     <Button className="mt-4">Add First Treatment</Button>
                   </Link>
                 </div>
@@ -637,7 +638,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
               <CardDescription>X-rays, photos, and scans</CardDescription>
             </CardHeader>
             <CardContent>
-              <ClinicalImagesGallery patientId={params.id} />
+              <ClinicalImagesGallery patientId={id} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -650,7 +651,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
               <CardDescription>Digital consent documentation</CardDescription>
             </CardHeader>
             <CardContent>
-              <ConsentManager patientId={params.id} />
+              <ConsentManager patientId={id} />
             </CardContent>
           </Card>
         </TabsContent>

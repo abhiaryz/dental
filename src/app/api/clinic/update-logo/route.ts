@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
-import { existsSync } from "fs";
 import { withAuth, AuthenticatedRequest } from "@/lib/auth-middleware";
 import { prisma } from "@/lib/prisma";
 import { Permissions } from "@/lib/rbac";
+import { uploadToBlob, generateBlobPath } from "@/lib/vercel-blob";
 
 export const POST = withAuth(
   async (req: AuthenticatedRequest) => {
@@ -28,28 +26,15 @@ export const POST = withAuth(
         );
       }
 
-      // Create upload directory if it doesn't exist
-      const uploadDir = join(process.cwd(), "public", "uploads", "clinic");
-      if (!existsSync(uploadDir)) {
-        await mkdir(uploadDir, { recursive: true });
-      }
-
-      // Generate unique filename
-      const timestamp = Date.now();
-      const extension = file.name.split(".").pop();
-      const filename = `logo_${clinicId}_${timestamp}.${extension}`;
-      const filepath = join(uploadDir, filename);
-
-      // Convert file to buffer and save
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      await writeFile(filepath, buffer);
+      // Generate blob path and upload to Vercel Blob
+      const blobPath = generateBlobPath("clinic-logos", clinicId, file.name);
+      const logoUrl = await uploadToBlob(file, blobPath, file.type);
 
       // Update clinic record
       const clinic = await prisma.clinic.update({
         where: { id: clinicId },
         data: {
-          logo: `/uploads/clinic/${filename}`,
+          logo: logoUrl,
         },
       });
 
@@ -66,7 +51,7 @@ export const POST = withAuth(
     }
   },
   {
-    requiredPermissions: [Permissions.CLINIC_UPDATE],
+    requiredPermissions: [Permissions.SETTINGS_UPDATE],
   }
 );
 

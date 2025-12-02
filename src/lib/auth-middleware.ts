@@ -99,12 +99,12 @@ export function canAccessPatient(
   userClinicId?: string | null,
   patientClinicId?: string | null
 ): boolean {
-  // External doctors can only access their own patients
+  // Individual doctors can only access their own patients
   if (isExternalDoctor || userRole === "EXTERNAL_DOCTOR") {
-    return patientUserId === userId && patientCreatedByExternal;
+    return patientUserId === userId;
   }
 
-  // Cannot access external doctor's patients
+  // Cannot access external doctor's patients (unless you are that doctor, covered above)
   if (patientCreatedByExternal) {
     return false;
   }
@@ -141,10 +141,9 @@ export function getPatientWhereClause(
 ) {
   const where: any = {};
 
-  // External doctors only see their own patients
+  // Individual doctors only see their own patients
   if (isExternal || userRole === "EXTERNAL_DOCTOR") {
     where.userId = userId;
-    where.createdByExternal = true;
   } else {
     // Clinic staff see patients from their clinic only
     where.createdByExternal = false;

@@ -68,7 +68,7 @@ export const POST = withAuth(
           requiresSignature: requiresSignature !== false,
           clinicId: req.user.clinicId || undefined,
           createdBy: req.user.id,
-        },
+        } as any,
       });
 
       return NextResponse.json(
@@ -84,7 +84,7 @@ export const POST = withAuth(
     }
   },
   {
-    requiredPermissions: [Permissions.SETTINGS_WRITE],
+    requiredPermissions: [Permissions.SETTINGS_UPDATE],
   }
 );
 

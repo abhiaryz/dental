@@ -25,7 +25,10 @@ async function handler(req: AuthenticatedSuperAdminRequest) {
     }
 
     if (status) {
-      where.subscriptionStatus = status;
+      // Fallback since subscriptionStatus doesn't exist in DB
+      if (status === "TRIAL") where.planType = "free";
+      if (status === "ACTIVE") where.planType = { not: "free" };
+      // where.subscriptionStatus = status;
     }
 
     // Get total count
@@ -42,11 +45,12 @@ async function handler(req: AuthenticatedSuperAdminRequest) {
         email: true,
         ownerName: true,
         ownerEmail: true,
-        subscriptionStatus: true,
-        subscriptionStartDate: true,
-        subscriptionEndDate: true,
-        mrr: true,
-        lastPaymentDate: true,
+        planType: true,
+        // subscriptionStatus: true,
+        // subscriptionStartDate: true,
+        // subscriptionEndDate: true,
+        // mrr: true,
+        // lastPaymentDate: true,
         isActive: true,
         createdAt: true,
         updatedAt: true,
@@ -67,6 +71,8 @@ async function handler(req: AuthenticatedSuperAdminRequest) {
     // Format response
     const formattedClinics = clinics.map((clinic) => ({
       ...clinic,
+      subscriptionStatus: clinic.planType === "free" ? "TRIAL" : "ACTIVE", // Mock status
+      mrr: clinic.planType === "free" ? 0 : 50, // Mock MRR
       userCount: clinic._count.users,
       patientCount: clinic._count.patients,
       _count: undefined,

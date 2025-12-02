@@ -11,12 +11,13 @@ import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ArrowLeft, Save, Loader2, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { patientsAPI } from "@/lib/api";
 
-export default function EditPatientPage({ params }: { params: { id: string } }) {
+export default function EditPatientPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  const { id } = use(params);
   const [loading, setLoading] = useState(true);
   const [patient, setPatient] = useState<any>(null);
   const [medicalConditions, setMedicalConditions] = useState<string[]>([]);
@@ -43,12 +44,12 @@ export default function EditPatientPage({ params }: { params: { id: string } }) 
 
   useEffect(() => {
     fetchPatient();
-  }, [params.id]);
+  }, [id]);
 
   const fetchPatient = async () => {
     try {
       setLoading(true);
-      const data = await patientsAPI.getById(params.id);
+      const data = await patientsAPI.getById(id);
       setPatient(data);
       
       // Parse medical conditions from medical history
@@ -126,8 +127,8 @@ export default function EditPatientPage({ params }: { params: { id: string } }) 
         sumInsured: formData.get("sumInsured") ? parseFloat(formData.get("sumInsured") as string) : undefined,
       };
 
-      await patientsAPI.update(params.id, patientData);
-      router.push(`/dashboard/patients/${params.id}`);
+      await patientsAPI.update(id, patientData);
+      router.push(`/dashboard/patients/${id}`);
     } catch (err: any) {
       setError(err.message || "Failed to update patient. Please try again.");
     } finally {
@@ -138,7 +139,7 @@ export default function EditPatientPage({ params }: { params: { id: string } }) 
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
-      await patientsAPI.delete(params.id);
+      await patientsAPI.delete(id);
       router.push("/dashboard/patients");
     } catch (err: any) {
       setError(err.message || "Failed to delete patient. Please try again.");
@@ -178,7 +179,7 @@ export default function EditPatientPage({ params }: { params: { id: string } }) 
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href={`/dashboard/patients/${params.id}`}>
+          <Link href={`/dashboard/patients/${id}`}>
             <Button variant="outline" size="icon">
               <ArrowLeft className="size-4" />
             </Button>
@@ -629,7 +630,7 @@ export default function EditPatientPage({ params }: { params: { id: string } }) 
 
         {/* Form Actions */}
         <div className="flex justify-end gap-4">
-          <Link href={`/dashboard/patients/${params.id}`}>
+          <Link href={`/dashboard/patients/${id}`}>
             <Button variant="outline" disabled={isSubmitting || isDeleting}>Cancel</Button>
           </Link>
           <Button type="submit" className="bg-primary text-primary-foreground hover:bg-primary/90" disabled={isSubmitting || isDeleting}>

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { 
   LayoutDashboard, 
   Building2, 
+  Users,
   BarChart3, 
   Settings, 
   LogOut,
@@ -78,6 +79,11 @@ export default function SuperAdminLayout({
       name: "Clinics",
       href: "/super-admin/clinics",
       icon: Building2,
+    },
+    {
+      name: "Users",
+      href: "/super-admin/users",
+      icon: Users, // You need to import Users from lucide-react
     },
     {
       name: "Analytics",

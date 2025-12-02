@@ -15,6 +15,10 @@ export async function GET(request: NextRequest) {
     const userRole = (session.user as any).role;
     const userClinicId = (session.user as any).clinicId;
 
+    if (!userClinicId) {
+      return NextResponse.json({ error: "Clinic ID is required" }, { status: 400 });
+    }
+
     // Check permissions
     const canRead = await checkPermission(userRole, "inventory", "read");
     if (!canRead) {
@@ -104,6 +108,10 @@ export async function POST(request: NextRequest) {
     const userId = (session.user as any).id;
     const userRole = (session.user as any).role;
     const userClinicId = (session.user as any).clinicId;
+
+    if (!userClinicId) {
+      return NextResponse.json({ error: "Clinic ID is required" }, { status: 400 });
+    }
 
     // Check permissions
     const canCreate = await checkPermission(userRole, "inventory", "create");

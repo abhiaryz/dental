@@ -7,6 +7,41 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  ADMIN
+  CLINIC_DOCTOR
+  HYGIENIST
+  RECEPTIONIST
+  EXTERNAL_DOCTOR
+}
+
+enum ClinicType {
+  INDIVIDUAL_PRACTICE
+  CLINIC
+  MULTI_LOCATION_CLINIC
+}
+
+enum ClinicalImageType {
+  XRAY
+  INTRAORAL
+  EXTRAORAL
+  PERIAPICAL
+  BITEWING
+  PANORAMIC
+  CEPHALOMETRIC
+  CBCT
+  BEFORE_TREATMENT
+  DURING_TREATMENT
+  AFTER_TREATMENT
+  OTHER
+}
+
+enum ConsentStatus {
+  PENDING
+  SIGNED
+  REVOKED
+}
+
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -47,8 +82,8 @@ model User {
   role                Role        @default(CLINIC_DOCTOR)
   isExternal          Boolean     @default(false)
   clinicId            String?
-  lastLoginAt         DateTime?
   failedLoginAttempts Int         @default(0)
+  lastLoginAt         DateTime?
   lockedUntil         DateTime?
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
@@ -57,9 +92,25 @@ model User {
   sessions            Session[]
   treatments          Treatment[]
   clinic              Clinic?     @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  clinicalImages      ClinicalImage[]
+  consentsSigned      PatientConsent[] @relation("SignedBy")
+  invoicesCreated     Invoice[]
+  paymentsRecorded    Payment[]
+  stockMovements      StockMovement[]
 
-  @@index([clinicId])
   @@index([username])
+  @@index([clinicId])
+}
+
+model SuperAdmin {
+  id          String    @id @default(cuid())
+  name        String
+  email       String    @unique
+  password    String
+  isActive    Boolean   @default(true)
+  lastLoginAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model VerificationToken {
@@ -71,46 +122,42 @@ model VerificationToken {
 }
 
 model Clinic {
-  id                    String             @id @default(cuid())
-  name                  String
-  clinicCode            String             @unique
-  type                  ClinicType         @default(CLINIC)
-  email                 String
-  phone                 String?
-  address               String?
-  city                  String?
-  state                 String?
-  logo                  String?
-  isActive              Boolean            @default(true)
-  ownerName             String
-  ownerEmail            String
-  planType              String             @default("free")
-  maxUsers              Int                @default(5)
-  onboardingComplete    Boolean            @default(false)
-  onboardingStep        Int                @default(1)
-  termsAcceptedAt       DateTime?
-  privacyAcceptedAt     DateTime?
-  subscriptionStatus    SubscriptionStatus @default(TRIAL)
-  subscriptionStartDate DateTime?
-  subscriptionEndDate   DateTime?
-  billingEmail          String?
-  mrr                   Float              @default(0)
-  lastPaymentDate       DateTime?
-  createdAt             DateTime           @default(now())
-  updatedAt             DateTime           @updatedAt
-  invitations           Invitation[]
-  patients              Patient[]
-  users                 User[]
-  inventoryItems        InventoryItem[]
-  suppliers             Supplier[]
-  invoices              Invoice[]
+  id                  String        @id @default(cuid())
+  name                String
+  clinicCode          String        @unique
+  type                ClinicType    @default(CLINIC)
+  email               String
+  phone               String?
+  address             String?
+  city                String?
+  state               String?
+  pinCode             String?
+  website             String?
+  registrationNumber  String?
+  logo                String?
+  isActive            Boolean       @default(true)
+  ownerName           String
+  ownerEmail          String
+  planType            String        @default("free")
+  maxUsers            Int           @default(5)
+  onboardingComplete  Boolean       @default(false)
+  onboardingStep      Int           @default(1)
+  privacyAcceptedAt   DateTime?
+  termsAcceptedAt     DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  users               User[]
+  patients            Patient[]
+  invitations         Invitation[]
+  invoices            Invoice[]
+  suppliers           Supplier[]
+  inventoryItems      InventoryItem[]
 
   @@index([clinicCode])
-  @@index([subscriptionStatus])
 }
 
 model Patient {
-  id                    String           @id @default(cuid())
+  id                    String        @id @default(cuid())
   firstName             String
   lastName              String
   dateOfBirth           DateTime
@@ -133,34 +180,34 @@ model Patient {
   dentalHistory         String?
   allergies             String?
   currentMedications    String?
-  previousSurgeries     String?
-  dentalConcerns        String?
-  previousDentalWork    String?
   preferredPaymentMode  String?
   insuranceProvider     String?
   sumInsured            Float?
   userId                String
-  clinicId              String?
-  createdByExternal     Boolean          @default(false)
-  createdAt             DateTime         @default(now())
-  updatedAt             DateTime         @updatedAt
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  dentalConcerns        String?
+  previousDentalWork    String?
+  previousSurgeries     String?
   appointments          Appointment[]
   documents             Document[]
-  clinic                Clinic?          @relation(fields: [clinicId], references: [id], onDelete: Cascade)
-  user                  User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   treatments            Treatment[]
-  invoices              Invoice[]
   clinicalImages        ClinicalImage[]
   consents              PatientConsent[]
+  clinicId              String?
+  createdByExternal     Boolean       @default(false)
+  clinic                Clinic?       @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  invoices              Invoice[]
 
   @@index([userId])
   @@index([mobileNumber])
-  @@index([createdByExternal])
   @@index([clinicId])
+  @@index([createdByExternal])
 }
 
 model Treatment {
-  id               String            @id @default(cuid())
+  id               String    @id @default(cuid())
   patientId        String
   treatmentDate    DateTime
   chiefComplaint   String
@@ -170,26 +217,21 @@ model Treatment {
   prescription     String
   notes            String?
   cost             Float
-  paidAmount       Float             @default(0)
+  paidAmount       Float     @default(0)
   selectedTeeth    String[]
-  toothChart       String? // JSON field for tooth restoration map
   userId           String
   followUpDate     DateTime?
   followUpNotes    String?
-  status           TreatmentStatus   @default(IN_PROGRESS)
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  patient          Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  invoices         Invoice[]
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  patient          Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   clinicalImages   ClinicalImage[]
   consents         PatientConsent[]
-  visits           TreatmentVisit[]
-  prescriptions    PrescriptionPDF[]
+  invoices         Invoice[]
 
   @@index([patientId])
   @@index([userId])
-  @@index([status])
 }
 
 model Appointment {
@@ -209,18 +251,125 @@ model Appointment {
 }
 
 model Document {
-  id         String   @id @default(cuid())
-  patientId  String
-  name       String
-  type       String
-  url        String
-  notes      String?
-  uploadedBy String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  patient    Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  patientId String
+  name      String
+  type      String
+  url       String
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
 
   @@index([patientId])
+}
+
+model ClinicalImage {
+  id          String            @id @default(cuid())
+  patientId   String
+  treatmentId String?
+  type        ClinicalImageType
+  title       String
+  toothNumber String?
+  notes       String?
+  fileUrl     String
+  fileSize    Int
+  mimeType    String
+  capturedBy  String
+  capturedAt  DateTime          @default(now())
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  patient     Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  treatment   Treatment?        @relation(fields: [treatmentId], references: [id], onDelete: SetNull)
+  capturedByUser User           @relation(fields: [capturedBy], references: [id], onDelete: Cascade)
+
+  @@index([patientId])
+  @@index([treatmentId])
+  @@index([capturedBy])
+  @@index([capturedAt])
+}
+
+model ConsentTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  title       String
+  body        String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  consents    PatientConsent[]
+
+  @@index([isActive])
+}
+
+model PatientConsent {
+  id            String         @id @default(cuid())
+  patientId     String
+  treatmentId   String?
+  templateId    String
+  signedBy      String
+  signedByUserId String
+  signedAt      DateTime
+  signatureUrl String?
+  pdfUrl        String
+  status        ConsentStatus  @default(SIGNED)
+  notes         String?
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  patient       Patient        @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  treatment     Treatment?     @relation(fields: [treatmentId], references: [id], onDelete: SetNull)
+  template      ConsentTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  signedByUser  User           @relation("SignedBy", fields: [signedByUserId], references: [id], onDelete: Cascade)
+
+  @@index([patientId])
+  @@index([treatmentId])
+  @@index([templateId])
+  @@index([signedByUserId])
+  @@index([status])
+  @@index([signedAt])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([token])
+}
+
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  email     String?
+  username  String?
+  ipAddress String
+  userAgent String?
+  successful Boolean
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([ipAddress])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entityType String?
+  entityId  String?
+  ipAddress String?
+  userAgent String?
+  metadata  String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
 }
 
 model Invitation {
@@ -252,67 +401,108 @@ model PasswordResetToken {
   @@index([token])
 }
 
-model EmailVerificationToken {
+model Invoice {
+  id             String        @id @default(cuid())
+  invoiceNumber  String        @unique
+  patientId      String
+  treatmentId    String?
+  clinicId       String?
+  createdBy      String
+  amount         Float
+  taxAmount      Float         @default(0)
+  discountAmount Float         @default(0)
+  totalAmount    Float
+  status         String        @default("PENDING") // PENDING, PAID, OVERDUE, CANCELLED
+  dueDate        DateTime
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  
+  patient        Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  treatment      Treatment?    @relation(fields: [treatmentId], references: [id])
+  clinic         Clinic?       @relation(fields: [clinicId], references: [id])
+  user           User          @relation(fields: [createdBy], references: [id])
+  items          InvoiceItem[]
+  payments       Payment[]
+
+  @@index([patientId])
+  @@index([clinicId])
+  @@index([treatmentId])
+  @@index([status])
+  @@index([invoiceNumber])
+  @@index([createdAt])
+}
+
+model InvoiceItem {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  description String
+  quantity    Int
+  unitPrice   Float
+  amount      Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  amount      Float
+  paymentDate DateTime @default(now())
+  method      String   // CASH, CARD, UPI, BANK_TRANSFER
+  reference   String?
+  notes       String?
+  recordedBy  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [recordedBy], references: [id])
+
+  @@index([invoiceId])
+  @@index([paymentDate])
+}
+
+model Supplier {
   id        String   @id @default(cuid())
-  email     String
-  token     String   @unique
-  expiresAt DateTime
+  clinicId  String
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  gstIn     String?
+  notes     String?
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  clinic    Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  items     InventoryItem[]
 
-  @@index([email])
-  @@index([token])
-}
-
-model LoginAttempt {
-  id         String   @id @default(cuid())
-  email      String?
-  username   String?
-  ipAddress  String
-  userAgent  String?
-  successful Boolean
-  createdAt  DateTime @default(now())
-
-  @@index([email])
-  @@index([ipAddress])
-  @@index([createdAt])
-}
-
-model AuditLog {
-  id         String   @id @default(cuid())
-  userId     String?
-  action     String
-  entityType String?
-  entityId   String?
-  ipAddress  String?
-  userAgent  String?
-  metadata   String?
-  createdAt  DateTime @default(now())
-
-  @@index([userId])
-  @@index([action])
-  @@index([createdAt])
+  @@index([clinicId])
 }
 
 model InventoryItem {
-  id             String          @id @default(cuid())
-  name           String
-  category       String
-  sku            String?         @unique
-  description    String?
-  unit           String
-  quantity       Int             @default(0)
-  minQuantity    Int             @default(10)
-  maxQuantity    Int?
-  unitPrice      Float
-  supplierId     String?
-  location       String?
-  expiryDate     DateTime?
-  batchNumber    String?
-  clinicId       String?
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  clinic         Clinic?         @relation(fields: [clinicId], references: [id], onDelete: Cascade)
-  supplier       Supplier?       @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  id          String   @id @default(cuid())
+  clinicId    String
+  supplierId  String?
+  name        String
+  description String?
+  category    String
+  sku         String?
+  unit        String
+  unitPrice   Float
+  quantity    Int      @default(0)
+  minQuantity Int      @default(10)
+  expiryDate  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  clinic      Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  supplier    Supplier? @relation(fields: [supplierId], references: [id])
   stockMovements StockMovement[]
 
   @@index([clinicId])
@@ -322,375 +512,20 @@ model InventoryItem {
 }
 
 model StockMovement {
-  id          String        @id @default(cuid())
+  id          String   @id @default(cuid())
   itemId      String
-  type        MovementType
+  userId      String
+  type        String   // IN, OUT, ADJUSTMENT
   quantity    Int
   previousQty Int
   newQty      Int
   reason      String?
-  reference   String?
-  userId      String
-  createdAt   DateTime      @default(now())
+  createdAt   DateTime @default(now())
+
   item        InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  user        User          @relation(fields: [userId], references: [id])
 
   @@index([itemId])
   @@index([userId])
   @@index([createdAt])
-}
-
-model Supplier {
-  id            String          @id @default(cuid())
-  name          String
-  contactPerson String?
-  email         String?
-  phone         String?
-  address       String?
-  city          String?
-  state         String?
-  pinCode       String?
-  taxId         String?
-  paymentTerms  String?
-  notes         String?
-  isActive      Boolean         @default(true)
-  clinicId      String?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  clinic        Clinic?         @relation(fields: [clinicId], references: [id], onDelete: Cascade)
-  items         InventoryItem[]
-
-  @@index([clinicId])
-}
-
-model Invoice {
-  id             String        @id @default(cuid())
-  invoiceNumber  String        @unique
-  patientId      String
-  treatmentId    String?
-  amount         Float
-  taxAmount      Float         @default(0)
-  discountAmount Float         @default(0)
-  totalAmount    Float
-  status         InvoiceStatus @default(PENDING)
-  dueDate        DateTime
-  paidDate       DateTime?
-  notes          String?
-  clinicId       String?
-  createdBy      String
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  patient        Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  treatment      Treatment?    @relation(fields: [treatmentId], references: [id], onDelete: SetNull)
-  clinic         Clinic?       @relation(fields: [clinicId], references: [id], onDelete: Cascade)
-  payments       Payment[]
-  items          InvoiceItem[]
-
-  @@index([patientId])
-  @@index([treatmentId])
-  @@index([clinicId])
-  @@index([invoiceNumber])
-  @@index([status])
-}
-
-model InvoiceItem {
-  id          String  @id @default(cuid())
-  invoiceId   String
-  description String
-  quantity    Int     @default(1)
-  unitPrice   Float
-  amount      Float
-  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-
-  @@index([invoiceId])
-}
-
-model Payment {
-  id            String        @id @default(cuid())
-  invoiceId     String
-  amount        Float
-  paymentMethod PaymentMethod
-  paymentDate   DateTime      @default(now())
-  transactionId String?
-  status        PaymentStatus @default(COMPLETED)
-  notes         String?
-  createdBy     String
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  invoice       Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-
-  @@index([invoiceId])
-  @@index([paymentDate])
-}
-
-model Notification {
-  id        String           @id @default(cuid())
-  userId    String
-  type      NotificationType
-  title     String
-  message   String
-  link      String?
-  isRead    Boolean          @default(false)
-  metadata  String?
-  createdAt DateTime         @default(now())
-
-  @@index([userId])
-  @@index([isRead])
-  @@index([createdAt])
-}
-
-model NotificationPreference {
-  id                   String   @id @default(cuid())
-  userId               String   @unique
-  emailNotifications   Boolean  @default(true)
-  smsNotifications     Boolean  @default(false)
-  appointmentReminders Boolean  @default(true)
-  paymentReminders     Boolean  @default(true)
-  inventoryAlerts      Boolean  @default(true)
-  systemUpdates        Boolean  @default(true)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-
-  @@index([userId])
-}
-
-enum Role {
-  ADMIN
-  CLINIC_DOCTOR
-  HYGIENIST
-  RECEPTIONIST
-  EXTERNAL_DOCTOR
-}
-
-enum ClinicType {
-  INDIVIDUAL_PRACTICE
-  CLINIC
-  MULTI_LOCATION_CLINIC
-}
-
-enum MovementType {
-  IN
-  OUT
-  ADJUSTMENT
-  EXPIRED
-  DAMAGED
-}
-
-enum InvoiceStatus {
-  DRAFT
-  PENDING
-  PAID
-  OVERDUE
-  CANCELLED
-}
-
-enum PaymentMethod {
-  CASH
-  CREDIT_CARD
-  DEBIT_CARD
-  UPI
-  BANK_TRANSFER
-  CHEQUE
-  INSURANCE
-}
-
-enum PaymentStatus {
-  PENDING
-  COMPLETED
-  FAILED
-  REFUNDED
-}
-
-enum NotificationType {
-  APPOINTMENT_REMINDER
-  APPOINTMENT_CONFIRMED
-  APPOINTMENT_CANCELLED
-  PAYMENT_REMINDER
-  PAYMENT_RECEIVED
-  INVENTORY_LOW_STOCK
-  INVENTORY_OUT_OF_STOCK
-  SYSTEM_UPDATE
-  GENERAL
-}
-
-enum SubscriptionStatus {
-  TRIAL
-  ACTIVE
-  SUSPENDED
-  CANCELLED
-  EXPIRED
-}
-
-enum TreatmentStatus {
-  PLANNED
-  IN_PROGRESS
-  COMPLETED
-  CANCELLED
-  ON_HOLD
-}
-
-enum ClinicalImageType {
-  XRAY
-  INTRAORAL
-  EXTRAORAL
-  PERIAPICAL
-  BITEWING
-  PANORAMIC
-  CEPHALOMETRIC
-  CBCT
-  BEFORE_TREATMENT
-  DURING_TREATMENT
-  AFTER_TREATMENT
-  OTHER
-}
-
-enum ConsentStatus {
-  PENDING
-  SIGNED
-  DECLINED
-  EXPIRED
-}
-
-enum VisitStatus {
-  SCHEDULED
-  COMPLETED
-  CANCELLED
-  NO_SHOW
-}
-
-// Clinical Images - X-rays, photos, scans
-model ClinicalImage {
-  id          String            @id @default(cuid())
-  patientId   String
-  treatmentId String?
-  type        ClinicalImageType
-  toothNumber String? // Optional tooth reference
-  title       String
-  notes       String?
-  fileUrl     String
-  fileSize    Int? // in bytes
-  mimeType    String?
-  capturedBy  String // userId
-  capturedAt  DateTime          @default(now())
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  patient     Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  treatment   Treatment?        @relation(fields: [treatmentId], references: [id], onDelete: SetNull)
-
-  @@index([patientId])
-  @@index([treatmentId])
-  @@index([type])
-  @@index([capturedAt])
-}
-
-// Consent Templates - Reusable consent forms
-model ConsentTemplate {
-  id                String           @id @default(cuid())
-  name              String
-  title             String
-  body              String // HTML/Markdown content
-  category          String? // e.g., "General", "Surgical", "Orthodontic"
-  requiresSignature Boolean          @default(true)
-  isActive          Boolean          @default(true)
-  clinicId          String?
-  createdBy         String
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
-  consents          PatientConsent[]
-
-  @@index([clinicId])
-  @@index([isActive])
-}
-
-// Patient Consents - Signed consent instances
-model PatientConsent {
-  id             String          @id @default(cuid())
-  patientId      String
-  treatmentId    String?
-  templateId     String
-  signedBy       String // Patient name
-  signedByUserId String? // If signed by staff on behalf
-  signedAt       DateTime?
-  signatureUrl   String? // Path to signature image
-  pdfUrl         String? // Path to generated consent PDF
-  status         ConsentStatus   @default(PENDING)
-  notes          String?
-  ipAddress      String?
-  userAgent      String?
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  patient        Patient         @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  treatment      Treatment?      @relation(fields: [treatmentId], references: [id], onDelete: SetNull)
-  template       ConsentTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
-
-  @@index([patientId])
-  @@index([treatmentId])
-  @@index([templateId])
-  @@index([status])
-}
-
-// Treatment Visits - Multi-visit tracking
-model TreatmentVisit {
-  id          String      @id @default(cuid())
-  treatmentId String
-  visitNumber Int
-  visitDate   DateTime
-  status      VisitStatus @default(COMPLETED)
-  notes       String?
-  procedures  String? // Procedures performed this visit
-  cost        Float       @default(0)
-  duration    Int? // Duration in minutes
-  performedBy String // userId
-  isBilled    Boolean     @default(false)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  treatment   Treatment   @relation(fields: [treatmentId], references: [id], onDelete: Cascade)
-
-  @@index([treatmentId])
-  @@index([visitDate])
-  @@index([status])
-}
-
-// Prescription PDFs - Generated prescription metadata
-model PrescriptionPDF {
-  id           String    @id @default(cuid())
-  treatmentId  String
-  patientId    String
-  pdfUrl       String
-  medications  String // JSON array of medications
-  instructions String?
-  generatedBy  String // userId
-  generatedAt  DateTime  @default(now())
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  treatment    Treatment @relation(fields: [treatmentId], references: [id], onDelete: Cascade)
-
-  @@index([treatmentId])
-  @@index([patientId])
-  @@index([generatedAt])
-}
-
-// Super Admin Model - Platform administrators
-model SuperAdmin {
-  id          String    @id @default(cuid())
-  email       String    @unique
-  password    String // bcrypt hashed
-  name        String
-  isActive    Boolean   @default(true)
-  lastLoginAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@index([email])
-}
-
-// Platform Metrics - Track SaaS metrics over time
-model PlatformMetric {
-  id         String   @id @default(cuid())
-  date       DateTime @default(now())
-  metricType String // MRR, ACTIVE_CLINICS, TOTAL_USERS, etc.
-  value      Float
-  metadata   String? // JSON for additional data
-  createdAt  DateTime @default(now())
-
-  @@index([metricType, date])
 }

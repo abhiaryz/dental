@@ -45,6 +45,23 @@ export default function SuperAdminDashboard() {
       setData(result);
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error);
+      setData({
+        overview: {
+          totalClinics: 0,
+          clinicsByStatus: {},
+          totalUsers: 0,
+          totalMRR: 0,
+          newSignupsThisMonth: 0,
+          newSignupsLastMonth: 0,
+          signupGrowth: 0,
+          churnRate: 0,
+          churnedThisMonth: 0
+        },
+        trends: {
+          mrr: [],
+          signups: []
+        }
+      });
     } finally {
       setLoading(false);
     }

@@ -14,6 +14,7 @@ import { useState, useEffect } from "react";
 import { patientsAPI, treatmentsAPI, employeesAPI } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { useSession } from "next-auth/react";
 
 // Tooth icon component
 const ToothIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
@@ -30,6 +31,7 @@ const ToothIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
 export default function AddTreatmentPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { toast } = useToast();
+  const { data: session, status } = useSession();
   const [patientId, setPatientId] = useState<string>("");
   const [patient, setPatient] = useState<any>(null);
   const [doctors, setDoctors] = useState<any[]>([]);
@@ -41,26 +43,48 @@ export default function AddTreatmentPage({ params }: { params: Promise<{ id: str
   const [selectedTreatmentType, setSelectedTreatmentType] = useState("");
 
   useEffect(() => {
+    if (status === "loading") return;
+    
     params.then(p => {
       setPatientId(p.id);
       fetchData(p.id);
     });
-  }, []);
+  }, [params, status]);
 
   const fetchData = async (id: string) => {
     try {
       setLoading(true);
-      const [patientData, employeesData] = await Promise.all([
-        patientsAPI.getById(id),
-        employeesAPI.getAll()
-      ]);
+      
+      // Fetch patient details
+      const patientData = await patientsAPI.getById(id);
       setPatient(patientData);
       
-      // Filter only doctors (employees with role DOCTOR or DENTIST)
-      const doctorsList = employeesData.employees?.filter((emp: any) => 
-        emp.role === 'DOCTOR' || emp.role === 'DENTIST'
-      ) || [];
-      setDoctors(doctorsList);
+      const user = session?.user as any;
+      
+      // If user belongs to a clinic, fetch employees (doctors)
+      if (user?.clinicId) {
+        try {
+          const employeesData = await employeesAPI.getAll();
+          // Filter only doctors (employees with role DOCTOR or DENTIST)
+          const doctorsList = employeesData.employees?.filter((emp: any) => 
+            emp.role === 'DOCTOR' || emp.role === 'DENTIST'
+          ) || [];
+          setDoctors(doctorsList);
+        } catch (error) {
+          console.error("Failed to fetch employees:", error);
+          // Don't block the page if fetching doctors fails, but user might be blocked from submitting
+          // if validation requires a doctor selected.
+        }
+      } else if (user) {
+        // If no clinic (External Doctor), the current user is the doctor
+        setDoctors([{
+          id: user.id,
+          name: user.name || "Doctor",
+          role: user.role
+        }]);
+        setSelectedDoctor(user.id);
+      }
+      
     } catch (err: any) {
       setError(err.message || "Failed to load data");
       toast({
@@ -606,7 +630,7 @@ export default function AddTreatmentPage({ params }: { params: Promise<{ id: str
 
         {/* Form Actions */}
         <div className="flex justify-end gap-4">
-          <Link href={`/dashboard/patients/${params.id}`}>
+          <Link href={`/dashboard/patients/${patientId}`}>
             <Button variant="outline" disabled={submitting}>Cancel</Button>
           </Link>
           <Button type="submit" className="bg-primary text-primary-foreground hover:bg-primary/90" disabled={submitting}>

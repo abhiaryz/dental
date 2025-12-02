@@ -25,6 +25,27 @@ import {
 import Link from "next/link";
 import { analyticsAPI } from "@/lib/api";
 
+interface DashboardAnalytics {
+  overview: {
+    totalRevenue: number;
+    totalPatients: number;
+    todayAppointments: number;
+    totalTreatments: number;
+  };
+  activityFeed: {
+    type: string;
+    title: string;
+    description: string;
+    time: string;
+  }[];
+  weeklyVisits: number[];
+  treatmentDistribution: {
+    label: string;
+    value: number;
+    color: string;
+  }[];
+}
+
 const quickActions = [
   {
     title: "Add patient",
@@ -53,7 +74,7 @@ const quickActions = [
 ];
 
 export default function DashboardHome() {
-  const [analytics, setAnalytics] = useState<any>(null);
+  const [analytics, setAnalytics] = useState<DashboardAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -104,7 +125,13 @@ export default function DashboardHome() {
     );
   }
 
-  const overview = analytics?.overview || {};
+  const overview = analytics?.overview || {
+    totalRevenue: 0,
+    totalPatients: 0,
+    todayAppointments: 0,
+    totalTreatments: 0,
+    pendingAmount: 0
+  };
   const activityFeed = analytics?.activityFeed || [];
   const weeklyData = analytics?.weeklyVisits || [0, 0, 0, 0, 0, 0, 0];
   const treatmentDistribution = analytics?.treatmentDistribution || [];
@@ -154,98 +181,7 @@ export default function DashboardHome() {
 
   return (
     <main className="space-y-8">
-      <section className="rounded-3xl border border-white/70 bg-gradient-to-br from-sky-500/10 via-white to-emerald-300/10 p-8 shadow-xl">
-        <div className="flex flex-wrap items-start justify-between gap-6">
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/80 px-4 py-1 text-sm font-medium text-sky-700 shadow-sm">
-              <Sparkles className="h-4 w-4" />
-              Morning snapshot
-            </div>
-            <div className="space-y-3">
-              <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-                Welcome back, Dr. Mehra
-              </h1>
-              <p className="max-w-2xl text-base text-slate-600">
-                Your practice is thriving. Review collections, patient touchpoints, and operational tasks from one command center. Everything is synced, compliant, and ready for your next decision.
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">
-              <span className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                100% backups verified overnight
-              </span>
-              <Separator orientation="vertical" className="hidden h-5 bg-slate-300 sm:block" />
-              <span className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-sky-600" />
-                5 patient messages awaiting follow-up
-              </span>
-            </div>
-            
-            {/* Auto-refresh controls */}
-            <div className="flex flex-wrap items-center gap-3 text-sm">
-              <Button
-                variant={autoRefresh ? "default" : "outline"}
-                size="sm"
-                onClick={() => setAutoRefresh(!autoRefresh)}
-                className="gap-2"
-              >
-                <Activity className={`size-4 ${autoRefresh ? 'animate-pulse' : ''}`} />
-                {autoRefresh ? 'Auto-refresh ON' : 'Auto-refresh OFF'}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => fetchAnalytics()}
-                disabled={loading}
-              >
-                {loading ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <TrendingUp className="size-4" />
-                )}
-                <span className="ml-2">Refresh Now</span>
-              </Button>
-              {lastUpdated && (
-                <span className="text-xs text-slate-500">
-                  Updated {getTimeAgo(lastUpdated)}
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-white/70 bg-white/80 p-6 text-sm text-slate-600 shadow-lg">
-            <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500">Focus for today</p>
-            <ul className="mt-3 space-y-2">
-              <li className="flex items-start gap-2">
-                <Badge variant="secondary" className="rounded-full bg-sky-100 text-sky-700">
-                  09:30
-                </Badge>
-                <span>Leadership sync — review weekly production.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Badge variant="secondary" className="rounded-full bg-emerald-100 text-emerald-700">
-                  13:00
-                </Badge>
-                <span>Implant planning consult with Dr. Rao.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Badge variant="secondary" className="rounded-full bg-sky-100 text-sky-700">
-                  16:30
-                </Badge>
-                <span>Quarterly compliance checklist sign-off.</span>
-              </li>
-            </ul>
-            <div className="mt-4 flex gap-2">
-              <Button size="sm" className="rounded-xl bg-slate-900 text-white hover:bg-slate-800">
-                View agenda
-              </Button>
-              <Button size="sm" variant="outline" className="rounded-xl border-slate-200 text-slate-700 hover:bg-slate-100">
-                Share daily brief
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
+     
 
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="w-full justify-start gap-2 rounded-2xl bg-white/80 p-2 shadow">
@@ -293,9 +229,7 @@ export default function DashboardHome() {
                   <CardTitle className="text-xl text-slate-900">Smart shortcuts</CardTitle>
                   <CardDescription>Automate routine actions across your practice.</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" className="rounded-xl border-slate-200 text-slate-700 hover:bg-slate-100">
-                  Create automation
-                </Button>
+               
               </CardHeader>
               <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {quickActions.map((action) => (
@@ -328,7 +262,7 @@ export default function DashboardHome() {
                 {activityFeed.length === 0 ? (
                   <p className="text-center text-sm text-muted-foreground py-4">No recent activity</p>
                 ) : (
-                  activityFeed.map((item: any, index: number) => {
+                  activityFeed.map((item, index) => {
                     const getIconForType = (type: string) => {
                       switch (type) {
                         case "PATIENT_REGISTERED":
@@ -382,10 +316,10 @@ export default function DashboardHome() {
                   <div key={index} className="flex flex-1 flex-col items-center gap-2">
                     <div
                       className="w-full rounded-t-2xl bg-gradient-to-t from-sky-400 to-emerald-400"
-                      style={{ height: `${(value / 70) * 100}%` }}
+                      style={{ height: `${Math.min((value / 20) * 100, 100)}%` }}
                     />
                     <span className="text-xs font-medium text-slate-500">
-                      {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][index]}
+                      {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][index]}
                     </span>
                   </div>
                 ))}

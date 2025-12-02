@@ -52,9 +52,7 @@ export async function POST(
     }
 
     // Calculate total paid so far
-    const totalPaid = invoice.payments.reduce((sum, p) => 
-      p.status === "COMPLETED" ? sum + p.amount : sum, 0
-    );
+    const totalPaid = invoice.payments.reduce((sum, p) => sum + p.amount, 0);
     
     const newTotalPaid = totalPaid + data.amount;
 
@@ -71,12 +69,11 @@ export async function POST(
       data: {
         invoiceId: id,
         amount: data.amount,
-        paymentMethod: data.paymentMethod,
+        method: data.paymentMethod,
         paymentDate: data.paymentDate ? new Date(data.paymentDate) : new Date(),
-        transactionId: data.transactionId,
-        status: data.status || "COMPLETED",
+        reference: data.reference || data.transactionId,
         notes: data.notes,
-        createdBy: userId,
+        recordedBy: userId,
       },
     });
 

@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
-import { existsSync } from "fs";
 import { withAuth, AuthenticatedRequest, getPatientWhereClause } from "@/lib/auth-middleware";
 import { prisma } from "@/lib/prisma";
 import { Permissions } from "@/lib/rbac";
 import { AppError, ErrorCodes, createErrorResponse } from "@/lib/api-errors";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { uploadToBlob, generateBlobPath } from "@/lib/vercel-blob";
 
 // Get prescriptions
 export const GET = withAuth(
@@ -121,12 +119,6 @@ export const POST = withAuth(
           })
         : null;
 
-      // Create upload directory
-      const prescriptionDir = join(process.cwd(), "public", "uploads", "prescriptions");
-      if (!existsSync(prescriptionDir)) {
-        await mkdir(prescriptionDir, { recursive: true });
-      }
-
       // Generate PDF
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
@@ -199,14 +191,10 @@ export const POST = withAuth(
       doc.setFontSize(8);
       doc.text("Authorized Signature", pageWidth - 80, signatureY + 12);
 
-      // Save PDF
-      const timestamp = Date.now();
-      const pdfFilename = `rx_${patientId}_${timestamp}.pdf`;
-      const pdfPath = join(prescriptionDir, pdfFilename);
+      // Convert PDF to buffer and upload to Vercel Blob
       const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
-      await writeFile(pdfPath, pdfBuffer);
-
-      const pdfUrl = `/uploads/prescriptions/${pdfFilename}`;
+      const pdfBlobPath = generateBlobPath("prescriptions", patientId, `prescription_${Date.now()}.pdf`);
+      const pdfUrl = await uploadToBlob(pdfBuffer, pdfBlobPath, "application/pdf");
 
       // Create database record
       const prescription = await prisma.prescriptionPDF.create({

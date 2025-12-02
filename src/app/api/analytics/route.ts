@@ -48,16 +48,12 @@ export const GET = withAuth(
     }
 
     // Build patient where clause for clinic-based queries
-    const patientWhere: any = {};
-    if (req.user.isExternal || req.user.role === "EXTERNAL_DOCTOR") {
-      patientWhere.userId = userId;
-      patientWhere.createdByExternal = true;
-    } else {
-      patientWhere.createdByExternal = false;
-      if (clinicId) {
-        patientWhere.clinicId = clinicId;
-      }
-    }
+    const patientWhere = getPatientWhereClause(
+      userId,
+      req.user.role,
+      req.user.isExternal,
+      clinicId
+    );
 
     // Build treatment where clause
     const treatmentWhere: any = { patient: patientWhere, ...dateFilter };
@@ -204,23 +200,7 @@ export const GET = withAuth(
         prisma.treatment.findMany({
           where: treatmentWhere,
           orderBy: { treatmentDate: "desc" },
-          take: 3,
-          include: {
-            patient: {
-              select: {
-                firstName: true,
-                lastName: true,
-              },
-            },
-          },
-        }),
-        prisma.invoice.findMany({
-          where: {
-            ...(clinicId ? { clinicId } : {}),
-            status: "PAID",
-          },
-          orderBy: { paidDate: "desc" },
-          take: 2,
+          take: 5,
           include: {
             patient: {
               select: {
@@ -296,7 +276,7 @@ export const GET = withAuth(
       treatmentCategories[category] = (treatmentCategories[category] || 0) + 1;
     });
 
-    const totalDistributed = Object.values(treatmentCategories).reduce((sum: any, count: any) => sum + count, 0);
+    const totalDistributed = Object.values(treatmentCategories).reduce((sum: number, count: any) => sum + (count as number), 0) as number;
     const treatmentDistribution = Object.entries(treatmentCategories)
       .slice(0, 4)
       .map(([label, count]: any, index) => {
@@ -308,7 +288,7 @@ export const GET = withAuth(
         ];
         return {
           label: label.length > 20 ? label.substring(0, 20) + "..." : label,
-          value: Math.round((count / totalDistributed) * 100),
+          value: Math.round(((count as number) / totalDistributed) * 100),
           color: colors[index] || "from-sky-400 to-sky-600",
         };
       });
@@ -331,15 +311,6 @@ export const GET = withAuth(
         title: "Treatment completed",
         description: `${treatment.patient.firstName} ${treatment.patient.lastName} - ${treatment.treatmentPlan || treatment.chiefComplaint}.`,
         time: getTimeAgo(treatment.treatmentDate),
-      });
-    });
-
-    recentActivity[2].forEach((invoice: any) => {
-      activityFeedData.push({
-        type: "INVOICE_PAID",
-        title: "Invoice reconciled",
-        description: `Invoice #${invoice.invoiceNumber} - ${invoice.patient.firstName} ${invoice.patient.lastName} paid ₹${invoice.totalAmount.toLocaleString()}.`,
-        time: getTimeAgo(invoice.paidDate || invoice.updatedAt),
       });
     });
 

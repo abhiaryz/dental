@@ -16,6 +16,10 @@ export async function GET(request: NextRequest) {
     const userRole = (session.user as any).role;
     const userClinicId = (session.user as any).clinicId;
 
+    if (!userClinicId) {
+      return NextResponse.json({ error: "Clinic ID is required" }, { status: 400 });
+    }
+
     const canRead = await checkPermission(userRole, "inventory", "read");
     if (!canRead) {
       return NextResponse.json({ error: "Permission denied" }, { status: 403 });
@@ -59,6 +63,10 @@ export async function POST(request: NextRequest) {
 
     const userRole = (session.user as any).role;
     const userClinicId = (session.user as any).clinicId;
+
+    if (!userClinicId) {
+      return NextResponse.json({ error: "Clinic ID is required" }, { status: 400 });
+    }
 
     const canCreate = await checkPermission(userRole, "inventory", "create");
     if (!canCreate) {

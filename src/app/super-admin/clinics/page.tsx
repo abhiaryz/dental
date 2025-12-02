@@ -58,9 +58,15 @@ export default function ClinicsPage() {
       const response = await fetch(`/api/super-admin/clinics?${params}`);
       const data = await response.json();
       
-      setClinics(data.clinics);
-      setTotalPages(data.pagination.totalPages);
-      setTotal(data.pagination.total);
+      if (data && data.pagination) {
+        setClinics(data.clinics || []);
+        setTotalPages(data.pagination.totalPages || 1);
+        setTotal(data.pagination.total || 0);
+      } else {
+         setClinics([]);
+         setTotalPages(1);
+         setTotal(0);
+      }
     } catch (error) {
       console.error("Failed to fetch clinics:", error);
     } finally {
