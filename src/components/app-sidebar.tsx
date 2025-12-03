@@ -11,6 +11,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -21,10 +22,13 @@ import * as React from "react";
 
 export function AppSidebar({ className }: { className?: string }) {
   const pathname = usePathname();
+  const { setOpen } = useSidebar();
 
   return (
     <Sidebar 
       collapsible="icon" 
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
       className={cn(
         "bg-gradient-to-b from-sky-50 via-emerald-50/30 to-white",
         "border-r border-white/70 backdrop-blur-xl",

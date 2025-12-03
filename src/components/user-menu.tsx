@@ -18,7 +18,7 @@ export function UserMenu() {
   const { data: session } = useSession();
 
   const handleSignOut = async () => {
-    await signOut({ callbackUrl: "/login" });
+    await signOut({ callbackUrl: "/" });
   };
 
   const getInitials = (name?: string | null) => {

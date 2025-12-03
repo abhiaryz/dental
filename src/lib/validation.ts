@@ -95,10 +95,10 @@ export const treatmentSchema = z.object({
   patientId: z.string().min(1, "Patient ID is required"),
   treatmentDate: z.string().min(1, "Treatment date is required"),
   chiefComplaint: z.string().min(1, "Chief complaint is required"),
-  clinicalFindings: z.string().optional(),
-  diagnosis: z.string().min(1, "Diagnosis is required"),
-  treatmentPlan: z.string().min(1, "Treatment plan is required"),
-  prescription: z.string().optional(),
+  clinicalFindings: z.string().nullable().optional().transform(val => val || ""),
+  diagnosis: z.string().nullable().optional().transform(val => val || ""),
+  treatmentPlan: z.string().nullable().optional().transform(val => val || ""),
+  prescription: z.string().nullable().optional().transform(val => val || ""),
   cost: z
     .number()
     .min(0, "Cost cannot be negative")
@@ -207,10 +207,10 @@ export const appointmentSchema = z.object({
 export const treatmentUpdateSchema = z.object({
   treatmentDate: z.string().min(1, "Treatment date is required").optional(),
   chiefComplaint: z.string().min(1, "Chief complaint is required").optional(),
-  clinicalFindings: z.string().optional(),
-  diagnosis: z.string().min(1, "Diagnosis is required").optional(),
-  treatmentPlan: z.string().min(1, "Treatment plan is required").optional(),
-  prescription: z.string().optional(),
+  clinicalFindings: z.string().nullable().optional().transform(val => val || ""),
+  diagnosis: z.string().nullable().optional().transform(val => val || ""),
+  treatmentPlan: z.string().nullable().optional().transform(val => val || ""),
+  prescription: z.string().nullable().optional().transform(val => val || ""),
   cost: z
     .number()
     .min(0, "Cost cannot be negative")
