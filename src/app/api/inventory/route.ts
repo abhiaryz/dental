@@ -109,6 +109,7 @@ export async function POST(request: NextRequest) {
     const userRole = (session.user as any).role;
     const userClinicId = (session.user as any).clinicId;
 
+    // For inventory creation, we need a valid clinic ID
     if (!userClinicId) {
       return NextResponse.json({ error: "Clinic ID is required" }, { status: 400 });
     }

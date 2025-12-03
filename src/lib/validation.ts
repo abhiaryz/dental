@@ -195,8 +195,9 @@ export const appointmentSchema = z.object({
   type: z.string().min(1, "Appointment type is required"),
   notes: z.string().optional(),
   status: z
-    .enum(["SCHEDULED", "CONFIRMED", "CANCELLED", "COMPLETED", "NO_SHOW"])
-    .optional(),
+    .enum(["scheduled", "confirmed", "cancelled", "completed", "no_show", "SCHEDULED", "CONFIRMED", "CANCELLED", "COMPLETED", "NO_SHOW"])
+    .optional()
+    .transform(val => val ? val.toLowerCase() : undefined),
 });
 
 // ========================================
@@ -244,8 +245,9 @@ export const appointmentUpdateSchema = z.object({
   type: z.string().min(1, "Appointment type is required").optional(),
   notes: z.string().optional(),
   status: z
-    .enum(["SCHEDULED", "CONFIRMED", "CANCELLED", "COMPLETED", "NO_SHOW"])
-    .optional(),
+    .enum(["scheduled", "confirmed", "cancelled", "completed", "no_show", "SCHEDULED", "CONFIRMED", "CANCELLED", "COMPLETED", "NO_SHOW"])
+    .optional()
+    .transform(val => val ? val.toLowerCase() : undefined),
 }).strict();
 
 // Patient update schema (all fields optional for partial updates)
@@ -296,7 +298,7 @@ export const inventoryItemSchema = z.object({
   minQuantity: z.number().int().min(0, "Minimum quantity cannot be negative"),
   unit: z.string().min(1, "Unit is required"),
   unitPrice: z.number().min(0, "Price cannot be negative"),
-  supplierId: z.string().optional(),
+  supplierId: z.string().nullable().optional(),
   expiryDate: z.string().optional().nullable(),
   notes: z.string().optional(),
 });
