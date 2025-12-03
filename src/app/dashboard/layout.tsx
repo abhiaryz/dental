@@ -32,34 +32,37 @@ export default function DashboardLayout({
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-gradient-to-br from-slate-100 via-white to-slate-50">
-        <SidebarProvider defaultOpen={false} className="[--sidebar-width:12rem] [--sidebar-width-icon:3rem]">
+        <SidebarProvider 
+          defaultOpen={false} 
+          className="[--sidebar-width:16rem] [--sidebar-width-icon:4rem] lg:[--sidebar-width:18rem]"
+        >
           <AppSidebar />
           <SidebarInset>
-            <div className="flex h-12 items-center justify-between border-b border-slate-200 bg-white/90 px-4 backdrop-blur">
-              <div className="flex items-center gap-3">
-                <SidebarTrigger />
+            <header className="sticky top-0 z-40 flex h-14 md:h-16 items-center justify-between gap-2 border-b border-slate-200 bg-white/95 px-3 md:px-6 backdrop-blur-md shadow-sm">
+              <div className="flex items-center gap-2 md:gap-3">
+                <SidebarTrigger className="md:hidden" />
                 <BreadcrumbNav />
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 md:gap-2">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setCommandPaletteOpen(true)}
-                  className="gap-2 text-muted-foreground"
+                  className="gap-2 text-muted-foreground px-2 md:px-4"
                 >
                   <Search className="size-4" />
-                  <span className="hidden sm:inline">Search</span>
-                  <kbd className="hidden sm:inline pointer-events-none h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100">
+                  <span className="hidden md:inline">Search</span>
+                  <kbd className="hidden lg:inline pointer-events-none h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100">
                     <span className="text-xs">⌘</span>K
                   </kbd>
                 </Button>
                 <UserMenu />
               </div>
-            </div>
-            <div className="p-6">
+            </header>
+            <main className="p-4 sm:p-6 lg:p-8 pb-safe">
               {children}
-            </div>
+            </main>
           </SidebarInset>
         </SidebarProvider>
 
@@ -68,4 +71,3 @@ export default function DashboardLayout({
     </ErrorBoundary>
   );
 }
-

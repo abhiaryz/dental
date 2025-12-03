@@ -44,6 +44,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { CalendarPlus, Calendar, Clock, XCircle, CheckCircle2, TrendingUp, Loader2, Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { appointmentsAPI, patientsAPI } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { Skeleton, SkeletonTable } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface Appointment {
   id: string;
@@ -316,87 +318,97 @@ export default function AppointmentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-            <Calendar className="size-8 text-primary" />
-            Appointments
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2 sm:gap-3">
+            <Calendar className="size-6 sm:size-8 text-primary shrink-0" />
+            <span>Appointments</span>
           </h1>
-          <p className="text-muted-foreground">Schedule and manage appointments</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">
+            Schedule and manage appointments
+          </p>
         </div>
         <Button
           onClick={() => setShowCreateDialog(true)}
-          className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-md hover:shadow-lg transition-all"
+          className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90 shadow-md hover:shadow-lg transition-all min-touch"
         >
           <CalendarPlus className="mr-2 size-4" />
           New Appointment
         </Button>
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-l-4 border-l-primary hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Today</CardTitle>
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Clock className="size-5 text-primary" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{todayAppointments.length}</div>
-            <Badge className="mt-2 bg-accent text-accent-foreground">
-              {todayAppointments.filter((apt) => apt.status === "scheduled").length} scheduled
-            </Badge>
-          </CardContent>
-        </Card>
-        <Card className="border-l-4 border-l-accent hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">This Week</CardTitle>
-            <div className="p-2 bg-accent/10 rounded-lg">
-              <Calendar className="size-5 text-accent" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{thisWeekAppointments.length}</div>
-            <div className="flex items-center gap-2 mt-2">
-              <Badge className="bg-success text-success-foreground gap-1">
-                <TrendingUp className="size-3" />
-                Active
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-l-4 border-l-orange-500 hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Cancelled</CardTitle>
-            <div className="p-2 bg-orange-50 rounded-lg">
-              <XCircle className="size-5 text-orange-600" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{cancelledAppointments.length}</div>
-            <Badge variant="secondary" className="mt-2">Total</Badge>
-          </CardContent>
-        </Card>
-        <Card className="border-l-4 border-l-green-500 hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Upcoming</CardTitle>
-            <div className="p-2 bg-green-50 rounded-lg">
-              <CheckCircle2 className="size-5 text-green-600" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{upcomingAppointments.length}</div>
-            <Badge className="mt-2 bg-primary text-white">Scheduled</Badge>
-          </CardContent>
-        </Card>
+      <div className="relative -mx-4 sm:mx-0">
+        <div className="overflow-x-auto px-4 sm:px-0 pb-2 scrollbar-hide">
+          <div className="grid grid-flow-col auto-cols-[280px] sm:auto-cols-auto sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <Card className="border-l-4 border-l-primary hover:shadow-lg transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Today</CardTitle>
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Clock className="size-5 text-primary" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{todayAppointments.length}</div>
+                <Badge className="mt-2 bg-accent text-accent-foreground">
+                  {todayAppointments.filter((apt) => apt.status === "scheduled").length} scheduled
+                </Badge>
+              </CardContent>
+            </Card>
+            <Card className="border-l-4 border-l-accent hover:shadow-lg transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">This Week</CardTitle>
+                <div className="p-2 bg-accent/10 rounded-lg">
+                  <Calendar className="size-5 text-accent" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{thisWeekAppointments.length}</div>
+                <div className="flex items-center gap-2 mt-2">
+                  <Badge className="bg-success text-success-foreground gap-1">
+                    <TrendingUp className="size-3" />
+                    Active
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-l-4 border-l-orange-500 hover:shadow-lg transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Cancelled</CardTitle>
+                <div className="p-2 bg-orange-50 rounded-lg">
+                  <XCircle className="size-5 text-orange-600" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{cancelledAppointments.length}</div>
+                <Badge variant="secondary" className="mt-2">Total</Badge>
+              </CardContent>
+            </Card>
+            <Card className="border-l-4 border-l-green-500 hover:shadow-lg transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Upcoming</CardTitle>
+                <div className="p-2 bg-green-50 rounded-lg">
+                  <CheckCircle2 className="size-5 text-green-600" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{upcomingAppointments.length}</div>
+                <Badge className="mt-2 bg-primary text-white">Scheduled</Badge>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
 
       <Tabs defaultValue="calendar" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="calendar">Calendar View</TabsTrigger>
-          <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-          <TabsTrigger value="past">Past</TabsTrigger>
-        </TabsList>
+        <div className="relative -mx-4 sm:mx-0">
+          <div className="overflow-x-auto px-4 sm:px-0 pb-2 scrollbar-hide">
+            <TabsList className="inline-flex sm:w-full justify-start gap-2 rounded-2xl bg-white/80 p-2 shadow-md min-w-max">
+              <TabsTrigger value="calendar" className="px-3 sm:px-4 py-2">Calendar View</TabsTrigger>
+              <TabsTrigger value="upcoming" className="px-3 sm:px-4 py-2">Upcoming</TabsTrigger>
+              <TabsTrigger value="past" className="px-3 sm:px-4 py-2">Past</TabsTrigger>
+            </TabsList>
+          </div>
+        </div>
 
         <TabsContent value="calendar">
           <Card>
@@ -409,59 +421,65 @@ export default function AppointmentsPage() {
                   </CardDescription>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={goToPreviousWeek}>
+                  <Button variant="outline" size="sm" onClick={goToPreviousWeek} className="min-touch">
                     <ChevronLeft className="size-4" />
                   </Button>
-                  <Button variant="outline" size="sm" onClick={goToToday}>
+                  <Button variant="outline" size="sm" onClick={goToToday} className="min-touch">
                     Today
                   </Button>
-                  <Button variant="outline" size="sm" onClick={goToNextWeek}>
+                  <Button variant="outline" size="sm" onClick={goToNextWeek} className="min-touch">
                     <ChevronRight className="size-4" />
                   </Button>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-7 gap-2">
-                {getWeekDays().map((day, index) => {
-                  const dayAppointments = getAppointmentsForDate(day);
-                  const isToday = day.toDateString() === new Date().toDateString();
-                  
-                  return (
-                    <div
-                      key={index}
-                      className={`border rounded-lg p-3 min-h-[150px] ${
-                        isToday ? "bg-primary/5 border-primary" : ""
-                      }`}
-                    >
-                      <div className="text-center mb-2">
-                        <div className="text-xs text-muted-foreground">
-                          {day.toLocaleDateString("en-US", { weekday: "short" })}
-                        </div>
-                        <div className={`text-lg font-bold ${isToday ? "text-primary" : ""}`}>
-                          {day.getDate()}
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        {dayAppointments.map((apt) => (
-                          <div
-                            key={apt.id}
-                            className="text-xs p-2 rounded bg-muted hover:bg-muted/80 cursor-pointer"
-                            onClick={() => openEditDialog(apt)}
-                          >
-                            <div className="font-medium truncate">
-                              {apt.time}
-                            </div>
-                            <div className="truncate text-muted-foreground">
-                              {apt.patient.firstName} {apt.patient.lastName}
-                            </div>
+              {loading ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-40 w-full rounded-lg" />
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-7 gap-2">
+                  {getWeekDays().map((day, index) => {
+                    const dayAppointments = getAppointmentsForDate(day);
+                    const isToday = day.toDateString() === new Date().toDateString();
+                    
+                    return (
+                      <div
+                        key={index}
+                        className={`border rounded-lg p-3 min-h-[150px] ${
+                          isToday ? "bg-primary/5 border-primary" : ""
+                        }`}
+                      >
+                        <div className="text-center mb-2 flex justify-between sm:block items-center">
+                          <div className="text-xs text-muted-foreground">
+                            {day.toLocaleDateString("en-US", { weekday: "short" })}
                           </div>
-                        ))}
+                          <div className={`text-lg font-bold ${isToday ? "text-primary" : ""}`}>
+                            {day.getDate()}
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          {dayAppointments.map((apt) => (
+                            <div
+                              key={apt.id}
+                              className="text-xs p-2 rounded bg-muted hover:bg-muted/80 cursor-pointer active:scale-95 transition-transform"
+                              onClick={() => openEditDialog(apt)}
+                            >
+                              <div className="font-medium truncate">
+                                {apt.time}
+                              </div>
+                              <div className="truncate text-muted-foreground">
+                                {apt.patient.firstName} {apt.patient.lastName}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -472,63 +490,74 @@ export default function AppointmentsPage() {
               <CardTitle>Upcoming Appointments</CardTitle>
               <CardDescription>Appointments scheduled for today and beyond</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0 sm:p-6 sm:pt-0">
               {loading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="size-8 animate-spin text-primary" />
+                <div className="p-6">
+                  <SkeletonTable />
                 </div>
               ) : upcomingAppointments.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground">No upcoming appointments</p>
-                </div>
+                <EmptyState
+                  icon={Calendar}
+                  title="No upcoming appointments"
+                  description="You don't have any upcoming appointments scheduled."
+                  action={{
+                    label: "Schedule Appointment",
+                    onClick: () => setShowCreateDialog(true),
+                    icon: CalendarPlus
+                  }}
+                />
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Time</TableHead>
-                      <TableHead>Patient</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {upcomingAppointments.map((appointment) => (
-                      <TableRow key={appointment.id}>
-                        <TableCell>{new Date(appointment.date).toLocaleDateString()}</TableCell>
-                        <TableCell>{appointment.time}</TableCell>
-                        <TableCell>
-                          {appointment.patient.firstName} {appointment.patient.lastName}
-                        </TableCell>
-                        <TableCell className="capitalize">{appointment.type}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={getStatusColor(appointment.status)}>
-                            {appointment.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => openEditDialog(appointment)}
-                            >
-                              <Edit className="size-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setDeleteId(appointment.id)}
-                            >
-                              <Trash2 className="size-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="whitespace-nowrap">Date</TableHead>
+                        <TableHead className="whitespace-nowrap">Time</TableHead>
+                        <TableHead className="whitespace-nowrap">Patient</TableHead>
+                        <TableHead className="whitespace-nowrap">Type</TableHead>
+                        <TableHead className="whitespace-nowrap">Status</TableHead>
+                        <TableHead className="whitespace-nowrap">Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {upcomingAppointments.map((appointment) => (
+                        <TableRow key={appointment.id}>
+                          <TableCell className="whitespace-nowrap">{new Date(appointment.date).toLocaleDateString()}</TableCell>
+                          <TableCell className="whitespace-nowrap">{appointment.time}</TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {appointment.patient.firstName} {appointment.patient.lastName}
+                          </TableCell>
+                          <TableCell className="capitalize whitespace-nowrap">{appointment.type}</TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            <Badge variant="outline" className={getStatusColor(appointment.status)}>
+                              {appointment.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            <div className="flex gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openEditDialog(appointment)}
+                                className="min-touch"
+                              >
+                                <Edit className="size-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setDeleteId(appointment.id)}
+                                className="min-touch"
+                              >
+                                <Trash2 className="size-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -540,42 +569,46 @@ export default function AppointmentsPage() {
               <CardTitle>Past Appointments</CardTitle>
               <CardDescription>Historical appointment records</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0 sm:p-6 sm:pt-0">
               {loading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="size-8 animate-spin text-primary" />
+                <div className="p-6">
+                  <SkeletonTable />
                 </div>
               ) : pastAppointments.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground">No past appointments</p>
-                </div>
+                <EmptyState
+                  icon={Clock}
+                  title="No past appointments"
+                  description="You don't have any past appointments."
+                />
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Time</TableHead>
-                      <TableHead>Patient</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {pastAppointments.map((appointment) => (
-                      <TableRow key={appointment.id}>
-                        <TableCell>{new Date(appointment.date).toLocaleDateString()}</TableCell>
-                        <TableCell>{appointment.time}</TableCell>
-                        <TableCell>
-                          {appointment.patient.firstName} {appointment.patient.lastName}
-                        </TableCell>
-                        <TableCell className="capitalize">{appointment.type}</TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">{appointment.status}</Badge>
-                        </TableCell>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="whitespace-nowrap">Date</TableHead>
+                        <TableHead className="whitespace-nowrap">Time</TableHead>
+                        <TableHead className="whitespace-nowrap">Patient</TableHead>
+                        <TableHead className="whitespace-nowrap">Type</TableHead>
+                        <TableHead className="whitespace-nowrap">Status</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {pastAppointments.map((appointment) => (
+                        <TableRow key={appointment.id}>
+                          <TableCell className="whitespace-nowrap">{new Date(appointment.date).toLocaleDateString()}</TableCell>
+                          <TableCell className="whitespace-nowrap">{appointment.time}</TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {appointment.patient.firstName} {appointment.patient.lastName}
+                          </TableCell>
+                          <TableCell className="capitalize whitespace-nowrap">{appointment.type}</TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            <Badge variant="secondary">{appointment.status}</Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -587,22 +620,22 @@ export default function AppointmentsPage() {
         setShowCreateDialog(open);
         if (!open) resetForm();
       }}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl w-[95vw] sm:w-full">
           <DialogHeader>
             <DialogTitle>Create New Appointment</DialogTitle>
             <DialogDescription>Schedule a new appointment for a patient</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Patient *</Label>
                 <Select value={formData.patientId} onValueChange={(value) => setFormData({ ...formData, patientId: value })}>
-                  <SelectTrigger>
+                  <SelectTrigger className="min-touch">
                     <SelectValue placeholder="Select patient" />
                   </SelectTrigger>
                   <SelectContent>
                     {patients.map((patient) => (
-                      <SelectItem key={patient.id} value={patient.id}>
+                      <SelectItem key={patient.id} value={patient.id} className="min-touch">
                         {patient.firstName} {patient.lastName}
                       </SelectItem>
                     ))}
@@ -612,26 +645,28 @@ export default function AppointmentsPage() {
               <div className="space-y-2">
                 <Label>Type *</Label>
                 <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
-                  <SelectTrigger>
+                  <SelectTrigger className="min-touch">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="consultation">Consultation</SelectItem>
-                    <SelectItem value="checkup">Checkup</SelectItem>
-                    <SelectItem value="treatment">Treatment</SelectItem>
-                    <SelectItem value="follow-up">Follow-up</SelectItem>
-                    <SelectItem value="emergency">Emergency</SelectItem>
+                    <SelectItem value="consultation" className="min-touch">Consultation</SelectItem>
+                    <SelectItem value="checkup" className="min-touch">Checkup</SelectItem>
+                    <SelectItem value="treatment" className="min-touch">Treatment</SelectItem>
+                    <SelectItem value="follow-up" className="min-touch">Follow-up</SelectItem>
+                    <SelectItem value="emergency" className="min-touch">Emergency</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Date *</Label>
                 <Input
                   type="date"
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  className="min-touch"
+                  style={{ fontSize: '16px' }}
                 />
               </div>
               <div className="space-y-2">
@@ -640,20 +675,22 @@ export default function AppointmentsPage() {
                   type="time"
                   value={formData.time}
                   onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                  className="min-touch"
+                  style={{ fontSize: '16px' }}
                 />
               </div>
             </div>
             <div className="space-y-2">
               <Label>Status</Label>
               <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
-                <SelectTrigger>
+                <SelectTrigger className="min-touch">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="scheduled">Scheduled</SelectItem>
-                  <SelectItem value="confirmed">Confirmed</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="scheduled" className="min-touch">Scheduled</SelectItem>
+                  <SelectItem value="confirmed" className="min-touch">Confirmed</SelectItem>
+                  <SelectItem value="completed" className="min-touch">Completed</SelectItem>
+                  <SelectItem value="cancelled" className="min-touch">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -663,14 +700,16 @@ export default function AppointmentsPage() {
                 placeholder="Add any notes about the appointment..."
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                className="min-h-[100px]"
+                style={{ fontSize: '16px' }}
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowCreateDialog(false)} className="min-touch">
               Cancel
             </Button>
-            <Button onClick={handleCreate} disabled={saving}>
+            <Button onClick={handleCreate} disabled={saving} className="min-touch">
               {saving && <Loader2 className="mr-2 size-4 animate-spin" />}
               Create Appointment
             </Button>
@@ -683,22 +722,22 @@ export default function AppointmentsPage() {
         setShowEditDialog(open ? showEditDialog : false);
         if (!open) resetForm();
       }}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl w-[95vw] sm:w-full">
           <DialogHeader>
             <DialogTitle>Edit Appointment</DialogTitle>
             <DialogDescription>Update appointment details</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Patient *</Label>
                 <Select value={formData.patientId} onValueChange={(value) => setFormData({ ...formData, patientId: value })}>
-                  <SelectTrigger>
+                  <SelectTrigger className="min-touch">
                     <SelectValue placeholder="Select patient" />
                   </SelectTrigger>
                   <SelectContent>
                     {patients.map((patient) => (
-                      <SelectItem key={patient.id} value={patient.id}>
+                      <SelectItem key={patient.id} value={patient.id} className="min-touch">
                         {patient.firstName} {patient.lastName}
                       </SelectItem>
                     ))}
@@ -708,26 +747,28 @@ export default function AppointmentsPage() {
               <div className="space-y-2">
                 <Label>Type *</Label>
                 <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
-                  <SelectTrigger>
+                  <SelectTrigger className="min-touch">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="consultation">Consultation</SelectItem>
-                    <SelectItem value="checkup">Checkup</SelectItem>
-                    <SelectItem value="treatment">Treatment</SelectItem>
-                    <SelectItem value="follow-up">Follow-up</SelectItem>
-                    <SelectItem value="emergency">Emergency</SelectItem>
+                    <SelectItem value="consultation" className="min-touch">Consultation</SelectItem>
+                    <SelectItem value="checkup" className="min-touch">Checkup</SelectItem>
+                    <SelectItem value="treatment" className="min-touch">Treatment</SelectItem>
+                    <SelectItem value="follow-up" className="min-touch">Follow-up</SelectItem>
+                    <SelectItem value="emergency" className="min-touch">Emergency</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Date *</Label>
                 <Input
                   type="date"
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  className="min-touch"
+                  style={{ fontSize: '16px' }}
                 />
               </div>
               <div className="space-y-2">
@@ -736,20 +777,22 @@ export default function AppointmentsPage() {
                   type="time"
                   value={formData.time}
                   onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                  className="min-touch"
+                  style={{ fontSize: '16px' }}
                 />
               </div>
             </div>
             <div className="space-y-2">
               <Label>Status</Label>
               <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
-                <SelectTrigger>
+                <SelectTrigger className="min-touch">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="scheduled">Scheduled</SelectItem>
-                  <SelectItem value="confirmed">Confirmed</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="scheduled" className="min-touch">Scheduled</SelectItem>
+                  <SelectItem value="confirmed" className="min-touch">Confirmed</SelectItem>
+                  <SelectItem value="completed" className="min-touch">Completed</SelectItem>
+                  <SelectItem value="cancelled" className="min-touch">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -759,14 +802,16 @@ export default function AppointmentsPage() {
                 placeholder="Add any notes about the appointment..."
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                className="min-h-[100px]"
+                style={{ fontSize: '16px' }}
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowEditDialog(false)} className="min-touch">
               Cancel
             </Button>
-            <Button onClick={handleUpdate} disabled={saving}>
+            <Button onClick={handleUpdate} disabled={saving} className="min-touch">
               {saving && <Loader2 className="mr-2 size-4 animate-spin" />}
               Update Appointment
             </Button>
@@ -783,9 +828,9 @@ export default function AppointmentsPage() {
               This will permanently delete the appointment. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel className="min-touch">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground min-touch">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -8,10 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Loader2 } from "lucide-react";
+import { Loader2, Settings } from "lucide-react";
 import { settingsAPI } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "next-auth/react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function SettingsPage() {
   const { data: session, update } = useSession();
@@ -263,19 +264,30 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground">Manage your account and application preferences</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2 sm:gap-3">
+            <Settings className="size-6 sm:size-8 text-primary shrink-0" />
+            <span>Settings</span>
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">
+            Manage your account and application preferences
+          </p>
+        </div>
       </div>
 
       <Tabs defaultValue="profile" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="clinic">Clinic</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="system">System</TabsTrigger>
-        </TabsList>
+        <div className="relative -mx-4 sm:mx-0">
+          <div className="overflow-x-auto px-4 sm:px-0 pb-2 scrollbar-hide">
+            <TabsList className="inline-flex sm:w-full justify-start gap-2 rounded-2xl bg-white/80 p-2 shadow-md min-w-max">
+              <TabsTrigger value="profile" className="px-3 sm:px-4 py-2">Profile</TabsTrigger>
+              <TabsTrigger value="security" className="px-3 sm:px-4 py-2">Security</TabsTrigger>
+              <TabsTrigger value="clinic" className="px-3 sm:px-4 py-2">Clinic</TabsTrigger>
+              <TabsTrigger value="notifications" className="px-3 sm:px-4 py-2">Notifications</TabsTrigger>
+              <TabsTrigger value="system" className="px-3 sm:px-4 py-2">System</TabsTrigger>
+            </TabsList>
+          </div>
+        </div>
 
         <TabsContent value="profile" className="space-y-4">
           <Card>
@@ -285,8 +297,16 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {profileLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="size-6 animate-spin text-primary" />
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                  <Skeleton className="h-10 w-32" />
                 </div>
               ) : (
                 <>
@@ -296,6 +316,8 @@ export default function SettingsPage() {
                       value={name} 
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Enter your name"
+                      className="min-touch"
+                      style={{ fontSize: '16px' }}
                     />
                   </div>
                   <div className="space-y-2">
@@ -304,7 +326,8 @@ export default function SettingsPage() {
                       type="email" 
                       value={email} 
                       disabled 
-                      className="bg-muted"
+                      className="bg-muted min-touch"
+                      style={{ fontSize: '16px' }}
                     />
                     <p className="text-xs text-muted-foreground">
                       Email cannot be changed. Contact support if you need to update it.
@@ -315,14 +338,15 @@ export default function SettingsPage() {
                     <Input 
                       value={profile?.role || ""} 
                       disabled 
-                      className="bg-muted capitalize"
+                      className="bg-muted capitalize min-touch"
+                      style={{ fontSize: '16px' }}
                     />
                   </div>
                   <Separator />
                   <Button 
                     onClick={handleSaveProfile}
                     disabled={profileSaving || !name}
-                    className="bg-primary text-primary-foreground hover:bg-primary/90"
+                    className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90 min-touch"
                   >
                     {profileSaving && <Loader2 className="mr-2 size-4 animate-spin" />}
                     Save Changes
@@ -347,6 +371,8 @@ export default function SettingsPage() {
                   placeholder="Enter current password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="min-touch"
+                  style={{ fontSize: '16px' }}
                 />
               </div>
               <div className="space-y-2">
@@ -356,6 +382,8 @@ export default function SettingsPage() {
                   placeholder="Enter new password (min 8 characters)"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
+                  className="min-touch"
+                  style={{ fontSize: '16px' }}
                 />
               </div>
               <div className="space-y-2">
@@ -365,13 +393,15 @@ export default function SettingsPage() {
                   placeholder="Confirm new password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="min-touch"
+                  style={{ fontSize: '16px' }}
                 />
               </div>
               <Separator />
               <Button 
                 onClick={handleChangePassword}
                 disabled={passwordSaving || !currentPassword || !newPassword || !confirmPassword}
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
+                className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90 min-touch"
               >
                 {passwordSaving && <Loader2 className="mr-2 size-4 animate-spin" />}
                 Update Password
@@ -393,7 +423,7 @@ export default function SettingsPage() {
                 <Badge variant="secondary">Coming Soon</Badge>
               </div>
               <Separator />
-              <Button variant="outline" disabled>Enable 2FA</Button>
+              <Button variant="outline" disabled className="w-full sm:w-auto min-touch">Enable 2FA</Button>
               <p className="text-xs text-muted-foreground">
                 Two-factor authentication will be available in a future update
               </p>
@@ -409,8 +439,22 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {clinicLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="size-6 animate-spin text-primary" />
+                <div className="space-y-6">
+                   <div className="space-y-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-20 w-20 rounded-md" />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-10 w-full" />
+                    </div>
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-10 w-full" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-10 w-32" />
                 </div>
               ) : (
                 <>
@@ -433,6 +477,8 @@ export default function SettingsPage() {
                       accept="image/*"
                       onChange={handleLogoUpload}
                       disabled={logoUploading || isNewClinic}
+                      className="min-touch"
+                      style={{ fontSize: '16px' }}
                     />
                     {isNewClinic && <p className="text-xs text-muted-foreground mt-1">Save clinic details first to upload logo</p>}
                     {logoUploading && <p className="text-xs text-muted-foreground">Uploading...</p>}
@@ -447,6 +493,8 @@ export default function SettingsPage() {
                       value={clinicFormData.name} 
                       onChange={(e) => setClinicFormData({ ...clinicFormData, name: e.target.value })}
                       placeholder="Enter clinic name"
+                      className="min-touch"
+                      style={{ fontSize: '16px' }}
                     />
                   </div>
                   
@@ -457,17 +505,21 @@ export default function SettingsPage() {
                       value={clinicFormData.address} 
                       onChange={(e) => setClinicFormData({ ...clinicFormData, address: e.target.value })}
                       placeholder="Enter street address"
+                      className="min-touch"
+                      style={{ fontSize: '16px' }}
                     />
                   </div>
                   
                   {/* City, State, PIN Code */}
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <label className="text-sm font-medium">City</label>
                       <Input 
                         value={clinicFormData.city} 
                         onChange={(e) => setClinicFormData({ ...clinicFormData, city: e.target.value })}
                         placeholder="City"
+                        className="min-touch"
+                        style={{ fontSize: '16px' }}
                       />
                     </div>
                     <div className="space-y-2">
@@ -476,6 +528,8 @@ export default function SettingsPage() {
                         value={clinicFormData.state} 
                         onChange={(e) => setClinicFormData({ ...clinicFormData, state: e.target.value })}
                         placeholder="State"
+                        className="min-touch"
+                        style={{ fontSize: '16px' }}
                       />
                     </div>
                     <div className="space-y-2">
@@ -484,18 +538,22 @@ export default function SettingsPage() {
                         value={clinicFormData.pinCode} 
                         onChange={(e) => setClinicFormData({ ...clinicFormData, pinCode: e.target.value })}
                         placeholder="PIN"
+                        className="min-touch"
+                        style={{ fontSize: '16px' }}
                       />
                     </div>
                   </div>
                   
                   {/* Phone & Email */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Phone</label>
                       <Input 
                         value={clinicFormData.phone} 
                         onChange={(e) => setClinicFormData({ ...clinicFormData, phone: e.target.value })}
                         placeholder="Phone number"
+                        className="min-touch"
+                        style={{ fontSize: '16px' }}
                       />
                     </div>
                     <div className="space-y-2">
@@ -505,18 +563,22 @@ export default function SettingsPage() {
                         value={clinicFormData.email} 
                         onChange={(e) => setClinicFormData({ ...clinicFormData, email: e.target.value })}
                         placeholder="Email address"
+                        className="min-touch"
+                        style={{ fontSize: '16px' }}
                       />
                     </div>
                   </div>
                   
                   {/* Website & Registration Number */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Website</label>
                       <Input 
                         value={clinicFormData.website} 
                         onChange={(e) => setClinicFormData({ ...clinicFormData, website: e.target.value })}
                         placeholder="www.example.com"
+                        className="min-touch"
+                        style={{ fontSize: '16px' }}
                       />
                     </div>
                     <div className="space-y-2">
@@ -525,6 +587,8 @@ export default function SettingsPage() {
                         value={clinicFormData.registrationNumber} 
                         onChange={(e) => setClinicFormData({ ...clinicFormData, registrationNumber: e.target.value })}
                         placeholder="Registration number"
+                        className="min-touch"
+                        style={{ fontSize: '16px' }}
                       />
                     </div>
                   </div>
@@ -534,7 +598,7 @@ export default function SettingsPage() {
                   <Button 
                     onClick={handleSaveClinic}
                     disabled={clinicSaving || !clinicFormData.name}
-                    className="bg-primary text-primary-foreground hover:bg-primary/90"
+                    className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90 min-touch"
                   >
                     {clinicSaving && <Loader2 className="mr-2 size-4 animate-spin" />}
                     Save Clinic Settings
@@ -548,6 +612,7 @@ export default function SettingsPage() {
             variant="outline" 
             onClick={fetchClinicSettings}
             disabled={clinicLoading}
+            className="w-full sm:w-auto min-touch"
           >
             {clinicLoading && <Loader2 className="mr-2 size-4 animate-spin" />}
             Load Clinic Settings
@@ -601,15 +666,15 @@ export default function SettingsPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Language</label>
-                <Input defaultValue="English (US)" disabled className="bg-muted" />
+                <Input defaultValue="English (US)" disabled className="bg-muted min-touch" style={{ fontSize: '16px' }} />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Timezone</label>
-                <Input defaultValue="Pacific Time (PT)" disabled className="bg-muted" />
+                <Input defaultValue="Pacific Time (PT)" disabled className="bg-muted min-touch" style={{ fontSize: '16px' }} />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Date Format</label>
-                <Input defaultValue="MM/DD/YYYY" disabled className="bg-muted" />
+                <Input defaultValue="MM/DD/YYYY" disabled className="bg-muted min-touch" style={{ fontSize: '16px' }} />
               </div>
               <Separator />
               <p className="text-xs text-muted-foreground">
@@ -624,8 +689,10 @@ export default function SettingsPage() {
               <CardDescription>Manage your data and account</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button variant="outline" disabled>Export Data</Button>
-              <Button variant="outline" className="ml-2" disabled>Clear Cache</Button>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" disabled className="flex-1 sm:flex-none min-touch">Export Data</Button>
+                <Button variant="outline" className="flex-1 sm:flex-none min-touch" disabled>Clear Cache</Button>
+              </div>
               <p className="text-xs text-muted-foreground">
                 Data export and management tools will be available in a future update
               </p>
@@ -634,7 +701,7 @@ export default function SettingsPage() {
                 <p className="text-sm font-medium text-destructive mb-2">Danger Zone</p>
                 <Button 
                   variant="outline" 
-                  className="border-destructive text-destructive hover:bg-destructive hover:text-white"
+                  className="w-full sm:w-auto border-destructive text-destructive hover:bg-destructive hover:text-white min-touch"
                   disabled
                 >
                   Delete Account

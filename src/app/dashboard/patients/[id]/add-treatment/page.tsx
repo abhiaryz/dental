@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Save, Loader2, ChevronRight, ChevronLeft } from "lucide-react";
+import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { patientsAPI, treatmentsAPI, employeesAPI, invoicesAPI } from "@/lib/api";
@@ -190,7 +190,7 @@ export default function AddTreatmentPage({ params }: { params: Promise<{ id: str
       const paidAmount = parseFloat(formData.get("paidAmount") as string) || 0;
       
       // Create treatment
-      const treatment = await treatmentsAPI.create({
+      await treatmentsAPI.create({
         patientId: patientId,
         treatmentDate: formData.get("treatmentDate"),
         chiefComplaint: formData.get("chiefComplaint"),

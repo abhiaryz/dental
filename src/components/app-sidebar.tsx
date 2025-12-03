@@ -13,6 +13,7 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import { Home, BarChart3, Settings, Users, CalendarClock, PackageSearch, DollarSign, UserCog, Cuboid } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -22,109 +23,181 @@ export function AppSidebar({ className }: { className?: string }) {
   const pathname = usePathname();
 
   return (
-    <Sidebar collapsible="icon" className={cn("bg-gradient-to-b from-sky-50 via-emerald-50/30 to-white border-r border-white/70 backdrop-blur", className)}>
-      <SidebarHeader>
-        <div className="flex h-8 items-center gap-2 px-2">
-          <div className="size-6 rounded-lg bg-gradient-to-br from-sky-600 to-emerald-500 flex items-center justify-center group-data-[collapsible=icon]:size-8">
-            <span className="text-white font-bold text-xs">MC</span>
+    <Sidebar 
+      collapsible="icon" 
+      className={cn(
+        "bg-gradient-to-b from-sky-50 via-emerald-50/30 to-white",
+        "border-r border-white/70 backdrop-blur-xl",
+        "transition-all duration-300",
+        className
+      )}
+    >
+      <SidebarHeader className="border-b border-slate-200/50">
+        <div className="flex h-14 items-center gap-3 px-3">
+          <div className="size-8 rounded-xl bg-gradient-to-br from-sky-600 to-emerald-500 flex items-center justify-center group-data-[collapsible=icon]:size-10 shadow-lg transition-all">
+            <span className="text-white font-bold text-sm group-data-[collapsible=icon]:text-base">DE</span>
           </div>
-          <span className="text-sm font-semibold group-data-[collapsible=icon]:hidden text-slate-900">DentaEdge</span>
+          <div className="group-data-[collapsible=icon]:hidden space-y-0.5">
+            <span className="text-base font-bold text-slate-900 block">DentaEdge</span>
+            <span className="text-[10px] text-slate-500 block">Dental Management</span>
+          </div>
         </div>
-        <SidebarSeparator />
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="py-2">
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname === "/dashboard"}>
+                <SidebarMenuButton 
+                  asChild 
+                  isActive={pathname === "/dashboard"}
+                  className="group/item"
+                >
                   <Link href="/dashboard">
-                    <Home />
+                    <Home className="transition-transform group-hover/item:scale-110" />
                     <span>Home</span>
+                    {pathname === "/dashboard" && (
+                      <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
+                    )}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname === "/dashboard/patients" || pathname.startsWith("/dashboard/patients/")}>
+                <SidebarMenuButton 
+                  asChild 
+                  isActive={pathname === "/dashboard/patients" || pathname.startsWith("/dashboard/patients/")}
+                  className="group/item"
+                >
                   <Link href="/dashboard/patients">
-                    <Users />
+                    <Users className="transition-transform group-hover/item:scale-110" />
                     <span>Patients</span>
+                    {(pathname === "/dashboard/patients" || pathname.startsWith("/dashboard/patients/")) && (
+                      <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
+                    )}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname === "/dashboard/appointments" || pathname.startsWith("/dashboard/appointments/")}>
+                <SidebarMenuButton 
+                  asChild 
+                  isActive={pathname === "/dashboard/appointments" || pathname.startsWith("/dashboard/appointments/")}
+                  className="group/item"
+                >
                   <Link href="/dashboard/appointments">
-                    <CalendarClock />
+                    <CalendarClock className="transition-transform group-hover/item:scale-110" />
                     <span>Appointments</span>
+                    {(pathname === "/dashboard/appointments" || pathname.startsWith("/dashboard/appointments/")) && (
+                      <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
+                    )}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname === "/dashboard/inventory" || pathname.startsWith("/dashboard/inventory/")}>
+                <SidebarMenuButton 
+                  asChild 
+                  isActive={pathname === "/dashboard/inventory" || pathname.startsWith("/dashboard/inventory/")}
+                  className="group/item"
+                >
                   <Link href="/dashboard/inventory">
-                    <PackageSearch />
+                    <PackageSearch className="transition-transform group-hover/item:scale-110" />
                     <span>Inventory</span>
+                    {(pathname === "/dashboard/inventory" || pathname.startsWith("/dashboard/inventory/")) && (
+                      <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
+                    )}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname === "/dashboard/analytics" || pathname.startsWith("/dashboard/analytics/")}>
+                <SidebarMenuButton 
+                  asChild 
+                  isActive={pathname === "/dashboard/analytics" || pathname.startsWith("/dashboard/analytics/")}
+                  className="group/item"
+                >
                   <Link href="/dashboard/analytics">
-                    <BarChart3 />
+                    <BarChart3 className="transition-transform group-hover/item:scale-110" />
                     <span>Analytics</span>
+                    {(pathname === "/dashboard/analytics" || pathname.startsWith("/dashboard/analytics/")) && (
+                      <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
+                    )}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname === "/dashboard/finance" || pathname.startsWith("/dashboard/finance/")}>
+                <SidebarMenuButton 
+                  asChild 
+                  isActive={pathname === "/dashboard/finance" || pathname.startsWith("/dashboard/finance/")}
+                  className="group/item"
+                >
                   <Link href="/dashboard/finance">
-                    <DollarSign />
+                    <DollarSign className="transition-transform group-hover/item:scale-110" />
                     <span>Finance</span>
+                    {(pathname === "/dashboard/finance" || pathname.startsWith("/dashboard/finance/")) && (
+                      <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
+                    )}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname === "/dashboard/employees" || pathname.startsWith("/dashboard/employees/")}>
+                <SidebarMenuButton 
+                  asChild 
+                  isActive={pathname === "/dashboard/employees" || pathname.startsWith("/dashboard/employees/")}
+                  className="group/item"
+                >
                   <Link href="/dashboard/employees">
-                    <UserCog />
+                    <UserCog className="transition-transform group-hover/item:scale-110" />
                     <span>Employees</span>
+                    {(pathname === "/dashboard/employees" || pathname.startsWith("/dashboard/employees/")) && (
+                      <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
+                    )}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname === "/dashboard/settings" || pathname.startsWith("/dashboard/settings/")}>
+                <SidebarMenuButton 
+                  asChild 
+                  isActive={pathname === "/dashboard/settings" || pathname.startsWith("/dashboard/settings/")}
+                  className="group/item"
+                >
                   <Link href="/dashboard/settings">
-                    <Settings />
+                    <Settings className="transition-transform group-hover/item:scale-110" />
                     <span>Settings</span>
+                    {(pathname === "/dashboard/settings" || pathname.startsWith("/dashboard/settings/")) && (
+                      <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
+                    )}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname === "/dashboard/dental-explorer" || pathname.startsWith("/dashboard/dental-explorer/")}>
+                <SidebarMenuButton 
+                  asChild 
+                  isActive={pathname === "/dashboard/dental-explorer" || pathname.startsWith("/dashboard/dental-explorer/")}
+                  className="group/item"
+                >
                   <Link href="/dashboard/dental-explorer">
-                    <Cuboid />
+                    <Cuboid className="transition-transform group-hover/item:scale-110" />
                     <span>Dental Explorer</span>
+                    {(pathname === "/dashboard/dental-explorer" || pathname.startsWith("/dashboard/dental-explorer/")) && (
+                      <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
+                    )}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
-        <SidebarSeparator />
-
-       
       </SidebarContent>
 
       <SidebarSeparator />
 
-      <SidebarFooter>
-        <span className="text-xs text-slate-500 font-medium px-2">v1.0</span>
+      <SidebarFooter className="p-3 border-t border-slate-200/50">
+        <div className="flex items-center justify-between text-xs text-slate-500">
+          <span className="font-medium group-data-[collapsible=icon]:hidden">v1.0.0</span>
+          <Badge variant="secondary" className="text-[10px] group-data-[collapsible=icon]:hidden">
+            Beta
+          </Badge>
+        </div>
       </SidebarFooter>
     </Sidebar>
   );
 }
-
-
