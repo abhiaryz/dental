@@ -8,13 +8,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Save, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Loader2, ChevronRight, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { patientsAPI, treatmentsAPI, employeesAPI } from "@/lib/api";
+import { patientsAPI, treatmentsAPI, employeesAPI, invoicesAPI } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "next-auth/react";
+import { Stepper } from "@/components/ui/stepper";
 
 // Tooth icon component
 const ToothIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
@@ -41,6 +42,15 @@ export default function AddTreatmentPage({ params }: { params: Promise<{ id: str
   const [selectedTeeth, setSelectedTeeth] = useState<string[]>([]);
   const [selectedDoctor, setSelectedDoctor] = useState("");
   const [selectedTreatmentType, setSelectedTreatmentType] = useState("");
+  const [currentStep, setCurrentStep] = useState(1);
+  const [autoGenerateInvoice, setAutoGenerateInvoice] = useState(true);
+
+  const steps = [
+    { title: "Basic Info", description: "Date & Doctor" },
+    { title: "Clinical Details", description: "Diagnosis & Plan" },
+    { title: "Prescription", description: "Teeth & Notes" },
+    { title: "Payment", description: "Cost & Amount" },
+  ];
 
   useEffect(() => {
     if (status === "loading") return;
@@ -175,7 +185,12 @@ export default function AddTreatmentPage({ params }: { params: Promise<{ id: str
     
     try {
       setSubmitting(true);
-      await treatmentsAPI.create({
+      
+      const cost = parseFloat(formData.get("cost") as string) || 0;
+      const paidAmount = parseFloat(formData.get("paidAmount") as string) || 0;
+      
+      // Create treatment
+      const treatment = await treatmentsAPI.create({
         patientId: patientId,
         treatmentDate: formData.get("treatmentDate"),
         chiefComplaint: formData.get("chiefComplaint"),
@@ -183,18 +198,61 @@ export default function AddTreatmentPage({ params }: { params: Promise<{ id: str
         diagnosis: formData.get("diagnosis"),
         treatmentPlan: formData.get("treatmentPlan"),
         prescription: formData.get("prescription"),
-        cost: parseFloat(formData.get("cost") as string) || 0,
-        paidAmount: parseFloat(formData.get("paidAmount") as string) || 0,
+        cost: cost,
+        paidAmount: paidAmount,
         selectedTeeth: selectedTeeth.join(","),
         notes: formData.get("notes"),
         doctorId: selectedDoctor,
         treatmentType: selectedTreatmentType,
       });
-      
-      toast({
-        title: "Success",
-        description: "Treatment added successfully",
-      });
+
+      // Auto-generate invoice if option is selected and cost > 0
+      if (autoGenerateInvoice && cost > 0) {
+        try {
+          const diagnosis = formData.get("diagnosis") as string;
+          const treatmentPlan = formData.get("treatmentPlan") as string;
+          
+          // Calculate due date (15 days from treatment date)
+          const treatmentDate = new Date(formData.get("treatmentDate") as string);
+          const dueDate = new Date(treatmentDate);
+          dueDate.setDate(dueDate.getDate() + 15);
+
+          await invoicesAPI.create({
+            patientId: patientId,
+            items: [
+              {
+                description: `${selectedTreatmentType}: ${diagnosis || treatmentPlan}`,
+                quantity: 1,
+                unitPrice: cost,
+                amount: cost,
+              },
+            ],
+            subtotal: cost,
+            tax: cost * 0.18, // 18% tax
+            totalAmount: cost * 1.18,
+            dueDate: dueDate.toISOString(),
+            status: paidAmount >= cost ? "PAID" : paidAmount > 0 ? "PARTIALLY_PAID" : "PENDING",
+            notes: `Auto-generated invoice for treatment on ${treatmentDate.toLocaleDateString()}`,
+          });
+
+          toast({
+            title: "Success",
+            description: "Treatment and invoice created successfully",
+          });
+        } catch (invoiceError) {
+          console.error("Failed to create invoice:", invoiceError);
+          toast({
+            title: "Partial Success",
+            description: "Treatment created but invoice generation failed. You can create an invoice manually.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "Success",
+          description: "Treatment added successfully",
+        });
+      }
       
       router.push(`/dashboard/patients/${patientId}`);
     } catch (err: any) {
@@ -273,11 +331,18 @@ export default function AddTreatmentPage({ params }: { params: Promise<{ id: str
           </Button>
         </div>
 
-        {/* Treatment Details */}
+        {/* Multi-step Stepper */}
         <Card>
+          <CardContent className="pt-6">
+            <Stepper steps={steps} currentStep={currentStep} />
+          </CardContent>
+        </Card>
+
+        {/* Step 1: Basic Info */}
+        <Card id="step-1" onClick={() => setCurrentStep(1)}>
           <CardHeader>
-            <CardTitle>Treatment Details</CardTitle>
-            <CardDescription>Basic treatment information</CardDescription>
+            <CardTitle>Step 1: Basic Information</CardTitle>
+            <CardDescription>Date, Doctor, and Chief Complaint</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
@@ -353,11 +418,11 @@ export default function AddTreatmentPage({ params }: { params: Promise<{ id: str
           </CardContent>
         </Card>
 
-        {/* Tooth Selection */}
-        <Card>
+        {/* Step 2: Clinical Details */}
+        <Card id="step-2" onClick={() => setCurrentStep(2)}>
           <CardHeader>
-            <CardTitle>Tooth Selection</CardTitle>
-            <CardDescription>Select the affected tooth/teeth (FDI Notation)</CardDescription>
+            <CardTitle>Step 2: Clinical Details</CardTitle>
+            <CardDescription>Clinical Findings, Diagnosis, and Treatment Plan</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-4">
@@ -421,95 +486,72 @@ export default function AddTreatmentPage({ params }: { params: Promise<{ id: str
           </CardContent>
         </Card>
 
-        {/* Clinical Findings */}
-        <Card>
+        {/* Step 3: Prescription & Notes */}
+        <Card id="step-3" onClick={() => setCurrentStep(3)}>
           <CardHeader>
-            <CardTitle>Clinical Findings</CardTitle>
-            <CardDescription>Examination and diagnosis details</CardDescription>
+            <CardTitle>Step 3: Prescription & Tooth Selection</CardTitle>
+            <CardDescription>Prescription, Notes, and Selected Teeth</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="clinicalFindings">Clinical Findings *</Label>
-              <Textarea
-                id="clinicalFindings"
-                name="clinicalFindings"
-                placeholder="Clinical examination findings"
-                rows={3}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="diagnosis">Diagnosis *</Label>
-              <Textarea
-                id="diagnosis"
-                name="diagnosis"
-                placeholder="Clinical diagnosis and findings"
-                rows={3}
-                required
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Treatment Plan & Procedure */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Treatment Plan & Procedure</CardTitle>
-            <CardDescription>Details of the treatment performed</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="treatmentPlan">Treatment Plan *</Label>
-              <Textarea
-                id="treatmentPlan"
-                name="treatmentPlan"
-                placeholder="Detailed treatment plan and procedure performed"
-                rows={4}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="materialsUsed">Materials Used</Label>
-              <Textarea
-                id="materialsUsed"
-                placeholder="List of materials, medicines, or equipment used"
-                rows={2}
-              />
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="anesthesia">Anesthesia Used</Label>
-                <Select>
-                  <SelectTrigger id="anesthesia">
-                    <SelectValue placeholder="Select anesthesia type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    <SelectItem value="local">Local Anesthesia</SelectItem>
-                    <SelectItem value="topical">Topical Anesthesia</SelectItem>
-                    <SelectItem value="general">General Anesthesia</SelectItem>
-                    <SelectItem value="sedation">Conscious Sedation</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="duration">Treatment Duration (minutes)</Label>
-                <Input id="duration" type="number" placeholder="45" />
+            <div>
+              <Label className="mb-3 block">Upper Teeth</Label>
+              <div className="grid grid-cols-8 gap-2">
+                {upperTeeth.map((tooth) => (
+                  <div key={tooth.number} className="flex flex-col items-center">
+                    <Button
+                      type="button"
+                      variant={selectedTeeth.includes(tooth.number) ? "default" : "outline"}
+                      className={`w-full h-20 flex flex-col gap-1 p-2 ${
+                        selectedTeeth.includes(tooth.number)
+                          ? "bg-primary text-primary-foreground"
+                          : ""
+                      }`}
+                      onClick={() => toggleTooth(tooth.number)}
+                    >
+                      <ToothIcon className="w-5 h-5" />
+                      <span className="font-bold text-xs">{tooth.number}</span>
+                    </Button>
+                    <span className="text-[10px] text-muted-foreground mt-1 text-center">{tooth.name}</span>
+                  </div>
+                ))}
               </div>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Prescription */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Prescription</CardTitle>
-            <CardDescription>Medications prescribed post-treatment</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            <Separator />
+
+            <div>
+              <Label className="mb-3 block">Lower Teeth</Label>
+              <div className="grid grid-cols-8 gap-2">
+                {lowerTeeth.map((tooth) => (
+                  <div key={tooth.number} className="flex flex-col items-center">
+                    <span className="text-[10px] text-muted-foreground mb-1 text-center">{tooth.name}</span>
+                    <Button
+                      type="button"
+                      variant={selectedTeeth.includes(tooth.number) ? "default" : "outline"}
+                      className={`w-full h-20 flex flex-col gap-1 p-2 ${
+                        selectedTeeth.includes(tooth.number)
+                          ? "bg-primary text-primary-foreground"
+                          : ""
+                      }`}
+                      onClick={() => toggleTooth(tooth.number)}
+                    >
+                      <span className="font-bold text-xs">{tooth.number}</span>
+                      <ToothIcon className="w-5 h-5 rotate-180" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {selectedTeeth.length > 0 && (
+              <div className="mt-4 p-3 bg-muted rounded-md">
+                <Label className="text-sm font-medium">Selected Teeth:</Label>
+                <p className="text-sm mt-1">{selectedTeeth.join(", ")}</p>
+              </div>
+            )}
+
+            <Separator className="my-6" />
+
             <div className="space-y-2">
               <Label htmlFor="prescription">Prescription *</Label>
               <Textarea
@@ -532,11 +574,11 @@ export default function AddTreatmentPage({ params }: { params: Promise<{ id: str
           </CardContent>
         </Card>
 
-        {/* Cost & Payment */}
-        <Card>
+        {/* Step 4: Payment */}
+        <Card id="step-4" onClick={() => setCurrentStep(4)}>
           <CardHeader>
-            <CardTitle>Cost & Payment</CardTitle>
-            <CardDescription>Treatment cost and payment details</CardDescription>
+            <CardTitle>Step 4: Payment Details</CardTitle>
+            <CardDescription>Cost, Payment Mode, and Status</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
@@ -585,6 +627,22 @@ export default function AddTreatmentPage({ params }: { params: Promise<{ id: str
               <Label htmlFor="receiptNumber">Receipt Number</Label>
               <Input id="receiptNumber" placeholder="RCP-2025-001" />
             </div>
+
+            <Separator className="my-4" />
+
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="autoInvoice" 
+                checked={autoGenerateInvoice}
+                onCheckedChange={(checked) => setAutoGenerateInvoice(checked as boolean)}
+              />
+              <Label htmlFor="autoInvoice" className="text-sm font-normal cursor-pointer">
+                Automatically generate invoice for this treatment
+              </Label>
+            </div>
+            <p className="text-xs text-muted-foreground ml-6">
+              An invoice will be created with the treatment details and cost. You can edit it later if needed.
+            </p>
           </CardContent>
         </Card>
 

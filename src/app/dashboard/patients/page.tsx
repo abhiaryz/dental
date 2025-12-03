@@ -18,10 +18,13 @@ import { Search, UserPlus, Users, UserCheck, Clock, AlertCircle, TrendingUp, Loa
 import Link from "next/link";
 import { patientsAPI } from "@/lib/api";
 import { PatientFilters, PatientFilterState } from "@/components/patient-filters";
+import { PatientCardView } from "@/components/patient-card-view";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 function PatientsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const isMobile = useIsMobile();
   const [patients, setPatients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
@@ -249,6 +252,8 @@ function PatientsPageContent() {
             <div className="text-center py-12">
               <p className="text-muted-foreground">No patients found</p>
             </div>
+          ) : isMobile ? (
+            <PatientCardView patients={patients} />
           ) : (
             <Table>
               <TableHeader>
