@@ -4,6 +4,7 @@ import { withAuth, AuthenticatedRequest, getPatientWhereClause } from "@/lib/aut
 import { Permissions } from "@/lib/rbac";
 import { createErrorResponse } from "@/lib/api-errors";
 import { checkRateLimit } from "@/lib/rate-limiter";
+import { deleteFromBlob } from "@/lib/vercel-blob";
 
 // GET - Fetch a single document
 export const GET = withAuth(
@@ -80,6 +81,19 @@ export const DELETE = withAuth(
 
       if (!existingDocument) {
         return NextResponse.json({ error: "Document not found or access denied" }, { status: 404 });
+      }
+
+      // Delete file from Vercel Blob if it's a blob URL
+      try {
+        // Check if it's a blob URL (starts with https://) or legacy local path
+        if (existingDocument.url.startsWith("https://")) {
+          await deleteFromBlob(existingDocument.url);
+        }
+        // Note: Legacy local paths (/uploads/...) are not deleted from blob
+        // They may still exist in the public folder but won't be accessible after deployment
+      } catch (error) {
+        console.error("Failed to delete file from blob:", error);
+        // Continue with database deletion even if file deletion fails
       }
 
       await prisma.document.delete({

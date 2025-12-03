@@ -142,6 +142,7 @@ export function withSuperAdminAuth(
 
 /**
  * Create audit log for super admin actions
+ * This is a fire-and-forget operation that doesn't block the response
  */
 export async function logSuperAdminAction(
   superAdminId: string,
@@ -150,8 +151,9 @@ export async function logSuperAdminAction(
   entityId?: string,
   metadata?: any
 ) {
-  try {
-    await prisma.auditLog.create({
+  // Fire-and-forget: don't await to avoid blocking the response
+  prisma.auditLog
+    .create({
       data: {
         userId: superAdminId,
         action: `SUPER_ADMIN_${action}`,
@@ -159,9 +161,9 @@ export async function logSuperAdminAction(
         entityId,
         metadata: metadata ? JSON.stringify(metadata) : null,
       },
+    })
+    .catch((error) => {
+      console.error("Failed to create audit log:", error);
     });
-  } catch (error) {
-    console.error("Failed to create audit log:", error);
-  }
 }
 

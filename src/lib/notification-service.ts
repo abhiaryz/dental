@@ -1,7 +1,8 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { sendEmail } from "./email";
 
-const prisma = new PrismaClient();
+// Shared prisma client used
+
 
 export interface NotificationData {
   userId: string;
@@ -52,7 +53,7 @@ export async function createNotification(data: NotificationData) {
     console.error("Error creating notification:", error);
     throw error;
   } finally {
-    await prisma.$disconnect();
+    // Shared prisma instance
   }
 }
 
@@ -140,7 +141,7 @@ export async function sendAppointmentReminder(appointmentId: string) {
     console.error("Error sending appointment reminder:", error);
     throw error;
   } finally {
-    await prisma.$disconnect();
+    // Shared prisma instance
   }
 }
 
@@ -185,7 +186,7 @@ export async function sendLowStockAlert(itemId: string) {
   } catch (error) {
     console.error("Error sending low stock alert:", error);
   } finally {
-    await prisma.$disconnect();
+    // Shared prisma instance
   }
 }
 
@@ -227,7 +228,7 @@ export async function sendPaymentReminder(invoiceId: string) {
     console.error("Error sending payment reminder:", error);
     throw error;
   } finally {
-    await prisma.$disconnect();
+    // Shared prisma instance
   }
 }
 

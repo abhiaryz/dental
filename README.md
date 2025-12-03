@@ -152,7 +152,9 @@ Explore the **[`/docs`](docs/)** directory for 20+ detailed guides covering ever
 
 ### Security & Utilities
 - **bcryptjs** - Password hashing
-- **rate-limiter-flexible** - Rate limiting
+- **rate-limiter-flexible** - Rate limiting (with Redis fallback)
+- **@upstash/redis** - Distributed caching and rate limiting
+- **@vercel/edge-config** - Read-only configuration
 - **zxcvbn** - Password strength
 - **Zod** - Input validation
 - **Resend** - Email delivery
@@ -349,7 +351,14 @@ IMPERSONATION_SECRET="..."
 
 # App
 NEXT_PUBLIC_APP_URL="https://your-domain.com"
+
+# Redis & Caching (Optional but recommended)
+EDGE_CONFIG="https://edge-config.vercel.com/..."
+UPSTASH_REDIS_REST_URL="https://your-redis.upstash.io"
+UPSTASH_REDIS_REST_TOKEN="your-redis-token"
 ```
+
+> **Note:** Redis and Edge Config are optional. The system will fall back to in-memory caching if not configured. See [Redis & Edge Config Setup](docs/REDIS_EDGE_CONFIG_SETUP.md) for details.
 
 ### Build & Deploy
 

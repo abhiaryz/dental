@@ -14,7 +14,8 @@ import {
   Loader2,
   Menu,
   X,
-  Database
+  Database,
+  Activity
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -95,6 +96,11 @@ export default function SuperAdminLayout({
       name: "Analytics",
       href: "/super-admin/analytics",
       icon: BarChart3,
+    },
+    {
+      name: "Performance",
+      href: "/super-admin/performance",
+      icon: Activity,
     },
     {
       name: "Settings",

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth, AuthenticatedRequest, getPatientWhereClause } from "@/lib/auth-middleware";
+import { cacheQuery, getCacheKey, CACHE_CONFIG } from "@/lib/query-cache";
 
 // GET - Global search across patients, appointments, invoices, treatments
 export const GET = withAuth(
@@ -28,8 +29,13 @@ export const GET = withAuth(
         req.user.clinicId
       );
 
-      // Search patients
-      const patients = await prisma.patient.findMany({
+      // Cache search results (common queries benefit from caching)
+      const cacheKey = getCacheKey('search', req.user.clinicId || req.user.id, searchQuery);
+      const result = await cacheQuery(
+        cacheKey,
+        async () => {
+          // Search patients
+          const patients = await prisma.patient.findMany({
         where: {
           ...whereClause,
           OR: [
@@ -148,12 +154,18 @@ export const GET = withAuth(
         orderBy: { treatmentDate: "desc" },
       });
 
-      return NextResponse.json({
-        patients,
-        appointments,
-        invoices,
-        treatments,
-      });
+          return {
+            patients,
+            appointments,
+            invoices,
+            treatments,
+          };
+        },
+        CACHE_CONFIG.SHORT, // 1 minute cache for search results
+        [`search-${req.user.clinicId || req.user.id}`]
+      );
+
+      return NextResponse.json(result);
     } catch (error) {
       console.error("Error in global search:", error);
       return NextResponse.json(

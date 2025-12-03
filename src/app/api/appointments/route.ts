@@ -6,6 +6,8 @@ import { createErrorResponse } from "@/lib/api-errors";
 import { checkRateLimit } from "@/lib/rate-limiter";
 import { appointmentSchema, validateData } from "@/lib/validation";
 import { sanitizeAppointmentData } from "@/lib/sanitize";
+import { cacheAppointmentQuery, getCacheKey, CACHE_CONFIG } from "@/lib/query-cache";
+import { Cache } from "@/lib/redis";
 
 // GET - Fetch all appointments based on role
 export const GET = withAuth(
@@ -46,38 +48,53 @@ export const GET = withAuth(
         };
       }
 
-      const [appointments, total] = await Promise.all([
-        prisma.appointment.findMany({
-          where,
-          include: {
-            patient: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                mobileNumber: true,
-              },
-            },
-          },
-          orderBy: [
-            { date: "asc" },
-            { time: "asc" },
-          ],
-          skip,
-          take: limit,
-        }),
-        prisma.appointment.count({ where }),
-      ]);
-
-      return NextResponse.json({
-        appointments,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
+      // Cache appointment list query
+      const result = await cacheAppointmentQuery(
+        {
+          clinicId: req.user.clinicId,
+          patientId: patientId || undefined,
+          startDate: startDate || undefined,
+          endDate: endDate || undefined,
+          status: status || undefined,
         },
-      });
+        async () => {
+          const [appointments, total] = await Promise.all([
+            prisma.appointment.findMany({
+              where,
+              include: {
+                patient: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    mobileNumber: true,
+                  },
+                },
+              },
+              orderBy: [
+                { date: "asc" },
+                { time: "asc" },
+              ],
+              skip,
+              take: limit,
+            }),
+            prisma.appointment.count({ where }),
+          ]);
+
+          return {
+            appointments,
+            pagination: {
+              page,
+              limit,
+              total,
+              totalPages: Math.ceil(total / limit),
+            },
+          };
+        },
+        CACHE_CONFIG.SHORT // 1 minute cache
+      );
+
+      return NextResponse.json(result);
     } catch (error) {
       const errorResponse = createErrorResponse(error, "Failed to fetch appointments");
       return NextResponse.json(errorResponse.body, { status: errorResponse.status });
@@ -156,6 +173,9 @@ export const POST = withAuth(
           },
         },
       });
+
+      // Invalidate appointment caches
+      await Cache.invalidatePattern(`appointment:*:${req.user.clinicId || 'no-clinic'}:*`);
 
       return NextResponse.json(appointment, { status: 201 });
     } catch (error) {

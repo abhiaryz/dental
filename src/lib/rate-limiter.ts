@@ -2,6 +2,7 @@ import { RateLimiterMemory } from "rate-limiter-flexible";
 import type { RateLimiterRes } from "rate-limiter-flexible";
 import { NextRequest, NextResponse } from "next/server";
 import { ErrorCodes } from "./api-errors";
+import { checkRedisRateLimit, isRedisAvailable } from "./redis";
 
 type EndpointLimiter = "api" | "auth" | "upload";
 
@@ -13,6 +14,7 @@ type RateLimitResult = {
   error?: NextResponse;
 };
 
+// In-memory limiters as fallback when Redis is not available
 const endpointLimiters: Record<EndpointLimiter, RateLimiterMemory> = {
   api: new RateLimiterMemory({
     points: 100,
@@ -114,14 +116,64 @@ export async function checkRateLimit(
   arg1: NextRequest | RateLimiterMemory,
   arg2: EndpointLimiter | string = "api"
 ): Promise<RateLimitResult> {
+  // Handle direct limiter usage (for passwordReset, emailVerification, etc.)
   if (isRateLimiterMemory(arg1)) {
     return consumeLimiter(arg1, arg2);
   }
 
   const request = arg1;
   const limiterType = typeof arg2 === "string" && isEndpointLimiter(arg2) ? arg2 : "api";
-  const limiter = endpointLimiters[limiterType];
   const identifier = getClientIdentifier(request);
+
+  // Try Redis first if available
+  if (isRedisAvailable()) {
+    try {
+      const redisResult = await checkRedisRateLimit(identifier, limiterType);
+      
+      if (!redisResult.allowed) {
+        const retryAfterSeconds = Math.ceil((redisResult.reset - Date.now()) / 1000);
+        return {
+          allowed: false,
+          remaining: redisResult.remaining,
+          limit: redisResult.limit,
+          resetTime: redisResult.reset - Date.now(),
+          error: NextResponse.json(
+            {
+              error: "Too many requests. Please try again later.",
+              code: ErrorCodes.RATE_LIMIT_EXCEEDED,
+              details: {
+                retryAfter: retryAfterSeconds,
+                limit: redisResult.limit,
+                window: "60s",
+              },
+            },
+            {
+              status: 429,
+              headers: {
+                "Retry-After": retryAfterSeconds.toString(),
+                "X-RateLimit-Limit": redisResult.limit.toString(),
+                "X-RateLimit-Remaining": redisResult.remaining.toString(),
+                "X-RateLimit-Reset": new Date(redisResult.reset).toISOString(),
+              },
+            }
+          ),
+        };
+      }
+
+      return {
+        allowed: true,
+        remaining: redisResult.remaining,
+        limit: redisResult.limit,
+        resetTime: redisResult.reset - Date.now(),
+      };
+    } catch (error) {
+      console.error("Redis rate limit error, falling back to in-memory:", error);
+      // Fall through to in-memory limiter
+    }
+  }
+
+  // Fallback to in-memory limiter
+  const limiter = endpointLimiters[limiterType];
   const result = await consumeLimiter(limiter, identifier);
 
   if (!result.allowed) {
@@ -154,9 +206,25 @@ export async function getRateLimitInfo(
   request: NextRequest,
   type: EndpointLimiter = "api"
 ): Promise<{ remaining: number; limit: number; reset: Date }> {
-  const limiter = endpointLimiters[type];
   const identifier = getClientIdentifier(request);
 
+  // Try Redis first if available
+  if (isRedisAvailable()) {
+    try {
+      const redisResult = await checkRedisRateLimit(identifier, type);
+      return {
+        remaining: redisResult.remaining,
+        limit: redisResult.limit,
+        reset: new Date(redisResult.reset),
+      };
+    } catch (error) {
+      console.error("Redis rate limit info error, falling back to in-memory:", error);
+      // Fall through to in-memory limiter
+    }
+  }
+
+  // Fallback to in-memory limiter
+  const limiter = endpointLimiters[type];
   try {
     const res = await limiter.get(identifier);
     const remaining = res ? limiter.points - res.consumedPoints : limiter.points;

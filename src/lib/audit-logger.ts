@@ -1,6 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 export interface AuditLogData {
   userId?: string;
@@ -12,6 +10,14 @@ export interface AuditLogData {
   metadata?: Record<string, any>;
 }
 
+/**
+ * Create an audit log entry
+ * 
+ * Uses the shared Prisma instance to avoid connection pool exhaustion.
+ * Never disconnects - the shared instance manages connections automatically.
+ * 
+ * @param data - Audit log data
+ */
 export async function createAuditLog(data: AuditLogData) {
   try {
     await prisma.auditLog.create({
@@ -28,9 +34,10 @@ export async function createAuditLog(data: AuditLogData) {
   } catch (error) {
     console.error("Audit log error:", error);
     // Don't throw - logging should never break the application
-  } finally {
-    await prisma.$disconnect();
+    // In production, consider sending to error monitoring service
   }
+  // Removed $disconnect() - using shared Prisma instance
+  // Disconnecting after every audit log was causing connection pool exhaustion
 }
 
 // Audit action constants

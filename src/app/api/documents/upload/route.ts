@@ -1,12 +1,10 @@
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
-import { existsSync } from "fs";
 import { withAuth, AuthenticatedRequest, getPatientWhereClause } from "@/lib/auth-middleware";
 import { prisma } from "@/lib/prisma";
 import { Permissions } from "@/lib/rbac";
 import { checkRateLimit } from "@/lib/rate-limiter";
 import { AppError, ErrorCodes, createErrorResponse } from "@/lib/api-errors";
+import { uploadToBlob, generateBlobPath } from "@/lib/vercel-blob";
 
 // Allowed MIME types for document uploads
 const ALLOWED_MIME_TYPES = [
@@ -144,22 +142,9 @@ export const POST = withAuth(
         throw new AppError("Patient not found or access denied", ErrorCodes.NOT_FOUND, 404);
       }
 
-      // Create upload directory if it doesn't exist
-      const uploadDir = join(process.cwd(), "public", "uploads", "documents");
-      if (!existsSync(uploadDir)) {
-        await mkdir(uploadDir, { recursive: true });
-      }
-
-      // Generate unique filename with sanitization
-      const timestamp = Date.now();
-      const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-      const filename = `${patientId}_${timestamp}_${sanitizedFileName}`;
-      const filepath = join(uploadDir, filename);
-
-      // Convert file to buffer and save
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      await writeFile(filepath, buffer);
+      // Generate blob path and upload to Vercel Blob
+      const blobPath = generateBlobPath("documents", patientId, file.name);
+      const fileUrl = await uploadToBlob(file, blobPath, file.type);
 
       // Save document record to database
       const document = await prisma.document.create({
@@ -167,7 +152,7 @@ export const POST = withAuth(
           patientId,
           name: name || file.name,
           type,
-          url: `/uploads/documents/${filename}`,
+          url: fileUrl,
           notes: notes || undefined,
         },
       });

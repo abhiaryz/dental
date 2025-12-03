@@ -5,6 +5,7 @@ import { checkPermission } from "@/lib/rbac";
 import { createErrorResponse, AppError, ErrorCodes } from "@/lib/api-errors";
 import { checkRateLimit } from "@/lib/rate-limiter";
 import { stockAdjustmentSchema, validateData } from "@/lib/validation";
+import { Cache } from "@/lib/redis";
 
 
 // POST - Adjust stock quantity
@@ -28,7 +29,21 @@ export async function POST(
 
     const userId = (session.user as any).id;
     const userRole = (session.user as any).role;
-    const userClinicId = (session.user as any).clinicId;
+    let userClinicId = (session.user as any).clinicId;
+
+    if (!userClinicId && userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { clinicId: true },
+      });
+      if (user?.clinicId) {
+        userClinicId = user.clinicId;
+      }
+    }
+
+    if (!userClinicId) {
+      throw new AppError("Clinic ID is required", ErrorCodes.VALIDATION_ERROR, 400);
+    }
 
     const canUpdate = await checkPermission(userRole, "inventory", "update");
     if (!canUpdate) {
@@ -105,6 +120,9 @@ export async function POST(
         },
       }),
     ]);
+
+    // Invalidate inventory cache
+    await Cache.invalidatePattern(`inventory:${userClinicId}:*`);
 
     return NextResponse.json({
       item: updatedItem,

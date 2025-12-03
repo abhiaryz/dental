@@ -5,6 +5,8 @@ import { Permissions } from "@/lib/rbac";
 import { patientUpdateSchema, validateData } from "@/lib/validation";
 import { sanitizePatientData } from "@/lib/sanitize";
 import { createErrorResponse } from "@/lib/api-errors";
+import { cachePatientQuery, getCacheKey, CACHE_CONFIG } from "@/lib/query-cache";
+import { Cache } from "@/lib/redis";
 
 // GET - Fetch a single patient with all related data
 export const GET = withAuth(
@@ -24,51 +26,65 @@ export const GET = withAuth(
 
       if (error) return error;
 
-      const patient = await prisma.patient.findUnique({
-        where: { id },
-        include: {
-          treatments: {
-            orderBy: { treatmentDate: "desc" },
+      // Cache patient detail query (heavy query with multiple includes)
+      const result = await cachePatientQuery(
+        id,
+        req.user.clinicId,
+        async () => {
+          const patient = await prisma.patient.findUnique({
+            where: { id },
             include: {
-              user: {
-                select: {
-                  name: true,
+              treatments: {
+                orderBy: { treatmentDate: "desc" },
+                include: {
+                  user: {
+                    select: {
+                      name: true,
+                    },
+                  },
                 },
               },
+              appointments: {
+                orderBy: { date: "desc" },
+              },
+              documents: {
+                orderBy: { createdAt: "desc" },
+              },
             },
-          },
-          appointments: {
-            orderBy: { date: "desc" },
-          },
-          documents: {
-            orderBy: { createdAt: "desc" },
-          },
-        },
-      });
+          });
 
-      if (!patient) {
+          if (!patient) {
+            return null;
+          }
+
+          // Calculate patient statistics
+          const totalTreatments = patient.treatments.length;
+          const totalCost = patient.treatments.reduce((sum, t) => sum + t.cost, 0);
+          const totalPaid = patient.treatments.reduce((sum, t) => sum + t.paidAmount, 0);
+          const pendingAmount = totalCost - totalPaid;
+
+          const stats = {
+            totalTreatments,
+            totalCost,
+            totalPaid,
+            pendingAmount,
+            totalAppointments: patient.appointments.length,
+            totalDocuments: patient.documents.length,
+          };
+
+          return {
+            ...patient,
+            stats,
+          };
+        },
+        CACHE_CONFIG.MEDIUM // 5 minutes cache
+      );
+
+      if (!result) {
         return NextResponse.json({ error: "Patient not found" }, { status: 404 });
       }
 
-      // Calculate patient statistics
-      const totalTreatments = patient.treatments.length;
-      const totalCost = patient.treatments.reduce((sum, t) => sum + t.cost, 0);
-      const totalPaid = patient.treatments.reduce((sum, t) => sum + t.paidAmount, 0);
-      const pendingAmount = totalCost - totalPaid;
-
-      const stats = {
-        totalTreatments,
-        totalCost,
-        totalPaid,
-        pendingAmount,
-        totalAppointments: patient.appointments.length,
-        totalDocuments: patient.documents.length,
-      };
-
-      return NextResponse.json({
-        ...patient,
-        stats,
-      });
+      return NextResponse.json(result);
     } catch (error) {
       console.error("Error fetching patient:", error);
       return NextResponse.json(
@@ -140,6 +156,11 @@ export const PUT = withAuth(
         data: updateData,
       });
 
+      // Invalidate patient cache
+      const cacheKey = getCacheKey('patient', id, req.user.clinicId || 'no-clinic');
+      await Cache.delete(cacheKey);
+      await Cache.invalidatePattern(`patient:*:${req.user.clinicId || 'no-clinic'}:*`);
+
       return NextResponse.json(patient);
     } catch (error) {
       const errorResponse = createErrorResponse(error, "Failed to update patient");
@@ -174,6 +195,11 @@ export const DELETE = withAuth(
           id,
         },
       });
+
+      // Invalidate patient cache
+      const cacheKey = getCacheKey('patient', id, req.user.clinicId || 'no-clinic');
+      await Cache.delete(cacheKey);
+      await Cache.invalidatePattern(`patient:*:${req.user.clinicId || 'no-clinic'}:*`);
 
       return NextResponse.json({ message: "Patient deleted successfully" });
     } catch (error) {

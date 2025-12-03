@@ -593,3 +593,67 @@ model PrescriptionPDF {
   @@index([generatedBy])
   @@index([generatedAt])
 }
+
+model PerformanceMetric {
+  id        String   @id @default(cuid())
+  endpoint  String
+  method    String
+  duration  Int      // milliseconds
+  statusCode Int
+  timestamp DateTime @default(now())
+  userId    String?
+  clinicId  String?
+  userAgent String?
+  ipAddress String?
+  
+  @@index([timestamp])
+  @@index([endpoint])
+  @@index([method, timestamp])
+  @@index([statusCode])
+}
+
+model ErrorLog {
+  id        String   @id @default(cuid())
+  endpoint  String
+  method    String
+  error     String   @db.Text
+  stack     String?  @db.Text
+  userId    String?
+  clinicId  String?
+  userAgent String?
+  ipAddress String?
+  timestamp DateTime @default(now())
+  
+  @@index([timestamp])
+  @@index([endpoint])
+  @@index([method])
+}
+
+model SlowQuery {
+  id        String   @id @default(cuid())
+  query     String   @db.Text
+  duration  Int      // milliseconds
+  endpoint  String?
+  model     String?  // Prisma model name
+  timestamp DateTime @default(now())
+  
+  @@index([timestamp])
+  @@index([duration])
+  @@index([endpoint])
+}
+
+model WebVital {
+  id        String   @id @default(cuid())
+  name      String   // LCP, FID, CLS, INP, TTFB
+  value     Float
+  rating    String   // good, needs-improvement, poor
+  page      String
+  userId    String?
+  clinicId  String?
+  timestamp DateTime @default(now())
+  
+  @@index([timestamp])
+  @@index([name, timestamp])
+  @@index([page])
+  @@index([rating])
+}

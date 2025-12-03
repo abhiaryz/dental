@@ -7,6 +7,8 @@ import { checkRateLimit } from "@/lib/rate-limiter";
 import { createAuditLog, AuditActions } from "@/lib/audit-logger";
 import { appointmentUpdateSchema, validateData } from "@/lib/validation";
 import { sanitizeAppointmentData } from "@/lib/sanitize";
+import { cacheQuery, getCacheKey, CACHE_CONFIG } from "@/lib/query-cache";
+import { Cache } from "@/lib/redis";
 
 // GET - Fetch a single appointment
 export const GET = withAuth(
@@ -22,15 +24,24 @@ export const GET = withAuth(
         req.user.clinicId
       );
 
-      const appointment = await prisma.appointment.findFirst({
-        where: {
-          id,
-          patient: patientWhere,
+      // Cache single appointment query
+      const cacheKey = getCacheKey('appointment', id, req.user.clinicId || 'no-clinic');
+      const appointment = await cacheQuery(
+        cacheKey,
+        async () => {
+          return await prisma.appointment.findFirst({
+            where: {
+              id,
+              patient: patientWhere,
+            },
+            include: {
+              patient: true,
+            },
+          });
         },
-        include: {
-          patient: true,
-        },
-      });
+        CACHE_CONFIG.MEDIUM, // 5 minutes cache
+        [`appointment-${id}`]
+      );
 
       if (!appointment) {
         return NextResponse.json({ error: "Appointment not found" }, { status: 404 });
@@ -135,6 +146,11 @@ export const PUT = withAuth(
         metadata: { patientId: appointment.patientId, date: appointment.date },
       });
 
+      // Invalidate appointment caches
+      const cacheKey = getCacheKey('appointment', id, req.user.clinicId || 'no-clinic');
+      await Cache.delete(cacheKey);
+      await Cache.invalidatePattern(`appointment:*:${req.user.clinicId || 'no-clinic'}:*`);
+
       return NextResponse.json(appointment);
     } catch (error) {
       const errorResponse = createErrorResponse(error, "Failed to update appointment");
@@ -194,6 +210,11 @@ export const DELETE = withAuth(
         userAgent: req.headers.get("user-agent") || undefined,
         metadata: { patientId: existingAppointment.patientId },
       });
+
+      // Invalidate appointment caches
+      const cacheKey = getCacheKey('appointment', id, req.user.clinicId || 'no-clinic');
+      await Cache.delete(cacheKey);
+      await Cache.invalidatePattern(`appointment:*:${req.user.clinicId || 'no-clinic'}:*`);
 
       return NextResponse.json({ message: "Appointment deleted successfully" });
     } catch (error) {

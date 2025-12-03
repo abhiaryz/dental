@@ -5,6 +5,8 @@ import { Permissions } from "@/lib/rbac";
 import { createErrorResponse } from "@/lib/api-errors";
 import { patientSchema, validateData } from "@/lib/validation";
 import { sanitizePatientData } from "@/lib/sanitize";
+import { cacheQuery, getCacheKey, CACHE_CONFIG } from "@/lib/query-cache";
+import { Cache } from "@/lib/redis";
 
 // GET - Fetch all patients for the logged-in user based on role
 export const GET = withAuth(
@@ -79,33 +81,56 @@ export const GET = withAuth(
         where.treatments = { none: {} };
       }
 
-      const [patients, total] = await Promise.all([
-        prisma.patient.findMany({
-          where,
-          orderBy: { createdAt: "desc" },
-          skip,
-          take: limit,
-          include: {
-            _count: {
-              select: {
-                treatments: true,
-                appointments: true,
-              },
-            },
-          },
-        }),
-        prisma.patient.count({ where }),
-      ]);
+      // Create cache key from query parameters
+      const cacheKey = getCacheKey(
+        'patients-list',
+        req.user.clinicId || req.user.id,
+        page,
+        limit,
+        search || 'no-search',
+        gender || 'all',
+        status || 'all',
+        minAge || 'no-min',
+        maxAge || 'no-max'
+      );
 
-      return NextResponse.json({
-        patients,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
+      // Cache patient list query (frequently accessed)
+      const result = await cacheQuery(
+        cacheKey,
+        async () => {
+          const [patients, total] = await Promise.all([
+            prisma.patient.findMany({
+              where,
+              orderBy: { createdAt: "desc" },
+              skip,
+              take: limit,
+              include: {
+                _count: {
+                  select: {
+                    treatments: true,
+                    appointments: true,
+                  },
+                },
+              },
+            }),
+            prisma.patient.count({ where }),
+          ]);
+
+          return {
+            patients,
+            pagination: {
+              page,
+              limit,
+              total,
+              totalPages: Math.ceil(total / limit),
+            },
+          };
         },
-      });
+        CACHE_CONFIG.SHORT, // 1 minute cache (frequently changing)
+        [`patients-${req.user.clinicId || req.user.id}`]
+      );
+
+      return NextResponse.json(result);
     } catch (error) {
       const errorResponse = createErrorResponse(error, "Failed to fetch patients");
       return NextResponse.json(errorResponse.body, { status: errorResponse.status });
@@ -173,6 +198,9 @@ export const POST = withAuth(
       const patient = await prisma.patient.create({
         data: patientData,
       });
+
+      // Invalidate patient list cache
+      await Cache.invalidatePattern(`patients-list:${req.user.clinicId || req.user.id}:*`);
 
       return NextResponse.json(patient, { status: 201 });
     } catch (error) {

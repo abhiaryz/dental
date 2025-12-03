@@ -5,6 +5,7 @@ import { checkPermission } from "@/lib/rbac";
 import { createErrorResponse, AppError, ErrorCodes } from "@/lib/api-errors";
 import { checkRateLimit } from "@/lib/rate-limiter";
 import { inventoryItemUpdateSchema, validateData } from "@/lib/validation";
+import { Cache } from "@/lib/redis";
 
 
 // GET - Get single inventory item
@@ -20,8 +21,23 @@ export async function GET(
       throw new AppError("Unauthorized", ErrorCodes.UNAUTHORIZED, 401);
     }
 
+    const userId = (session.user as any).id;
     const userRole = (session.user as any).role;
-    const userClinicId = (session.user as any).clinicId;
+    let userClinicId = (session.user as any).clinicId;
+
+    if (!userClinicId && userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { clinicId: true },
+      });
+      if (user?.clinicId) {
+        userClinicId = user.clinicId;
+      }
+    }
+
+    if (!userClinicId) {
+      throw new AppError("Clinic ID is required", ErrorCodes.VALIDATION_ERROR, 400);
+    }
 
     const canRead = await checkPermission(userRole, "inventory", "read");
     if (!canRead) {
@@ -74,8 +90,23 @@ export async function PUT(
       throw new AppError("Unauthorized", ErrorCodes.UNAUTHORIZED, 401);
     }
 
+    const userId = (session.user as any).id;
     const userRole = (session.user as any).role;
-    const userClinicId = (session.user as any).clinicId;
+    let userClinicId = (session.user as any).clinicId;
+
+    if (!userClinicId && userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { clinicId: true },
+      });
+      if (user?.clinicId) {
+        userClinicId = user.clinicId;
+      }
+    }
+
+    if (!userClinicId) {
+      throw new AppError("Clinic ID is required", ErrorCodes.VALIDATION_ERROR, 400);
+    }
 
     const canUpdate = await checkPermission(userRole, "inventory", "update");
     if (!canUpdate) {
@@ -119,6 +150,9 @@ export async function PUT(
       },
     });
 
+    // Invalidate inventory cache
+    await Cache.invalidatePattern(`inventory:${userClinicId}:*`);
+
     return NextResponse.json(item);
   } catch (error) {
     const errorResponse = createErrorResponse(error, "Failed to update inventory item");
@@ -145,8 +179,23 @@ export async function DELETE(
       throw new AppError("Unauthorized", ErrorCodes.UNAUTHORIZED, 401);
     }
 
+    const userId = (session.user as any).id;
     const userRole = (session.user as any).role;
-    const userClinicId = (session.user as any).clinicId;
+    let userClinicId = (session.user as any).clinicId;
+
+    if (!userClinicId && userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { clinicId: true },
+      });
+      if (user?.clinicId) {
+        userClinicId = user.clinicId;
+      }
+    }
+
+    if (!userClinicId) {
+      throw new AppError("Clinic ID is required", ErrorCodes.VALIDATION_ERROR, 400);
+    }
 
     const canDelete = await checkPermission(userRole, "inventory", "delete");
     if (!canDelete) {
@@ -168,6 +217,9 @@ export async function DELETE(
     await prisma.inventoryItem.delete({
       where: { id },
     });
+
+    // Invalidate inventory cache
+    await Cache.invalidatePattern(`inventory:${userClinicId}:*`);
 
     return NextResponse.json({ message: "Item deleted successfully" });
   } catch (error) {
