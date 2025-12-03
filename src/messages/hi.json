@@ -1,0 +1,29 @@
+{
+  "Sidebar": {
+    "dashboard": "डैशबोर्ड",
+    "patients": "मरीज",
+    "doctors": "डॉक्टर",
+    "appointments": "नियुक्तियों",
+    "treatments": "उपचार",
+    "invoices": "चालान",
+    "inventory": "इन्वेंटरी",
+    "analytics": "एनालिटिक्स",
+    "finance": "वित्त",
+    "employees": "कर्मचारी",
+    "settings": "सेटिंग्स",
+    "dental_explorer": "दंत एक्सप्लोरर",
+    "logout": "लॉग आउट"
+  },
+  "Settings": {
+    "title": "सेटिंग्स",
+    "description": "अपना खाता और एप्लिकेशन प्राथमिकताएं प्रबंधित करें",
+    "system": "सिस्टम",
+    "language": "भाषा",
+    "save": "सहेजें",
+    "saved": "सेटिंग्स सफलतापूर्वक सहेजी गईं"
+  },
+  "Common": {
+    "loading": "लोड हो रहा है...",
+    "error": "कुछ गलत हो गया"
+  }
+}

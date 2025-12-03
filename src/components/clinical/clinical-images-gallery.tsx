@@ -177,7 +177,7 @@ export function ClinicalImagesGallery({ patientId, treatmentId }: ClinicalImages
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           <Filter className="size-4 text-muted-foreground" />
           <Select value={filterType} onValueChange={setFilterType}>
@@ -265,7 +265,7 @@ export function ClinicalImagesGallery({ patientId, treatmentId }: ClinicalImages
 
       {/* Upload Dialog */}
       <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="max-w-[95vw] sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Upload Clinical Image</DialogTitle>
             <DialogDescription>
@@ -353,7 +353,7 @@ export function ClinicalImagesGallery({ patientId, treatmentId }: ClinicalImages
 
       {/* View Dialog */}
       <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
-        <DialogContent className="sm:max-w-[800px]">
+        <DialogContent className="max-w-[95vw] sm:max-w-[800px]">
           <DialogHeader>
             <DialogTitle>{selectedImage?.title}</DialogTitle>
             <DialogDescription>

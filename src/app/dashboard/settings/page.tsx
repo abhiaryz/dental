@@ -8,6 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { useTranslations, useLocale } from 'next-intl';
+import { updateLanguage } from "@/actions/settings";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Settings } from "lucide-react";
 import { settingsAPI } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
@@ -15,6 +18,8 @@ import { useSession } from "next-auth/react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function SettingsPage() {
+  const t = useTranslations('Settings');
+  const currentLocale = useLocale();
   const { data: session, update } = useSession();
   const { toast } = useToast();
   
@@ -22,6 +27,7 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState<any>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileSaving, setProfileSaving] = useState(false);
+  const [languageSaving, setLanguageSaving] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
 
@@ -262,16 +268,39 @@ export default function SettingsPage() {
     }
   };
 
+  const handleLanguageChange = async (value: string) => {
+    try {
+      setLanguageSaving(true);
+      await updateLanguage(value);
+      
+      toast({
+        title: "Success",
+        description: t('saved'),
+      });
+
+      // Reload to apply changes
+      window.location.reload();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update language",
+        variant: "destructive",
+      });
+    } finally {
+      setLanguageSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2 sm:gap-3">
             <Settings className="size-6 sm:size-8 text-primary shrink-0" />
-            <span>Settings</span>
+            <span>{t('title')}</span>
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground">
-            Manage your account and application preferences
+            {t('description')}
           </p>
         </div>
       </div>
@@ -284,7 +313,7 @@ export default function SettingsPage() {
               <TabsTrigger value="security" className="px-3 sm:px-4 py-2">Security</TabsTrigger>
               <TabsTrigger value="clinic" className="px-3 sm:px-4 py-2">Clinic</TabsTrigger>
               <TabsTrigger value="notifications" className="px-3 sm:px-4 py-2">Notifications</TabsTrigger>
-              <TabsTrigger value="system" className="px-3 sm:px-4 py-2">System</TabsTrigger>
+              <TabsTrigger value="system" className="px-3 sm:px-4 py-2">{t('system')}</TabsTrigger>
             </TabsList>
           </div>
         </div>
@@ -660,13 +689,25 @@ export default function SettingsPage() {
         <TabsContent value="system" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>System Settings</CardTitle>
+              <CardTitle>{t('system')} Settings</CardTitle>
               <CardDescription>Configure application behavior</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Language</label>
-                <Input defaultValue="English (US)" disabled className="bg-muted min-touch" style={{ fontSize: '16px' }} />
+                <label className="text-sm font-medium">{t('language')}</label>
+                <Select 
+                  value={currentLocale} 
+                  onValueChange={handleLanguageChange}
+                  disabled={languageSaving}
+                >
+                  <SelectTrigger className="min-touch">
+                    <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en">English</SelectItem>
+                    <SelectItem value="hi">Hindi (हिंदी)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Timezone</label>

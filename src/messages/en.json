@@ -1,0 +1,29 @@
+{
+  "Sidebar": {
+    "dashboard": "Dashboard",
+    "patients": "Patients",
+    "doctors": "Doctors",
+    "appointments": "Appointments",
+    "treatments": "Treatments",
+    "invoices": "Invoices",
+    "inventory": "Inventory",
+    "analytics": "Analytics",
+    "finance": "Finance",
+    "employees": "Employees",
+    "settings": "Settings",
+    "dental_explorer": "Dental Explorer",
+    "logout": "Logout"
+  },
+  "Settings": {
+    "title": "Settings",
+    "description": "Manage your account and application preferences",
+    "system": "System",
+    "language": "Language",
+    "save": "Save",
+    "saved": "Settings saved successfully"
+  },
+  "Common": {
+    "loading": "Loading...",
+    "error": "Something went wrong"
+  }
+}

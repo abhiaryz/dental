@@ -19,10 +19,12 @@ import { Home, BarChart3, Settings, Users, CalendarClock, PackageSearch, DollarS
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
+import { useTranslations } from 'next-intl';
 
 export function AppSidebar({ className }: { className?: string }) {
   const pathname = usePathname();
   const { setOpen } = useSidebar();
+  const t = useTranslations('Sidebar');
 
   return (
     <Sidebar 
@@ -38,9 +40,7 @@ export function AppSidebar({ className }: { className?: string }) {
     >
       <SidebarHeader className="border-b border-slate-200/50">
         <div className="flex h-14 items-center gap-3 px-3">
-          <div className="size-8 rounded-xl bg-gradient-to-br from-sky-600 to-emerald-500 flex items-center justify-center group-data-[collapsible=icon]:size-10 shadow-lg transition-all">
-            <span className="text-white font-bold text-sm group-data-[collapsible=icon]:text-base">DE</span>
-          </div>
+          
           <div className="group-data-[collapsible=icon]:hidden space-y-0.5">
             <span className="text-base font-bold text-slate-900 block">DentaEdge</span>
             <span className="text-[10px] text-slate-500 block">Dental Management</span>
@@ -60,7 +60,7 @@ export function AppSidebar({ className }: { className?: string }) {
                 >
                   <Link href="/dashboard">
                     <Home className="transition-transform group-hover/item:scale-110" />
-                    <span>Home</span>
+                    <span>{t('dashboard')}</span>
                     {pathname === "/dashboard" && (
                       <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
                     )}
@@ -75,7 +75,7 @@ export function AppSidebar({ className }: { className?: string }) {
                 >
                   <Link href="/dashboard/patients">
                     <Users className="transition-transform group-hover/item:scale-110" />
-                    <span>Patients</span>
+                    <span>{t('patients')}</span>
                     {(pathname === "/dashboard/patients" || pathname.startsWith("/dashboard/patients/")) && (
                       <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
                     )}
@@ -90,7 +90,7 @@ export function AppSidebar({ className }: { className?: string }) {
                 >
                   <Link href="/dashboard/appointments">
                     <CalendarClock className="transition-transform group-hover/item:scale-110" />
-                    <span>Appointments</span>
+                    <span>{t('appointments')}</span>
                     {(pathname === "/dashboard/appointments" || pathname.startsWith("/dashboard/appointments/")) && (
                       <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
                     )}
@@ -105,7 +105,7 @@ export function AppSidebar({ className }: { className?: string }) {
                 >
                   <Link href="/dashboard/inventory">
                     <PackageSearch className="transition-transform group-hover/item:scale-110" />
-                    <span>Inventory</span>
+                    <span>{t('inventory')}</span>
                     {(pathname === "/dashboard/inventory" || pathname.startsWith("/dashboard/inventory/")) && (
                       <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
                     )}
@@ -120,7 +120,7 @@ export function AppSidebar({ className }: { className?: string }) {
                 >
                   <Link href="/dashboard/analytics">
                     <BarChart3 className="transition-transform group-hover/item:scale-110" />
-                    <span>Analytics</span>
+                    <span>{t('analytics')}</span>
                     {(pathname === "/dashboard/analytics" || pathname.startsWith("/dashboard/analytics/")) && (
                       <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
                     )}
@@ -135,7 +135,7 @@ export function AppSidebar({ className }: { className?: string }) {
                 >
                   <Link href="/dashboard/finance">
                     <DollarSign className="transition-transform group-hover/item:scale-110" />
-                    <span>Finance</span>
+                    <span>{t('finance')}</span>
                     {(pathname === "/dashboard/finance" || pathname.startsWith("/dashboard/finance/")) && (
                       <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
                     )}
@@ -150,7 +150,7 @@ export function AppSidebar({ className }: { className?: string }) {
                 >
                   <Link href="/dashboard/employees">
                     <UserCog className="transition-transform group-hover/item:scale-110" />
-                    <span>Employees</span>
+                    <span>{t('employees')}</span>
                     {(pathname === "/dashboard/employees" || pathname.startsWith("/dashboard/employees/")) && (
                       <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
                     )}
@@ -165,7 +165,7 @@ export function AppSidebar({ className }: { className?: string }) {
                 >
                   <Link href="/dashboard/settings">
                     <Settings className="transition-transform group-hover/item:scale-110" />
-                    <span>Settings</span>
+                    <span>{t('settings')}</span>
                     {(pathname === "/dashboard/settings" || pathname.startsWith("/dashboard/settings/")) && (
                       <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
                     )}
@@ -180,7 +180,7 @@ export function AppSidebar({ className }: { className?: string }) {
                 >
                   <Link href="/dashboard/dental-explorer">
                     <Cuboid className="transition-transform group-hover/item:scale-110" />
-                    <span>Dental Explorer</span>
+                    <span>{t('dental_explorer')}</span>
                     {(pathname === "/dashboard/dental-explorer" || pathname.startsWith("/dashboard/dental-explorer/")) && (
                       <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
                     )}

@@ -239,7 +239,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
           <Link href="/dashboard/patients">
             <Button variant="outline" size="icon">
@@ -247,21 +247,21 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">
+            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
               {patient.firstName} {patient.lastName}
             </h1>
             <p className="text-muted-foreground">Patient ID: {patient.id.slice(0, 8)}</p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link href={`/dashboard/patients/${id}/add-treatment`}>
-            <Button className="bg-primary">
+            <Button className="bg-primary w-full md:w-auto">
               <FileText className="mr-2 size-4" />
               Add Treatment
             </Button>
           </Link>
           <Link href={`/dashboard/patients/${id}/edit`}>
-            <Button variant="outline">
+            <Button variant="outline" className="w-full md:w-auto">
               <Edit className="mr-2 size-4" />
               Edit Patient
             </Button>
@@ -317,14 +317,16 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
 
       {/* Main Content */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="treatments">Treatments</TabsTrigger>
-          <TabsTrigger value="appointments">Appointments</TabsTrigger>
-          <TabsTrigger value="documents">Documents</TabsTrigger>
-          <TabsTrigger value="clinical-images">Clinical Images</TabsTrigger>
-          <TabsTrigger value="consents">Consents</TabsTrigger>
-        </TabsList>
+        <div className="w-full overflow-x-auto pb-2">
+          <TabsList className="w-full justify-start">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="treatments">Treatments</TabsTrigger>
+            <TabsTrigger value="appointments">Appointments</TabsTrigger>
+            <TabsTrigger value="documents">Documents</TabsTrigger>
+            <TabsTrigger value="clinical-images">Clinical Images</TabsTrigger>
+            <TabsTrigger value="consents">Consents</TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">
@@ -338,7 +340,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">Age</p>
                     <p className="font-medium">{age} years</p>
@@ -478,38 +480,40 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
             </CardHeader>
             <CardContent>
               {patient.treatments && patient.treatments.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Treatment</TableHead>
-                      <TableHead>Cost</TableHead>
-                      <TableHead>Paid</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {patient.treatments.map((treatment: any) => (
-                      <TableRow key={treatment.id}>
-                        <TableCell>{new Date(treatment.treatmentDate).toLocaleDateString()}</TableCell>
-                        <TableCell>{treatment.diagnosis}</TableCell>
-                        <TableCell>₹{treatment.cost}</TableCell>
-                        <TableCell>₹{treatment.paidAmount}</TableCell>
-                        <TableCell>
-                          <Badge variant={treatment.cost === treatment.paidAmount ? "default" : "secondary"}>
-                            {treatment.cost === treatment.paidAmount ? "Paid" : "Pending"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Link href={`/dashboard/patients/${id}/treatment/${treatment.id}`}>
-                            <Button variant="outline" size="sm">View</Button>
-                          </Link>
-                        </TableCell>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Treatment</TableHead>
+                        <TableHead>Cost</TableHead>
+                        <TableHead>Paid</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {patient.treatments.map((treatment: any) => (
+                        <TableRow key={treatment.id}>
+                          <TableCell>{new Date(treatment.treatmentDate).toLocaleDateString()}</TableCell>
+                          <TableCell>{treatment.diagnosis}</TableCell>
+                          <TableCell>₹{treatment.cost}</TableCell>
+                          <TableCell>₹{treatment.paidAmount}</TableCell>
+                          <TableCell>
+                            <Badge variant={treatment.cost === treatment.paidAmount ? "default" : "secondary"}>
+                              {treatment.cost === treatment.paidAmount ? "Paid" : "Pending"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Link href={`/dashboard/patients/${id}/treatment/${treatment.id}`}>
+                              <Button variant="outline" size="sm">View</Button>
+                            </Link>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               ) : (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground">No treatments yet</p>
@@ -531,35 +535,37 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
             </CardHeader>
             <CardContent>
               {patient.appointments && patient.appointments.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Time</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Notes</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {patient.appointments.map((appointment: any) => (
-                      <TableRow key={appointment.id}>
-                        <TableCell>{new Date(appointment.date).toLocaleDateString()}</TableCell>
-                        <TableCell>{appointment.time}</TableCell>
-                        <TableCell>{appointment.type}</TableCell>
-                        <TableCell>
-                          <Badge variant={
-                            appointment.status === "completed" ? "default" :
-                            appointment.status === "scheduled" ? "secondary" : "outline"
-                          }>
-                            {appointment.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{appointment.notes || "N/A"}</TableCell>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Time</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Notes</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {patient.appointments.map((appointment: any) => (
+                        <TableRow key={appointment.id}>
+                          <TableCell>{new Date(appointment.date).toLocaleDateString()}</TableCell>
+                          <TableCell>{appointment.time}</TableCell>
+                          <TableCell>{appointment.type}</TableCell>
+                          <TableCell>
+                            <Badge variant={
+                              appointment.status === "completed" ? "default" :
+                              appointment.status === "scheduled" ? "secondary" : "outline"
+                            }>
+                              {appointment.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{appointment.notes || "N/A"}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               ) : (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground">No appointments yet</p>
@@ -586,41 +592,43 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
             </CardHeader>
             <CardContent>
               {patient.documents && patient.documents.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Uploaded</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {patient.documents.map((doc: any) => (
-                      <TableRow key={doc.id}>
-                        <TableCell className="font-medium">{doc.name}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {doc.type.replace("_", " ")}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{new Date(doc.createdAt).toLocaleDateString()}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDownloadDocument(doc.id)}
-                            >
-                              <Download className="mr-2 size-4" />
-                              Download
-                            </Button>
-                          </div>
-                        </TableCell>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Uploaded</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {patient.documents.map((doc: any) => (
+                        <TableRow key={doc.id}>
+                          <TableCell className="font-medium">{doc.name}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {doc.type.replace("_", " ")}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{new Date(doc.createdAt).toLocaleDateString()}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDownloadDocument(doc.id)}
+                              >
+                                <Download className="mr-2 size-4" />
+                                Download
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               ) : (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground">No documents uploaded yet</p>
