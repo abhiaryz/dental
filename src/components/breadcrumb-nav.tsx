@@ -3,9 +3,11 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { ChevronRight, Home } from "lucide-react";
+import { useBreadcrumbData } from "@/hooks/use-breadcrumb-data";
 
 export function BreadcrumbNav() {
   const pathname = usePathname();
+  const { entityData } = useBreadcrumbData();
   
   // Split the pathname into segments
   const segments = pathname.split("/").filter((segment) => segment !== "");
@@ -16,7 +18,33 @@ export function BreadcrumbNav() {
   }
 
   // Function to format segment names
-  const formatSegment = (segment: string) => {
+  const formatSegment = (segment: string, index: number) => {
+    // Check if this segment is an entity ID and we have data for it
+    if (entityData[segment]) {
+      const entity = entityData[segment];
+      
+      // For treatments, show diagnosis
+      if (entity.name && segments[index - 1] === "treatment") {
+        return entity.name;
+      }
+      
+      // For invoices, show invoice number
+      if (entity.invoiceNumber) {
+        return `Invoice #${entity.invoiceNumber}`;
+      }
+      
+      // For patients, show name
+      if (entity.name) {
+        return entity.name;
+      }
+    }
+    
+    // Special handling for known segments
+    if (segment === "add-treatment") return "Add Treatment";
+    if (segment === "edit") return "Edit";
+    if (segment === "treatment") return "Treatment";
+    if (segment === "invoices") return "Invoices";
+    
     // Replace hyphens with spaces and capitalize
     return segment
       .split("-")
@@ -30,7 +58,7 @@ export function BreadcrumbNav() {
     ...segments.map((segment, index) => {
       const href = "/" + segments.slice(0, index + 1).join("/");
       return {
-        name: formatSegment(segment),
+        name: formatSegment(segment, index),
         href: href,
       };
     }),

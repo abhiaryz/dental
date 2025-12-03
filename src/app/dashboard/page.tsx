@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -69,6 +70,7 @@ const quickActions = [
 ];
 
 export default function DashboardHome() {
+  const router = useRouter();
   const [analytics, setAnalytics] = useState<DashboardAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -117,7 +119,8 @@ export default function DashboardHome() {
       icon: IndianRupee,
       iconBg: "bg-sky-100",
       iconColor: "text-sky-600",
-      accent: "from-sky-500/15 to-sky-500/5"
+      accent: "from-sky-500/15 to-sky-500/5",
+      href: "/dashboard/finance?status=paid"
     },
     {
       title: "Active Patients",
@@ -127,7 +130,8 @@ export default function DashboardHome() {
       icon: Users,
       iconBg: "bg-emerald-100",
       iconColor: "text-emerald-600",
-      accent: "from-emerald-500/15 to-emerald-500/5"
+      accent: "from-emerald-500/15 to-emerald-500/5",
+      href: "/dashboard/patients"
     },
     {
       title: "Today's Appointments",
@@ -137,7 +141,8 @@ export default function DashboardHome() {
       icon: Calendar,
       iconBg: "bg-sky-100",
       iconColor: "text-sky-600",
-      accent: "from-sky-400/15 to-slate-100"
+      accent: "from-sky-400/15 to-slate-100",
+      href: "/dashboard/appointments?date=today"
     },
     {
       title: "Active Treatments",
@@ -147,7 +152,8 @@ export default function DashboardHome() {
       icon: HeartPulse,
       iconBg: "bg-emerald-100",
       iconColor: "text-emerald-600",
-      accent: "from-emerald-400/15 to-slate-100"
+      accent: "from-emerald-400/15 to-slate-100",
+      href: "/dashboard/patients"
     }
   ];
 
@@ -174,7 +180,11 @@ export default function DashboardHome() {
         <TabsContent value="overview" className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
             {overviewMetrics.map((metric) => (
-              <Card key={metric.title} className={`border-none bg-gradient-to-br ${metric.accent} p-[1px] shadow-lg`}>
+              <Card 
+                key={metric.title} 
+                className={`border-none bg-gradient-to-br ${metric.accent} p-[1px] shadow-lg cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1`}
+                onClick={() => router.push(metric.href)}
+              >
                 <div className="rounded-2xl bg-white/95 p-4">
                   <div className="flex items-center justify-between">
                     <div>

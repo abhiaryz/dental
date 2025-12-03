@@ -56,6 +56,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { ClinicalImagesGallery } from "@/components/clinical/clinical-images-gallery";
 import { ConsentManager } from "@/components/clinical/consent-manager";
+import { PatientQuickActions } from "@/components/patient-quick-actions";
 
 export default function PatientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -267,6 +268,12 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
           </Link>
         </div>
       </div>
+
+      {/* Quick Actions */}
+      <PatientQuickActions
+        patientId={id}
+        patientName={`${patient.firstName} ${patient.lastName}`}
+      />
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

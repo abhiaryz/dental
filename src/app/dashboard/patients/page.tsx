@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,26 +14,66 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, UserPlus, Users, UserCheck, Clock, AlertCircle, TrendingUp, Loader2 } from "lucide-react";
+import { Search, UserPlus, Users, UserCheck, Clock, AlertCircle, TrendingUp, Loader2, Filter } from "lucide-react";
 import Link from "next/link";
 import { patientsAPI } from "@/lib/api";
+import { PatientFilters, PatientFilterState } from "@/components/patient-filters";
 
-export default function PatientsPage() {
+function PatientsPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [patients, setPatients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState<any>(null);
+  const [showFilters, setShowFilters] = useState(false);
+
+  const [filters, setFilters] = useState<PatientFilterState>({
+    gender: searchParams.get("gender") || "all",
+    minAge: searchParams.get("minAge") || "",
+    maxAge: searchParams.get("maxAge") || "",
+    lastVisitFrom: searchParams.get("lastVisitFrom") || "",
+    lastVisitTo: searchParams.get("lastVisitTo") || "",
+    status: searchParams.get("status") || "all",
+  });
+
+  // Count active filters
+  const activeFilterCount = Object.entries(filters).filter(
+    ([key, value]) => value !== "" && value !== "all"
+  ).length;
+
+  // Update URL with filters
+  const updateURL = useCallback((newFilters: PatientFilterState, newSearch: string) => {
+    const params = new URLSearchParams();
+    if (newSearch) params.set("search", newSearch);
+    Object.entries(newFilters).forEach(([key, value]) => {
+      if (value && value !== "all") {
+        params.set(key, value);
+      }
+    });
+    const queryString = params.toString();
+    router.push(`/dashboard/patients${queryString ? `?${queryString}` : ""}`, { scroll: false });
+  }, [router]);
 
   // Fetch patients
   const fetchPatients = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await patientsAPI.getAll({
+      const params: Record<string, any> = {
         page,
         limit: 10,
-        search: searchTerm || undefined,
-      });
+      };
+      
+      if (searchTerm) params.search = searchTerm;
+      if (filters.gender && filters.gender !== "all") params.gender = filters.gender;
+      if (filters.minAge) params.minAge = filters.minAge;
+      if (filters.maxAge) params.maxAge = filters.maxAge;
+      if (filters.lastVisitFrom) params.lastVisitFrom = filters.lastVisitFrom;
+      if (filters.lastVisitTo) params.lastVisitTo = filters.lastVisitTo;
+      if (filters.status && filters.status !== "all") params.status = filters.status;
+
+      const data = await patientsAPI.getAll(params);
       setPatients(data.patients);
       setPagination(data.pagination);
     } catch (error) {
@@ -40,11 +81,37 @@ export default function PatientsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, searchTerm]);
+  }, [page, searchTerm, filters]);
 
   useEffect(() => {
     void fetchPatients();
   }, [fetchPatients]);
+
+  const handleFilterChange = (newFilters: PatientFilterState) => {
+    setFilters(newFilters);
+    updateURL(newFilters, searchTerm);
+    setPage(1);
+  };
+
+  const handleClearFilters = () => {
+    const emptyFilters: PatientFilterState = {
+      gender: "all",
+      minAge: "",
+      maxAge: "",
+      lastVisitFrom: "",
+      lastVisitTo: "",
+      status: "all",
+    };
+    setFilters(emptyFilters);
+    updateURL(emptyFilters, searchTerm);
+    setPage(1);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    updateURL(filters, value);
+    setPage(1);
+  };
 
   // Calculate age from date of birth
   const calculateAge = (dateOfBirth: string) => {
@@ -136,18 +203,43 @@ export default function PatientsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Patient List</CardTitle>
-          <CardDescription>View and manage all patient records</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Patient List</CardTitle>
+              <CardDescription>View and manage all patient records</CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowFilters(!showFilters)}
+              className="gap-2"
+            >
+              <Filter className="size-4" />
+              Filters
+              {activeFilterCount > 0 && (
+                <Badge variant="secondary" className="ml-1">
+                  {activeFilterCount}
+                </Badge>
+              )}
+            </Button>
+          </div>
           <div className="relative mt-4">
             <Search className="absolute left-2 top-2.5 size-4 text-muted-foreground" />
             <Input 
               placeholder="Search patients..." 
               className="pl-8" 
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
             />
           </div>
         </CardHeader>
+        {showFilters && (
+          <PatientFilters
+            filters={filters}
+            onFilterChange={handleFilterChange}
+            onClearFilters={handleClearFilters}
+          />
+        )}
         <CardContent>
           {loading ? (
             <div className="flex items-center justify-center py-12">
@@ -230,6 +322,18 @@ export default function PatientsPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function PatientsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="size-8 animate-spin text-primary" />
+      </div>
+    }>
+      <PatientsPageContent />
+    </Suspense>
   );
 }
 

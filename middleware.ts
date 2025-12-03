@@ -11,17 +11,14 @@ import { NextRequest, NextResponse } from "next/server";
 export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   
-  // Check for session token cookie (NextAuth uses this cookie name)
-  const sessionToken = req.cookies.get(
-    process.env.NODE_ENV === "production"
-      ? "__Secure-next-auth.session-token"
-      : "next-auth.session-token"
-  );
-  
-  const isLoggedIn = !!sessionToken;
+  // Check for session token cookie (NextAuth uses different cookie names in prod/dev)
+  // Check both possible cookie names since we might not know the environment at build time
+  const sessionTokenProd = req.cookies.get("__Secure-next-auth.session-token");
+  const sessionTokenDev = req.cookies.get("next-auth.session-token");
+  const isLoggedIn = !!(sessionTokenProd || sessionTokenDev);
 
   // Public pages that don't require authentication
-  const publicPages = ["/", "/login", "/signup", "/forgot-password", "/home"];
+  const publicPages = ["/", "/login", "/signup", "/forgot-password", "/home", "/privacy-policy", "/terms-of-service", "/verify-email", "/reset-password"];
   const isPublicPage = publicPages.some(
     (page) => pathname === page || (page !== "/" && pathname.startsWith(page))
   );
@@ -37,6 +34,16 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // If on root page and logged in, redirect to dashboard
+  // Otherwise, allow access to the landing page
+  if (pathname === "/") {
+    if (isLoggedIn) {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+    // Allow non-authenticated users to access the landing page
+    return NextResponse.next();
+  }
+
   // If on public auth page and already logged in, redirect to dashboard
   if (
     isLoggedIn &&
@@ -46,15 +53,6 @@ export default async function middleware(req: NextRequest) {
       pathname.startsWith("/signup"))
   ) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
-  }
-
-  // If on root page, redirect appropriately
-  if (pathname === "/") {
-    if (isLoggedIn) {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
-    } else {
-      return NextResponse.redirect(new URL("/login/clinic-select", req.url));
-    }
   }
 
   // Allow access to public pages

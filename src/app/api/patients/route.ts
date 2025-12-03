@@ -16,6 +16,14 @@ export const GET = withAuth(
       const limit = parseInt(searchParams.get("limit") || "10");
       const skip = (page - 1) * limit;
 
+      // Filter parameters
+      const gender = searchParams.get("gender");
+      const minAge = searchParams.get("minAge");
+      const maxAge = searchParams.get("maxAge");
+      const lastVisitFrom = searchParams.get("lastVisitFrom");
+      const lastVisitTo = searchParams.get("lastVisitTo");
+      const status = searchParams.get("status");
+
       // Build where clause based on user role and clinic
       const where = getPatientWhereClause(
         req.user.id, 
@@ -32,6 +40,43 @@ export const GET = withAuth(
           { mobileNumber: { contains: search } },
           { email: { contains: search, mode: "insensitive" } },
         ];
+      }
+
+      // Add gender filter
+      if (gender && gender !== "all") {
+        where.gender = gender;
+      }
+
+      // Add age filters (calculate from dateOfBirth)
+      if (minAge || maxAge) {
+        const now = new Date();
+        if (maxAge) {
+          const maxDate = new Date(now.getFullYear() - parseInt(maxAge), now.getMonth(), now.getDate());
+          where.dateOfBirth = { ...where.dateOfBirth, gte: maxDate };
+        }
+        if (minAge) {
+          const minDate = new Date(now.getFullYear() - parseInt(minAge) - 1, now.getMonth(), now.getDate());
+          where.dateOfBirth = { ...where.dateOfBirth, lte: minDate };
+        }
+      }
+
+      // Add last visit date filters
+      if (lastVisitFrom || lastVisitTo) {
+        where.treatments = {
+          some: {
+            treatmentDate: {
+              ...(lastVisitFrom && { gte: new Date(lastVisitFrom) }),
+              ...(lastVisitTo && { lte: new Date(lastVisitTo) }),
+            },
+          },
+        };
+      }
+
+      // Add status filter
+      if (status === "active") {
+        where.treatments = { some: {} };
+      } else if (status === "new") {
+        where.treatments = { none: {} };
       }
 
       const [patients, total] = await Promise.all([
