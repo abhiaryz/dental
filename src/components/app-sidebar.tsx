@@ -28,7 +28,7 @@ export function AppSidebar({ className }: { className?: string }) {
           <div className="size-6 rounded-lg bg-gradient-to-br from-sky-600 to-emerald-500 flex items-center justify-center group-data-[collapsible=icon]:size-8">
             <span className="text-white font-bold text-xs">MC</span>
           </div>
-          <span className="text-sm font-semibold group-data-[collapsible=icon]:hidden text-slate-900">MediCare</span>
+          <span className="text-sm font-semibold group-data-[collapsible=icon]:hidden text-slate-900">DentaEdge</span>
         </div>
         <SidebarSeparator />
       </SidebarHeader>

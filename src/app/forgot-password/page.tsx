@@ -60,7 +60,7 @@ export default function ForgotPasswordPage() {
             </div>
           </div>
           <h1 className="text-6xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent mb-4">
-            MediCare
+            DentaEdge
           </h1>
           <p className="text-xl text-muted-foreground flex items-center justify-center gap-2">
             <Sparkles className="size-5 text-primary" />
@@ -81,7 +81,7 @@ export default function ForgotPasswordPage() {
               </div>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent mb-2">
-              MediCare
+              DentaEdge
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground flex items-center justify-center gap-2">
               <Sparkles className="size-4 text-primary" />
@@ -169,7 +169,7 @@ export default function ForgotPasswordPage() {
 
       {/* Footer - Centered at bottom */}
       <div className="absolute bottom-4 sm:bottom-8 left-0 right-0 text-center text-xs sm:text-sm text-muted-foreground px-4">
-        <p>© 2024 MediCare. All rights reserved.</p>
+        <p>© 2024 DentaEdge. All rights reserved.</p>
       </div>
     </div>
   );

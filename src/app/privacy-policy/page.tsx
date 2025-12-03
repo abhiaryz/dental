@@ -44,7 +44,7 @@ export default function PrivacyPolicyPage() {
 
             <h2>3. HIPAA Compliance</h2>
             <p>
-              MediCare is committed to maintaining compliance with the Health Insurance Portability and Accountability Act (HIPAA). We implement appropriate safeguards to protect patient health information (PHI).
+              DentaEdge is committed to maintaining compliance with the Health Insurance Portability and Accountability Act (HIPAA). We implement appropriate safeguards to protect patient health information (PHI).
             </p>
 
             <h2>4. Data Security</h2>
@@ -104,7 +104,7 @@ export default function PrivacyPolicyPage() {
 
             <h2>12. Contact Us</h2>
             <p>
-              If you have any questions about this Privacy Policy, please contact us at privacy@medicare.com
+              If you have any questions about this Privacy Policy, please contact us at privacy@DentaEdge.com
             </p>
 
             <div className="mt-8 p-4 bg-primary/10 rounded-lg">

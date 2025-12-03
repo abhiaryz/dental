@@ -129,7 +129,7 @@ export const POST = withAuth(
       
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(20);
-      doc.text(clinic?.name || "MediCare Clinic", pageWidth / 2, 15, { align: 'center' });
+      doc.text(clinic?.name || "DentaEdge Clinic", pageWidth / 2, 15, { align: 'center' });
       doc.setFontSize(10);
       doc.text(clinic?.address || "Clinic Address", pageWidth / 2, 22, { align: 'center' });
 

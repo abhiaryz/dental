@@ -129,7 +129,7 @@ function EmployeeSignupContent() {
               We sent a verification email to <strong>{invitationData?.email}</strong>
             </p>
             <p className="text-sm text-muted-foreground">
-              Click the link in the email to verify your account and start using MediCare.
+              Click the link in the email to verify your account and start using DentaEdge.
             </p>
             <div className="pt-4">
               <Button onClick={() => router.push(`/login/${clinicCode}`)} className="w-full">
@@ -356,7 +356,7 @@ function EmployeeSignupContent() {
 
       {/* Footer */}
       <div className="absolute bottom-8 left-0 right-0 text-center text-sm text-muted-foreground">
-        <p>© 2024 MediCare. All rights reserved.</p>
+        <p>© 2024 DentaEdge. All rights reserved.</p>
       </div>
     </div>
   );

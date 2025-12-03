@@ -28,8 +28,8 @@ import {
   MapPin,
   Users,
   Zap,
-  Check,
 } from "lucide-react";
+import { AuthProgress } from "@/components/auth/auth-progress";
 
 function OnboardingContent() {
   const router = useRouter();
@@ -305,10 +305,10 @@ function OnboardingContent() {
     setInvitations(updated);
   };
 
-  const steps = [
-    { number: 1, title: "Basic Info", icon: Building2 },
-    { number: 2, title: "Branding", icon: Sparkles },
-    { number: 3, title: "Team", icon: Users },
+  const progressSteps = [
+    { label: "Basic Info", description: "Clinic details" },
+    { label: "Branding", description: "Logo & contact" },
+    { label: "Team", description: "Invite members" },
   ];
 
   // Email verification screen
@@ -399,51 +399,7 @@ function OnboardingContent() {
         </div>
 
         {/* Modern Progress Indicator */}
-        <div className="mb-8 sm:mb-12 px-2">
-          <div className="flex items-center justify-between relative">
-            {/* Progress Line */}
-            <div className="absolute top-4 sm:top-5 left-0 right-0 h-0.5 sm:h-1 bg-gray-200 -z-10">
-              <div 
-                className="h-full bg-gradient-to-r from-primary to-primary/80 transition-all duration-500 ease-out"
-                style={{ width: `${((step - 1) / (steps.length - 1)) * 100}%` }}
-              />
-            </div>
-
-            {steps.map((s) => {
-              const Icon = s.icon;
-              const isCompleted = step > s.number;
-              const isCurrent = step === s.number;
-              
-              return (
-                <div key={s.number} className="flex flex-col items-center flex-1">
-                  <div
-                    className={`
-                      w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-semibold text-xs sm:text-sm
-                      transition-all duration-300 transform
-                      ${isCurrent ? 'bg-primary text-white scale-110 shadow-lg ring-2 sm:ring-4 ring-primary/20' : ''}
-                      ${isCompleted ? 'bg-green-500 text-white' : ''}
-                      ${!isCurrent && !isCompleted ? 'bg-white text-gray-400 border-2 border-gray-200' : ''}
-                    `}
-                  >
-                    {isCompleted ? (
-                      <Check className="size-4 sm:size-5" />
-                    ) : (
-                      <Icon className="size-4 sm:size-5" />
-                    )}
-                  </div>
-                  <span className={`
-                    mt-1.5 sm:mt-2 text-[10px] sm:text-xs font-medium transition-colors
-                    ${isCurrent ? 'text-primary' : ''}
-                    ${isCompleted ? 'text-green-600' : ''}
-                    ${!isCurrent && !isCompleted ? 'text-gray-400' : ''}
-                  `}>
-                    {s.title}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <AuthProgress steps={progressSteps} currentStep={step} />
 
         {/* Step Content with Animations */}
         <div className="transition-all duration-500 ease-in-out">

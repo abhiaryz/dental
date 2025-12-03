@@ -1,4 +1,4 @@
-# 🏥 DentaRAG - Dental Clinic Management SaaS Platform
+# 🏥 DentaEdge - Dental Clinic Management SaaS Platform
 
 [![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)]()
 [![Tests](https://img.shields.io/badge/Tests-234%20Passing-success)]()
@@ -9,9 +9,9 @@
 
 ---
 
-## ✨ What is DentaRAG?
+## ✨ What is DentaEdge?
 
-**DentaRAG** is a modern, cloud-based dental practice management system that enables multiple clinics to operate independently on a single platform. Built with Next.js 15, TypeScript, and PostgreSQL, it provides everything from patient records and treatment planning to billing, inventory management, and advanced analytics.
+**DentaEdge** is a modern, cloud-based dental practice management system that enables multiple clinics to operate independently on a single platform. Built with Next.js 15, TypeScript, and PostgreSQL, it provides everything from patient records and treatment planning to billing, inventory management, and advanced analytics.
 
 ### 🎯 Key Highlights
 
@@ -456,7 +456,7 @@ Built with modern open-source technologies:
 
 Made with ❤️ for modern dental practices
 
-**🚀 Start using DentaRAG today!**
+**🚀 Start using DentaEdge today!**
 
 
 

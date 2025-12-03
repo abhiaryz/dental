@@ -8,15 +8,15 @@ async function main() {
 
   // 1. Create default Clinic
   console.log("Creating Clinic...");
-  const clinicCode = "MEDICARE01";
-  const clinicEmail = "contact@medicare.com";
-  const ownerEmail = "admin@medicare.com";
+  const clinicCode = "DentaEdge01";
+  const clinicEmail = "contact@DentaEdge.com";
+  const ownerEmail = "admin@DentaEdge.com";
 
   const clinic = await prisma.clinic.upsert({
     where: { clinicCode },
     update: {},
     create: {
-      name: "Medicare Dental Clinic",
+      name: "DentaEdge Dental Clinic",
       clinicCode,
       email: clinicEmail,
       phone: "123-456-7890",
@@ -34,7 +34,7 @@ async function main() {
   // 2. Create Admin User for the Clinic
   console.log("Creating Admin User...");
   const hashedPassword = await bcrypt.hash("admin123", 10);
-  const username = `admin_${clinicCode.toLowerCase()}`; // admin_medicare01
+  const username = `admin_${clinicCode.toLowerCase()}`; // admin_DentaEdge01
 
   const admin = await prisma.user.upsert({
     where: { email: ownerEmail },

@@ -25,12 +25,12 @@ export default function TermsOfServicePage() {
           <CardContent className="prose prose-sm max-w-none p-6 sm:p-8">
             <h2>1. Acceptance of Terms</h2>
             <p>
-              By accessing and using MediCare ("the Service"), you accept and agree to be bound by the terms and provision of this agreement.
+              By accessing and using DentaEdge ("the Service"), you accept and agree to be bound by the terms and provision of this agreement.
             </p>
 
             <h2>2. Use License</h2>
             <p>
-              Permission is granted to temporarily use MediCare for personal or internal business purposes. This is the grant of a license, not a transfer of title.
+              Permission is granted to temporarily use DentaEdge for personal or internal business purposes. This is the grant of a license, not a transfer of title.
             </p>
 
             <h2>3. User Accounts</h2>
@@ -40,7 +40,7 @@ export default function TermsOfServicePage() {
 
             <h2>4. HIPAA Compliance</h2>
             <p>
-              MediCare is designed to assist healthcare providers in maintaining HIPAA compliance. Users are responsible for ensuring their use of the Service complies with all applicable healthcare regulations.
+              DentaEdge is designed to assist healthcare providers in maintaining HIPAA compliance. Users are responsible for ensuring their use of the Service complies with all applicable healthcare regulations.
             </p>
 
             <h2>5. Data Security</h2>
@@ -69,7 +69,7 @@ export default function TermsOfServicePage() {
 
             <h2>9. Limitation of Liability</h2>
             <p>
-              MediCare shall not be liable for any indirect, incidental, special, consequential or punitive damages resulting from your use of the Service.
+              DentaEdge shall not be liable for any indirect, incidental, special, consequential or punitive damages resulting from your use of the Service.
             </p>
 
             <h2>10. Changes to Terms</h2>
@@ -79,12 +79,12 @@ export default function TermsOfServicePage() {
 
             <h2>11. Contact</h2>
             <p>
-              For questions about these Terms, please contact us at support@medicare.com
+              For questions about these Terms, please contact us at support@DentaEdge.com
             </p>
 
             <div className="mt-8 p-4 bg-primary/10 rounded-lg">
               <p className="text-sm text-center mb-0">
-                By using MediCare, you acknowledge that you have read and understood these Terms of Service.
+                By using DentaEdge, you acknowledge that you have read and understood these Terms of Service.
               </p>
             </div>
           </CardContent>

@@ -3,13 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Stethoscope, Loader2, AlertCircle, CheckCircle2, Building2, ArrowLeft } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle2, Building2, Mail, User, Lock, Phone, MapPin } from "lucide-react";
+import { AuthLayout } from "@/components/auth/auth-layout";
+import { AuthCard } from "@/components/auth/auth-card";
+import { AuthInput } from "@/components/auth/auth-input";
+import { Label } from "@/components/ui/label";
 
 export default function ClinicSignupPage() {
   const router = useRouter();
@@ -77,11 +79,11 @@ export default function ClinicSignupPage() {
 
   if (success && clinicCode) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 via-cyan-50 to-blue-50 p-4">
-        <Card className="w-full max-w-md shadow-2xl">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-              <CheckCircle2 className="size-8 text-green-600" />
+      <AuthLayout variant="split">
+        <Card className="shadow-2xl border-2 border-green-200">
+          <CardHeader className="text-center pb-6">
+            <div className="mx-auto mb-4 w-20 h-20 bg-green-50 rounded-full flex items-center justify-center">
+              <CheckCircle2 className="size-10 text-green-600" />
             </div>
             <CardTitle className="text-2xl">Clinic Created Successfully!</CardTitle>
             <CardDescription>Save your clinic code</CardDescription>
@@ -99,239 +101,210 @@ export default function ClinicSignupPage() {
             </Alert>
             <div className="space-y-2 text-sm text-muted-foreground">
               <p>✓ Clinic account created</p>
-              <p>✓ Admin account setup complete</p>
-              <p>✓ You can now add employees</p>
+              <p>✓ Admin user setup complete</p>
+              <p>✓ Verification email sent to {formData.ownerEmail}</p>
             </div>
-            <Button 
-              onClick={() => router.push(`/login/${clinicCode}`)}
-              className="w-full"
-            >
+            <Button onClick={() => router.push(`/login/${clinicCode}`)} className="w-full h-12">
               Continue to Login
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </AuthLayout>
     );
   }
 
   return (
-    <div className="min-h-screen py-8 px-4 bg-gradient-to-br from-cyan-50 via-cyan-50 to-blue-50">
-      <div className="max-w-2xl mx-auto">
-        {/* Back Button */}
-        <button
-          onClick={() => router.push("/login/clinic-select")}
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
-        >
-          <ArrowLeft className="size-4" />
-          Back to Login
-        </button>
+    <AuthLayout variant="split" showBackButton backHref="/signup" backLabel="Back to signup options">
+      <AuthCard
+        title="Create Clinic Account"
+        description="Setup your dental clinic or practice"
+        icon={<Building2 className="size-8 text-primary" />}
+        footerContent={
+          <div className="text-sm text-center">
+            <span className="text-muted-foreground">Already have an account? </span>
+            <Link href="/login" className="text-primary hover:underline font-semibold transition-colors">
+              Sign in instead
+            </Link>
+          </div>
+        }
+      >
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Clinic Information */}
+          <div className="space-y-4">
+            <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Clinic Information</h3>
+            
+            <AuthInput
+              id="clinicName"
+              label="Clinic Name"
+              type="text"
+              icon={<Building2 className="size-4" />}
+              placeholder="Smith Dental Clinic"
+              value={formData.clinicName}
+              onChange={(val) => setFormData({ ...formData, clinicName: val })}
+              required
+              disabled={isLoading}
+            />
 
-        <Card className="shadow-2xl border-0 backdrop-blur-sm bg-white/95">
-          <CardHeader className="text-center pb-6">
-            <div className="relative inline-block mb-4">
-              <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full"></div>
-              <div className="relative bg-gradient-to-br from-primary to-primary/80 p-4 rounded-2xl shadow-lg">
-                <Building2 className="size-8 text-white" />
-              </div>
-            </div>
-            <CardTitle className="text-3xl font-bold">Setup Your Clinic</CardTitle>
-            <CardDescription className="text-base">
-              Create your clinic account and get started
-            </CardDescription>
-          </CardHeader>
-
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Clinic Information */}
-              <div className="space-y-4">
-                <h2 className="text-xl font-semibold flex items-center gap-2 pb-2 border-b">
-                  <Building2 className="size-5" />
-                  Clinic Information
-                </h2>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="clinicName">Clinic Name *</Label>
-                  <Input
-                    id="clinicName"
-                    placeholder="e.g., Smile Dental Clinic"
-                    value={formData.clinicName}
-                    onChange={(e) => setFormData({...formData, clinicName: e.target.value})}
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="clinicType">Clinic Type *</Label>
-                  <Select
-                    value={formData.clinicType}
-                    onValueChange={(value) => setFormData({...formData, clinicType: value})}
-                    disabled={isLoading}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="INDIVIDUAL_PRACTICE">Individual Practice</SelectItem>
-                      <SelectItem value="CLINIC">Clinic</SelectItem>
-                      <SelectItem value="MULTI_LOCATION_CLINIC">Multi-Location Clinic</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Clinic Email *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="clinic@example.com"
-                      value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      required
-                      disabled={isLoading}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input
-                      id="phone"
-                      placeholder="(555) 123-4567"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                      disabled={isLoading}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="address">Address</Label>
-                  <Input
-                    id="address"
-                    placeholder="123 Main Street"
-                    value={formData.address}
-                    onChange={(e) => setFormData({...formData, address: e.target.value})}
-                    disabled={isLoading}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="city">City</Label>
-                    <Input
-                      id="city"
-                      placeholder="New York"
-                      value={formData.city}
-                      onChange={(e) => setFormData({...formData, city: e.target.value})}
-                      disabled={isLoading}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="state">State</Label>
-                    <Input
-                      id="state"
-                      placeholder="NY"
-                      value={formData.state}
-                      onChange={(e) => setFormData({...formData, state: e.target.value})}
-                      disabled={isLoading}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Owner/Admin Information */}
-              <div className="space-y-4 pt-4 border-t">
-                <h2 className="text-xl font-semibold flex items-center gap-2 pb-2">
-                  <Stethoscope className="size-5" />
-                  Admin Account
-                </h2>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="ownerName">Your Name *</Label>
-                  <Input
-                    id="ownerName"
-                    placeholder="Dr. John Doe"
-                    value={formData.ownerName}
-                    onChange={(e) => setFormData({...formData, ownerName: e.target.value})}
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="ownerEmail">Your Email *</Label>
-                  <Input
-                    id="ownerEmail"
-                    type="email"
-                    placeholder="admin@example.com"
-                    value={formData.ownerEmail}
-                    onChange={(e) => setFormData({...formData, ownerEmail: e.target.value})}
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Password *</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={formData.password}
-                      onChange={(e) => setFormData({...formData, password: e.target.value})}
-                      required
-                      disabled={isLoading}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm Password *</Label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      placeholder="••••••••"
-                      value={formData.confirmPassword}
-                      onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
-                      required
-                      disabled={isLoading}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {error && (
-                <Alert variant="destructive" className="border-red-200 bg-red-50">
-                  <AlertCircle className="size-4" />
-                  <AlertDescription className="font-medium">{error}</AlertDescription>
-                </Alert>
-              )}
-
-              <Button 
-                type="submit" 
-                className="w-full h-12 text-base font-semibold"
-                disabled={isLoading}
+            <div className="space-y-2">
+              <Label htmlFor="clinicType" className="text-sm font-medium flex items-center gap-2">
+                <Building2 className="size-4 text-primary" />
+                Clinic Type
+              </Label>
+              <Select
+                value={formData.clinicType}
+                onValueChange={(val) => setFormData({ ...formData, clinicType: val })}
               >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 size-5 animate-spin" />
-                    Creating Clinic...
-                  </>
-                ) : (
-                  "Create Clinic"
-                )}
-              </Button>
+                <SelectTrigger id="clinicType" className="h-12 border-2">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="CLINIC">Dental Clinic</SelectItem>
+                  <SelectItem value="HOSPITAL">Hospital</SelectItem>
+                  <SelectItem value="PRIVATE_PRACTICE">Private Practice</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-              <div className="text-center text-sm text-muted-foreground">
-                Already have an account?{" "}
-                <Link href="/login/clinic-select" className="text-primary hover:underline font-semibold">
-                  Sign in
-                </Link>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+            <AuthInput
+              id="email"
+              label="Clinic Email"
+              type="email"
+              icon={<Mail className="size-4" />}
+              placeholder="contact@clinic.com"
+              value={formData.email}
+              onChange={(val) => setFormData({ ...formData, email: val })}
+              required
+              disabled={isLoading}
+            />
+
+            <AuthInput
+              id="phone"
+              label="Clinic Phone"
+              type="tel"
+              icon={<Phone className="size-4" />}
+              placeholder="+1 (555) 123-4567"
+              value={formData.phone}
+              onChange={(val) => setFormData({ ...formData, phone: val })}
+              required
+              disabled={isLoading}
+            />
+
+            <AuthInput
+              id="address"
+              label="Address"
+              type="text"
+              icon={<MapPin className="size-4" />}
+              placeholder="123 Main Street"
+              value={formData.address}
+              onChange={(val) => setFormData({ ...formData, address: val })}
+              required
+              disabled={isLoading}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <AuthInput
+                id="city"
+                label="City"
+                type="text"
+                placeholder="New York"
+                value={formData.city}
+                onChange={(val) => setFormData({ ...formData, city: val })}
+                required
+                disabled={isLoading}
+              />
+
+              <AuthInput
+                id="state"
+                label="State"
+                type="text"
+                placeholder="NY"
+                value={formData.state}
+                onChange={(val) => setFormData({ ...formData, state: val })}
+                required
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+
+          {/* Owner Information */}
+          <div className="space-y-4 pt-4 border-t">
+            <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Owner Information</h3>
+            
+            <AuthInput
+              id="ownerName"
+              label="Owner Name"
+              type="text"
+              icon={<User className="size-4" />}
+              placeholder="Dr. John Smith"
+              value={formData.ownerName}
+              onChange={(val) => setFormData({ ...formData, ownerName: val })}
+              required
+              disabled={isLoading}
+            />
+
+            <AuthInput
+              id="ownerEmail"
+              label="Owner Email"
+              type="email"
+              icon={<Mail className="size-4" />}
+              placeholder="owner@clinic.com"
+              value={formData.ownerEmail}
+              onChange={(val) => setFormData({ ...formData, ownerEmail: val })}
+              required
+              disabled={isLoading}
+            />
+
+            <AuthInput
+              id="password"
+              label="Password"
+              type="password"
+              icon={<Lock className="size-4" />}
+              placeholder="••••••••"
+              value={formData.password}
+              onChange={(val) => setFormData({ ...formData, password: val })}
+              required
+              disabled={isLoading}
+              showPasswordToggle
+              helperText="Must be at least 6 characters"
+            />
+
+            <AuthInput
+              id="confirmPassword"
+              label="Confirm Password"
+              type="password"
+              icon={<Lock className="size-4" />}
+              placeholder="••••••••"
+              value={formData.confirmPassword}
+              onChange={(val) => setFormData({ ...formData, confirmPassword: val })}
+              required
+              disabled={isLoading}
+              showPasswordToggle
+            />
+          </div>
+
+          {error && (
+            <Alert variant="destructive" className="border-red-200 bg-red-50">
+              <AlertCircle className="size-4" />
+              <AlertDescription className="font-medium">{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <Button
+            type="submit"
+            className="w-full h-12 text-base font-semibold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200 touch-manipulation"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 size-5 animate-spin" />
+                Creating Clinic...
+              </>
+            ) : (
+              "Create Clinic"
+            )}
+          </Button>
+        </form>
+      </AuthCard>
+    </AuthLayout>
   );
 }
-

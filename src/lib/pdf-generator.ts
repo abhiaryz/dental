@@ -3,11 +3,11 @@ import autoTable from "jspdf-autotable";
 
 // Clinic Information
 const CLINIC_INFO = {
-  name: "MediCare Dental Clinic",
+  name: "DentaEdge Dental Clinic",
   address: "123, MG Road, Bangalore, Karnataka - 560001",
   phone: "+91 80 1234 5678",
-  email: "info@medicaredental.com",
-  website: "www.medicaredental.com",
+  email: "info@DentaEdgedental.com",
+  website: "www.DentaEdgedental.com",
   registrationNo: "KA/BLR/DC/2020/12345",
 };
 

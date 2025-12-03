@@ -2,16 +2,17 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Input } from "@/components/ui/input";
+import { Building2, User } from "lucide-react";
+import { AuthLayout } from "@/components/auth/auth-layout";
+import { ChoiceCard } from "@/components/auth/choice-card";
+import { AuthInput } from "@/components/auth/auth-input";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Building2, User, Stethoscope, Loader2, AlertCircle, ArrowRight } from "lucide-react";
 
 export default function ClinicSelectPage() {
   const router = useRouter();
+  const [showClinicForm, setShowClinicForm] = useState(false);
   const [clinicCode, setClinicCode] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -39,154 +40,117 @@ export default function ClinicSelectPage() {
     }
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 via-cyan-50 to-blue-50 p-4">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="relative inline-block mb-4">
-            <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full"></div>
-            <div className="relative bg-gradient-to-br from-primary to-primary/80 p-4 rounded-2xl shadow-lg">
-              <Stethoscope className="size-10 text-white" />
-            </div>
-          </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent mb-2">
-            MediCare
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Welcome! Choose how to continue
-          </p>
-        </div>
-
-        <Card className="shadow-2xl border-0 backdrop-blur-sm bg-white/95">
-          <CardHeader className="text-center pb-6">
-            <CardTitle className="text-2xl">Sign In</CardTitle>
-            <CardDescription>
-              Select your account type to continue
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Option 1: Clinic Login */}
-            <form onSubmit={handleClinicSubmit} className="space-y-4">
-              <div className="p-5 border-2 rounded-lg bg-primary/5 hover:bg-primary/10 transition-colors">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-primary/20 rounded-lg">
-                    <Building2 className="size-5 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg">Clinic/Practice</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Sign in as a clinic employee
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="clinicCode" className="text-sm font-medium">
-                    Enter Your Clinic Code
-                  </Label>
-                  <Input
-                    id="clinicCode"
-                    placeholder="e.g., ABC123XYZ"
-                    value={clinicCode}
-                    onChange={(e) => setClinicCode(e.target.value.toUpperCase())}
-                    disabled={isLoading}
-                    className="h-11 font-mono text-center tracking-wider"
-                  />
-                </div>
-
-                {error && (
-                  <Alert variant="destructive" className="mt-3 border-red-200 bg-red-50">
-                    <AlertCircle className="size-4" />
-                    <AlertDescription className="font-medium">{error}</AlertDescription>
-                  </Alert>
-                )}
-
-                <Button 
-                  type="submit" 
-                  className="w-full mt-4 h-11"
-                  disabled={isLoading || !clinicCode}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 size-4 animate-spin" />
-                      Verifying...
-                    </>
-                  ) : (
-                    <>
-                      Continue to Clinic
-                      <ArrowRight className="ml-2 size-4" />
-                    </>
-                  )}
-                </Button>
+  if (showClinicForm) {
+    return (
+      <AuthLayout variant="centered" showBackButton backHref="/login/clinic-select" backLabel="Back">
+        <div className="max-w-md mx-auto">
+          <form onSubmit={handleClinicSubmit} className="space-y-6 bg-white p-6 sm:p-8 rounded-2xl shadow-2xl border-2 border-primary/20">
+            <div className="text-center mb-6">
+              <div className="mx-auto mb-4 w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center">
+                <Building2 className="size-8 text-primary" />
               </div>
-            </form>
-
-            {/* Divider */}
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t-2"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-3 bg-card text-muted-foreground font-medium">
-                  OR
-                </span>
-              </div>
-            </div>
-
-            {/* Option 2: Individual Practitioner */}
-            <div className="p-5 border-2 rounded-lg hover:bg-muted/50 transition-colors">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <User className="size-5 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg">Individual Practitioner</h3>
-                  <p className="text-sm text-muted-foreground">
-                    For independent dental professionals
-                  </p>
-                </div>
-              </div>
-              <Button 
-                variant="outline" 
-                className="w-full h-11"
-                onClick={() => router.push("/login/individual")}
-              >
-                Continue as Individual
-                <ArrowRight className="ml-2 size-4" />
-              </Button>
-            </div>
-
-            {/* Setup Links */}
-            <div className="pt-4 border-t text-center space-y-3">
+              <h2 className="text-2xl font-bold mb-2">Enter Clinic Code</h2>
               <p className="text-sm text-muted-foreground">
-                Don't have an account?
+                Enter the unique code provided by your clinic
               </p>
-              <div className="flex gap-3 justify-center text-sm">
-                <Link
-                  href="/signup/clinic"
-                  className="text-primary hover:underline font-semibold"
-                >
-                  Setup Clinic
-                </Link>
-                <span className="text-muted-foreground">•</span>
-                <Link
-                  href="/signup/individual"
-                  className="text-primary hover:underline font-semibold"
-                >
-                  Setup Individual Practice
-                </Link>
-              </div>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Footer */}
-        <div className="mt-8 text-center text-sm text-muted-foreground">
-          <p>© 2024 MediCare. All rights reserved.</p>
+            <AuthInput
+              id="clinicCode"
+              label="Clinic Code"
+              type="text"
+              placeholder="e.g., ABC123XYZ"
+              value={clinicCode}
+              onChange={(val) => setClinicCode(val.toUpperCase())}
+              disabled={isLoading}
+              helperText="Clinic codes are case-insensitive and alphanumeric"
+            />
+
+            {error && (
+              <Alert variant="destructive" className="border-red-200 bg-red-50">
+                <AlertCircle className="size-4" />
+                <AlertDescription className="font-medium">{error}</AlertDescription>
+              </Alert>
+            )}
+
+            <Button 
+              type="submit" 
+              className="w-full h-12 text-base font-semibold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg"
+              disabled={isLoading || !clinicCode}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Verifying...
+                </>
+              ) : (
+                "Continue to Clinic Login"
+              )}
+            </Button>
+          </form>
+        </div>
+      </AuthLayout>
+    );
+  }
+
+  return (
+    <AuthLayout
+      variant="centered"
+      title="Welcome Back!"
+      subtitle="Choose your account type to sign in"
+    >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+        <ChoiceCard
+          icon={<Building2 className="size-10 text-primary" />}
+          title="Clinic/Practice"
+          description="For clinic staff and employees"
+          features={[
+            "Access your clinic's patient records",
+            "Manage appointments and treatments",
+            "Collaborate with your team",
+          ]}
+          buttonText="Sign in as Clinic Staff"
+          onClick={() => setShowClinicForm(true)}
+          recommended
+        />
+
+        <ChoiceCard
+          icon={<User className="size-10 text-blue-600" />}
+          title="Individual Practitioner"
+          description="For independent dental professionals"
+          features={[
+            "Manage your own practice",
+            "Independent patient records",
+            "Personal dashboard and tools",
+          ]}
+          buttonText="Sign in as Individual"
+          onClick={() => router.push("/login/individual")}
+          variant="outline"
+        />
+      </div>
+
+      <div className="mt-12 text-center max-w-2xl mx-auto">
+        <p className="text-sm text-muted-foreground mb-3">
+          Don't have an account?
+        </p>
+        <div className="flex flex-wrap gap-4 justify-center">
+          <Button
+            variant="link"
+            onClick={() => router.push("/signup/clinic")}
+            className="text-primary hover:underline font-semibold"
+          >
+            Setup Clinic
+          </Button>
+          <span className="text-muted-foreground">•</span>
+          <Button
+            variant="link"
+            onClick={() => router.push("/signup/individual")}
+            className="text-primary hover:underline font-semibold"
+          >
+            Setup Individual Practice
+          </Button>
         </div>
       </div>
-    </div>
+    </AuthLayout>
   );
 }
-

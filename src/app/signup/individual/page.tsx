@@ -4,13 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PasswordStrength } from "@/components/ui/password-strength";
-import { Stethoscope, Loader2, AlertCircle, User, Mail, Lock, ArrowLeft, Sparkles } from "lucide-react";
+import { Loader2, AlertCircle, User, Mail, Lock } from "lucide-react";
+import { AuthLayout } from "@/components/auth/auth-layout";
+import { AuthCard } from "@/components/auth/auth-card";
+import { AuthInput } from "@/components/auth/auth-input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function IndividualSignupPage() {
   const router = useRouter();
@@ -85,232 +86,161 @@ export default function IndividualSignupPage() {
 
   if (emailSent) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 via-cyan-50 to-blue-50 p-4">
-        <Card className="w-full max-w-md shadow-2xl">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center">
-              <Mail className="size-10 text-primary" />
+      <AuthLayout variant="split">
+        <Card className="shadow-2xl border-2 border-primary/20">
+          <CardHeader className="text-center pb-6">
+            <div className="mx-auto mb-4 w-20 h-20 bg-green-50 rounded-full flex items-center justify-center">
+              <Mail className="size-10 text-green-600" />
             </div>
             <CardTitle className="text-2xl">Check Your Email!</CardTitle>
             <CardDescription>We've sent you a verification link</CardDescription>
           </CardHeader>
           <CardContent className="text-center space-y-4">
             <p className="text-muted-foreground">
-              We sent a verification email to <strong>{formData.email}</strong>
+              We sent a verification email to <strong className="text-foreground">{formData.email}</strong>
             </p>
             <p className="text-sm text-muted-foreground">
-              Click the link in the email to verify your account and start using MediCare.
+              Click the link in the email to verify your account and start using DentaEdge.
             </p>
             <div className="pt-4">
-              <Button onClick={() => router.push("/login/individual")} className="w-full">
+              <Button onClick={() => router.push("/login/individual")} className="w-full h-12">
                 Go to Login
               </Button>
             </div>
           </CardContent>
         </Card>
-      </div>
+      </AuthLayout>
     );
   }
 
   return (
-    <div className="min-h-screen flex relative bg-gradient-to-br from-cyan-50 via-cyan-50 to-blue-50">
-      {/* Left Side - Logo and Branding */}
-      <div className="hidden lg:flex lg:w-1/2 items-center justify-center p-12 bg-gradient-to-br from-primary/5 to-primary/10">
-        <div className="max-w-md text-center">
-          <div className="relative inline-block mb-6">
-            <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full"></div>
-            <div className="relative bg-gradient-to-br from-primary to-primary/80 p-8 rounded-2xl shadow-lg">
-              <Stethoscope className="size-16 text-white" />
-            </div>
+    <AuthLayout variant="split" showBackButton backHref="/signup" backLabel="Back to signup options">
+      <AuthCard
+        title="Create Individual Account"
+        description="Setup your personal dental practice"
+        icon={<User className="size-8 text-blue-600" />}
+        iconBgColor="bg-blue-100"
+        footerContent={
+          <div className="text-sm text-center">
+            <span className="text-muted-foreground">Already have an account? </span>
+            <Link href="/login/individual" className="text-primary hover:underline font-semibold transition-colors">
+              Sign in instead
+            </Link>
           </div>
-          <h1 className="text-6xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent mb-4">
-            MediCare
-          </h1>
-          <p className="text-xl text-muted-foreground flex items-center justify-center gap-2">
-            <Sparkles className="size-5 text-primary" />
-            Your trusted dental care partner
-          </p>
-        </div>
-      </div>
+        }
+      >
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <AuthInput
+            id="name"
+            label="Full Name"
+            type="text"
+            icon={<User className="size-4" />}
+            placeholder="Dr. John Smith"
+            value={formData.name}
+            onChange={(val) => setFormData({ ...formData, name: val })}
+            required
+            disabled={isLoading}
+          />
 
-      {/* Right Side - Signup Form */}
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-12">
-        <div className="w-full max-w-md">
-          {/* Back Button */}
-          <button
-            onClick={() => router.push("/signup")}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4 sm:mb-6 transition-colors touch-manipulation"
-          >
-            <ArrowLeft className="size-4" />
-            Back to signup options
-          </button>
+          <AuthInput
+            id="email"
+            label="Email Address"
+            type="email"
+            icon={<Mail className="size-4" />}
+            placeholder="john@example.com"
+            value={formData.email}
+            onChange={(val) => setFormData({ ...formData, email: val })}
+            required
+            disabled={isLoading}
+            autoComplete="email"
+          />
 
-          {/* Mobile Logo */}
-          <div className="lg:hidden text-center mb-6 sm:mb-8">
-            <div className="relative inline-block mb-3 sm:mb-4">
-              <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full"></div>
-              <div className="relative bg-gradient-to-br from-primary to-primary/80 p-3 sm:p-4 rounded-2xl shadow-lg">
-                <Stethoscope className="size-7 sm:size-8 text-white" />
-              </div>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent mb-2">
-              MediCare
-            </h1>
+          <div className="space-y-2">
+            <AuthInput
+              id="password"
+              label="Password"
+              type="password"
+              icon={<Lock className="size-4" />}
+              placeholder="••••••••"
+              value={formData.password}
+              onChange={(val) => setFormData({ ...formData, password: val })}
+              required
+              disabled={isLoading}
+              showPasswordToggle
+              helperText="Must be at least 8 characters"
+            />
+            {formData.password && (
+              <PasswordStrength password={formData.password} />
+            )}
           </div>
 
-          <Card className="shadow-2xl border-0 backdrop-blur-sm bg-white/95">
-            <CardHeader className="space-y-1 text-center pb-4 sm:pb-6 px-4 sm:px-6">
-              <CardTitle className="text-xl sm:text-2xl font-bold">Create Individual Account</CardTitle>
-              <CardDescription className="text-sm sm:text-base">
-                Setup your independent practice account
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="px-4 sm:px-6">
-              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-sm font-medium flex items-center gap-2">
-                    <User className="size-4" />
-                    Full Name
-                  </Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    placeholder="Dr. John Doe"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                    disabled={isLoading}
-                    className="h-11 sm:h-12 border-2 focus:border-primary transition-colors text-base"
-                    autoComplete="name"
-                  />
-                </div>
+          <AuthInput
+            id="confirmPassword"
+            label="Confirm Password"
+            type="password"
+            icon={<Lock className="size-4" />}
+            placeholder="••••••••"
+            value={formData.confirmPassword}
+            onChange={(val) => setFormData({ ...formData, confirmPassword: val })}
+            required
+            disabled={isLoading}
+            showPasswordToggle
+          />
 
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
-                    <Mail className="size-4" />
-                    Email Address
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="john@example.com"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    required
-                    disabled={isLoading}
-                    className="h-11 sm:h-12 border-2 focus:border-primary transition-colors text-base"
-                    autoComplete="email"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-medium flex items-center gap-2">
-                    <Lock className="size-4" />
-                    Password
-                  </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    required
-                    disabled={isLoading}
-                    className="h-11 sm:h-12 border-2 focus:border-primary transition-colors text-base"
-                    autoComplete="new-password"
-                  />
-                  {formData.password && <PasswordStrength password={formData.password} />}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword" className="text-sm font-medium flex items-center gap-2">
-                    <Lock className="size-4" />
-                    Confirm Password
-                  </Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    placeholder="••••••••"
-                    value={formData.confirmPassword}
-                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                    required
-                    disabled={isLoading}
-                    className="h-11 sm:h-12 border-2 focus:border-primary transition-colors text-base"
-                    autoComplete="new-password"
-                  />
-                </div>
-
-                {/* Terms and Privacy */}
-                <div className="space-y-3 pt-2">
-                  <div className="flex items-start space-x-2">
-                    <Checkbox
-                      id="terms"
-                      checked={agreedToTerms}
-                      onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
-                      className="mt-1"
-                    />
-                    <label htmlFor="terms" className="text-sm text-muted-foreground leading-tight cursor-pointer">
-                      I agree to the{" "}
-                      <Link href="/terms-of-service" target="_blank" className="text-primary hover:underline font-medium">
-                        Terms of Service
-                      </Link>
-                    </label>
-                  </div>
-                  <div className="flex items-start space-x-2">
-                    <Checkbox
-                      id="privacy"
-                      checked={agreedToPrivacy}
-                      onCheckedChange={(checked) => setAgreedToPrivacy(checked as boolean)}
-                      className="mt-1"
-                    />
-                    <label htmlFor="privacy" className="text-sm text-muted-foreground leading-tight cursor-pointer">
-                      I agree to the{" "}
-                      <Link href="/privacy-policy" target="_blank" className="text-primary hover:underline font-medium">
-                        Privacy Policy
-                      </Link>
-                    </label>
-                  </div>
-                </div>
-
-                {error && (
-                  <Alert variant="destructive" className="border-red-200 bg-red-50">
-                    <AlertCircle className="size-4" />
-                    <AlertDescription className="font-medium">{error}</AlertDescription>
-                  </Alert>
-                )}
-
-                <Button
-                  type="submit"
-                  className="w-full h-12 text-base font-semibold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200 touch-manipulation"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 size-5 animate-spin" />
-                      Creating account...
-                    </>
-                  ) : (
-                    "Create Account & Continue"
-                  )}
-                </Button>
-              </form>
-
-              <div className="mt-4 sm:mt-6 text-sm text-center pb-4">
-                <span className="text-muted-foreground">Already have an account? </span>
-                <Link href="/login/individual" className="text-primary hover:underline font-semibold transition-colors touch-manipulation">
-                  Sign in
+          {/* Terms and Privacy */}
+          <div className="space-y-3 pt-2">
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                id="terms"
+                checked={agreedToTerms}
+                onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
+              />
+              <label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer select-none leading-relaxed">
+                I agree to the{" "}
+                <Link href="/terms" className="text-primary hover:underline font-medium">
+                  Terms of Service
                 </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+              </label>
+            </div>
 
-      {/* Footer */}
-      <div className="absolute bottom-8 left-0 right-0 text-center text-sm text-muted-foreground">
-        <p>© 2024 MediCare. All rights reserved.</p>
-      </div>
-    </div>
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                id="privacy"
+                checked={agreedToPrivacy}
+                onCheckedChange={(checked) => setAgreedToPrivacy(checked as boolean)}
+              />
+              <label htmlFor="privacy" className="text-sm text-muted-foreground cursor-pointer select-none leading-relaxed">
+                I agree to the{" "}
+                <Link href="/privacy" className="text-primary hover:underline font-medium">
+                  Privacy Policy
+                </Link>
+              </label>
+            </div>
+          </div>
+
+          {error && (
+            <Alert variant="destructive" className="border-red-200 bg-red-50">
+              <AlertCircle className="size-4" />
+              <AlertDescription className="font-medium">{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <Button
+            type="submit"
+            className="w-full h-12 text-base font-semibold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200 touch-manipulation"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 size-5 animate-spin" />
+                Creating Account...
+              </>
+            ) : (
+              "Create Account"
+            )}
+          </Button>
+        </form>
+      </AuthCard>
+    </AuthLayout>
   );
 }
-

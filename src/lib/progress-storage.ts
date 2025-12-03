@@ -20,7 +20,7 @@ export interface OnboardingProgress {
   lastSaved: string;
 }
 
-const STORAGE_KEY = "medicare_onboarding_progress";
+const STORAGE_KEY = "DentaEdge_onboarding_progress";
 
 export function saveOnboardingProgress(progress: OnboardingProgress) {
   if (typeof window !== "undefined") {

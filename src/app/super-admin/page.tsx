@@ -71,7 +71,7 @@ export default function SuperAdminLoginPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@medicare.com"
+                placeholder="admin@DentaEdge.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required

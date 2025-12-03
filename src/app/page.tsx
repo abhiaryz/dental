@@ -157,7 +157,7 @@ export default function LandingPage() {
               <Stethoscope className="h-5 w-5" />
             </span>
             <span className="text-xl font-bold tracking-tight text-slate-900">
-              MediCare
+              DentaEdge
             </span>
           </Link>
 
@@ -601,7 +601,7 @@ export default function LandingPage() {
               Ready to Transform Your Practice?
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-teal-100">
-              Join 500+ dental clinics across India already using MediCare.
+              Join 500+ dental clinics across India already using DentaEdge.
               Start your free trial today.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -615,7 +615,7 @@ export default function LandingPage() {
                 </Button>
               </Link>
               <Link
-                href="mailto:hello@medicare.health"
+                href="mailto:hello@DentaEdge.health"
                 className="text-base font-medium text-teal-100 hover:text-white"
               >
                 Contact Sales →
@@ -636,7 +636,7 @@ export default function LandingPage() {
                   <Stethoscope className="h-5 w-5" />
                 </span>
                 <span className="text-xl font-bold text-slate-900">
-                  MediCare
+                  DentaEdge
                 </span>
               </Link>
               <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-600">
@@ -709,7 +709,7 @@ export default function LandingPage() {
           {/* Bottom */}
           <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-slate-200 pt-8 sm:flex-row">
             <p className="text-sm text-slate-500">
-              © {new Date().getFullYear()} MediCare. All rights reserved.
+              © {new Date().getFullYear()} DentaEdge. All rights reserved.
             </p>
             <div className="flex items-center gap-4 text-sm text-slate-500">
               <span>Made in India 🇮🇳</span>

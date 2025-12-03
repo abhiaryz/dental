@@ -60,12 +60,12 @@ export default function DoctorsPage() {
         <header className="space-y-4">
           <span className="inline-flex items-center gap-2 rounded-full border border-sky-200/70 bg-white/80 px-4 py-1 text-sm font-medium text-sky-700 shadow-sm">
             <Stethoscope className="h-4 w-4" />
-            Find MediCare doctors
+            Find DentaEdge doctors
           </span>
           <div className="space-y-3">
-            <h1 className="text-3xl font-semibold text-slate-900 sm:text-4xl">Doctors using MediCare across India</h1>
+            <h1 className="text-3xl font-semibold text-slate-900 sm:text-4xl">Doctors using DentaEdge across India</h1>
             <p className="text-base text-slate-600 sm:text-lg">
-              Search by city or browse the list below to connect with experienced dentists already managing their clinics on MediCare.
+              Search by city or browse the list below to connect with experienced dentists already managing their clinics on DentaEdge.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -129,7 +129,7 @@ export default function DoctorsPage() {
           <CardHeader>
             <CardTitle className="text-xl text-slate-900">Want your clinic listed here?</CardTitle>
             <CardDescription className="text-slate-600">
-              Sign up for MediCare and we will help you publish your clinic details across our referral network.
+              Sign up for DentaEdge and we will help you publish your clinic details across our referral network.
             </CardDescription>
           </CardHeader>
           <CardContent>

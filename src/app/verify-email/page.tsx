@@ -79,7 +79,7 @@ function VerifyEmailContent() {
           </CardHeader>
           <CardContent className="text-center space-y-4">
             <p className="text-muted-foreground">
-              You can now sign in and start using MediCare.
+              You can now sign in and start using DentaEdge.
             </p>
             <Button onClick={() => router.push("/login")} className="w-full">
               Continue to Login
@@ -103,7 +103,7 @@ function VerifyEmailContent() {
             </div>
           </div>
           <h1 className="text-6xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent mb-4">
-            MediCare
+            DentaEdge
           </h1>
           <p className="text-xl text-muted-foreground flex items-center justify-center gap-2">
             <Sparkles className="size-5 text-primary" />
@@ -123,7 +123,7 @@ function VerifyEmailContent() {
               </div>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent mb-2">
-              MediCare
+              DentaEdge
             </h1>
           </div>
 
@@ -143,7 +143,7 @@ function VerifyEmailContent() {
       </div>
 
       <div className="absolute bottom-4 sm:bottom-8 left-0 right-0 text-center text-xs sm:text-sm text-muted-foreground px-4">
-        <p>© 2024 MediCare. All rights reserved.</p>
+        <p>© 2024 DentaEdge. All rights reserved.</p>
       </div>
     </div>
   );

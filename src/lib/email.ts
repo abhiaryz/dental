@@ -71,7 +71,7 @@ export async function sendInvitationEmail(data: InvitationEmailData) {
           </head>
           <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-              <h1 style="color: white; margin: 0; font-size: 28px;">MediCare</h1>
+              <h1 style="color: white; margin: 0; font-size: 28px;">DentaEdge</h1>
             </div>
             
             <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #ddd; border-top: none;">
@@ -126,7 +126,7 @@ export async function sendInvitationEmail(data: InvitationEmailData) {
             </div>
             
             <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
-              <p>© 2024 MediCare. All rights reserved.</p>
+              <p>© 2024 DentaEdge. All rights reserved.</p>
             </div>
           </body>
         </html>
@@ -171,7 +171,7 @@ export async function sendVerificationEmail(data: EmailVerificationData) {
     const emailResult = await transporter.sendMail({
       from: process.env.SMTP_FROM_EMAIL || "noreply@aidcircle.in",
       to: data.to,
-      subject: "Verify Your Email - MediCare",
+      subject: "Verify Your Email - DentaEdge",
       html: `
         <!DOCTYPE html>
         <html>
@@ -182,7 +182,7 @@ export async function sendVerificationEmail(data: EmailVerificationData) {
           </head>
           <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-              <h1 style="color: white; margin: 0; font-size: 28px;">MediCare</h1>
+              <h1 style="color: white; margin: 0; font-size: 28px;">DentaEdge</h1>
             </div>
             
             <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #ddd; border-top: none;">
@@ -193,7 +193,7 @@ export async function sendVerificationEmail(data: EmailVerificationData) {
               </p>
               
               <p style="font-size: 16px;">
-                Thanks for signing up! Please verify your email address to complete your registration and access your MediCare account.
+                Thanks for signing up! Please verify your email address to complete your registration and access your DentaEdge account.
               </p>
               
               <div style="text-align: center; margin: 30px 0;">
@@ -225,13 +225,13 @@ export async function sendVerificationEmail(data: EmailVerificationData) {
               <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
               
               <p style="font-size: 14px; color: #666;">
-                <strong>Didn't sign up for MediCare?</strong><br>
+                <strong>Didn't sign up for DentaEdge?</strong><br>
                 If you didn't create an account, you can safely ignore this email.
               </p>
             </div>
             
             <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
-              <p>© 2024 MediCare. All rights reserved.</p>
+              <p>© 2024 DentaEdge. All rights reserved.</p>
             </div>
           </body>
         </html>
@@ -258,18 +258,18 @@ export async function sendWelcomeEmail(data: WelcomeEmailData) {
     const emailResult = await transporter.sendMail({
       from: process.env.SMTP_FROM_EMAIL || "noreply@aidcircle.in",
       to: data.to,
-      subject: `Welcome to MediCare${data.clinicName ? ` - ${data.clinicName}` : ''}!`,
+      subject: `Welcome to DentaEdge${data.clinicName ? ` - ${data.clinicName}` : ''}!`,
       html: `
         <!DOCTYPE html>
         <html>
           <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Welcome to MediCare</title>
+            <title>Welcome to DentaEdge</title>
           </head>
           <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-              <h1 style="color: white; margin: 0; font-size: 28px;">🎉 Welcome to MediCare!</h1>
+              <h1 style="color: white; margin: 0; font-size: 28px;">🎉 Welcome to DentaEdge!</h1>
             </div>
             
             <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #ddd; border-top: none;">
@@ -325,7 +325,7 @@ export async function sendWelcomeEmail(data: WelcomeEmailData) {
             </div>
             
             <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
-              <p>© 2024 MediCare. All rights reserved.</p>
+              <p>© 2024 DentaEdge. All rights reserved.</p>
             </div>
           </body>
         </html>
@@ -346,7 +346,7 @@ export async function sendPasswordResetEmail(data: PasswordResetEmailData) {
     const emailResult = await transporter.sendMail({
       from: process.env.SMTP_FROM_EMAIL || "noreply@aidcircle.in",
       to: data.to,
-      subject: "Reset Your Password - MediCare",
+      subject: "Reset Your Password - DentaEdge",
       html: `
         <!DOCTYPE html>
         <html>
@@ -357,7 +357,7 @@ export async function sendPasswordResetEmail(data: PasswordResetEmailData) {
           </head>
           <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-              <h1 style="color: white; margin: 0; font-size: 28px;">MediCare</h1>
+              <h1 style="color: white; margin: 0; font-size: 28px;">DentaEdge</h1>
             </div>
             
             <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #ddd; border-top: none;">
@@ -368,7 +368,7 @@ export async function sendPasswordResetEmail(data: PasswordResetEmailData) {
               </p>
               
               <p style="font-size: 16px;">
-                We received a request to reset your password for your MediCare account. Click the button below to create a new password:
+                We received a request to reset your password for your DentaEdge account. Click the button below to create a new password:
               </p>
               
               <div style="text-align: center; margin: 30px 0;">
@@ -406,7 +406,7 @@ export async function sendPasswordResetEmail(data: PasswordResetEmailData) {
             </div>
             
             <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
-              <p>© 2024 MediCare. All rights reserved.</p>
+              <p>© 2024 DentaEdge. All rights reserved.</p>
             </div>
           </body>
         </html>

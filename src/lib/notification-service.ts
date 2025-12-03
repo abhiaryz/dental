@@ -84,7 +84,7 @@ async function sendEmailNotification({
             ` : ''}
             <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;" />
             <p style="color: #999; font-size: 12px; margin-top: 20px;">
-              This is an automated notification from MediCare. If you wish to stop receiving these emails, please update your notification preferences in settings.
+              This is an automated notification from DentaEdge. If you wish to stop receiving these emails, please update your notification preferences in settings.
             </p>
           </div>
         </body>

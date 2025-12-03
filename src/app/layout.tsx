@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MediCare - Complete Dental Practice Management Solution",
+  title: "DentaEdge - Complete Dental Practice Management Solution",
   description: "Streamline your dental clinic operations with our all-in-one management system. Manage patients, appointments, inventory, and more from a single platform. Trusted by 500+ dental clinics across India.",
 };
 

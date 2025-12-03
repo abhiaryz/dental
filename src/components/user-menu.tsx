@@ -55,7 +55,7 @@ export function UserMenu() {
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{session?.user?.name || "User"}</p>
             <p className="text-xs leading-none text-muted-foreground">
-              {session?.user?.email || "user@medicare.com"}
+              {session?.user?.email || "user@DentaEdge.com"}
             </p>
           </div>
         </DropdownMenuLabel>
