@@ -139,12 +139,12 @@ describe('RBAC Permission Tests', () => {
   describe('External Doctor Role Permissions', () => {
     const role: Role = 'EXTERNAL_DOCTOR';
 
-    test('should have limited patient access (own patients only)', () => {
+    test('should have full access to own patients', () => {
       expect(hasPermission(role, Permissions.PATIENT_CREATE)).toBe(true);
       expect(hasPermission(role, Permissions.PATIENT_READ)).toBe(true);
       expect(hasPermission(role, Permissions.PATIENT_UPDATE)).toBe(true);
-      expect(hasPermission(role, Permissions.PATIENT_READ_ALL)).toBe(false);
-      expect(canAccessAllPatients(role)).toBe(false);
+      expect(hasPermission(role, Permissions.PATIENT_READ_ALL)).toBe(true);
+      expect(canAccessAllPatients(role)).toBe(true);
       expect(isExternalDoctor(role)).toBe(true);
     });
 
@@ -160,9 +160,9 @@ describe('RBAC Permission Tests', () => {
       expect(hasPermission(role, Permissions.PRESCRIPTION_FINALIZE)).toBe(true);
     });
 
-    test('should NOT have finance access', () => {
-      expect(hasPermission(role, Permissions.FINANCE_READ)).toBe(false);
-      expect(canAccessFinance(role)).toBe(false);
+    test('should have finance access', () => {
+      expect(hasPermission(role, Permissions.FINANCE_READ)).toBe(true);
+      expect(canAccessFinance(role)).toBe(true);
     });
 
     test('should NOT have inventory access', () => {
@@ -279,9 +279,9 @@ describe('RBAC Permission Tests', () => {
       expect(hasPermission(role, Permissions.DOCUMENT_CREATE)).toBe(false);
     });
 
-    test('should NOT have finance access', () => {
-      expect(hasPermission(role, Permissions.FINANCE_READ)).toBe(false);
-      expect(canAccessFinance(role)).toBe(false);
+    test('should have finance access', () => {
+      expect(hasPermission(role, Permissions.FINANCE_READ)).toBe(true);
+      expect(canAccessFinance(role)).toBe(true);
     });
 
     test('should NOT have staff management', () => {
@@ -331,7 +331,7 @@ describe('RBAC Permission Tests', () => {
       expect(getRoleName('CLINIC_DOCTOR')).toBe('Clinic Doctor');
       expect(getRoleName('HYGIENIST')).toBe('Hygienist/Assistant');
       expect(getRoleName('RECEPTIONIST')).toBe('Receptionist/Staff');
-      expect(getRoleName('EXTERNAL_DOCTOR')).toBe('External Doctor');
+      expect(getRoleName('EXTERNAL_DOCTOR')).toBe('Individual Doctor');
     });
 
     test('should return role descriptions', () => {
@@ -341,7 +341,7 @@ describe('RBAC Permission Tests', () => {
 
       expect(adminDesc).toContain('Full system access');
       expect(doctorDesc).toContain('Full clinical access');
-      expect(externalDesc).toContain('Segregated access');
+      expect(externalDesc).toContain('Full access to own patients');
     });
   });
 

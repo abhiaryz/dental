@@ -151,6 +151,7 @@ export const RolePermissions: Record<Role, Permission[]> = {
     Permissions.TREATMENT_UPDATE, // Can update but not finalize
     Permissions.APPOINTMENT_READ,
     Permissions.INVENTORY_READ,
+    Permissions.FINANCE_READ,
     Permissions.RAG_BASIC_QUESTIONS,
     Permissions.RAG_PATIENT_EDUCATION,
     Permissions.DOCUMENT_READ,
