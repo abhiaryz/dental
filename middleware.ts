@@ -1,21 +1,50 @@
-import { auth } from "@/auth";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export default auth((req) => {
+/**
+ * Lightweight middleware for Edge Runtime
+ * Checks for NextAuth session token without importing heavy dependencies
+ * This avoids importing PrismaClient, bcryptjs, and other heavy libraries
+ * that would exceed Vercel's 1 MB Edge Function size limit
+ * 
+ * Note: Middleware always runs on Edge Runtime in Next.js
+ */
+export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const isLoggedIn = !!req.auth;
+  
+  // Check for session token cookie (NextAuth uses this cookie name)
+  const sessionToken = req.cookies.get(
+    process.env.NODE_ENV === "production"
+      ? "__Secure-next-auth.session-token"
+      : "next-auth.session-token"
+  );
+  
+  const isLoggedIn = !!sessionToken;
 
   // Public pages that don't require authentication
   const publicPages = ["/", "/login", "/signup", "/forgot-password", "/home"];
-  const isPublicPage = publicPages.some(page => pathname === page || (page !== "/" && pathname.startsWith(page)));
-  
-  // Allow API auth routes
-  if (pathname.startsWith("/api/auth") || pathname.startsWith("/api/clinic")) {
+  const isPublicPage = publicPages.some(
+    (page) => pathname === page || (page !== "/" && pathname.startsWith(page))
+  );
+
+  // Allow API auth routes and static files
+  if (
+    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/clinic") ||
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/favicon.ico") ||
+    pathname.match(/\.(ico|png|jpg|jpeg|svg|css|js|woff|woff2|ttf|eot)$/)
+  ) {
     return NextResponse.next();
   }
 
   // If on public auth page and already logged in, redirect to dashboard
-  if (isLoggedIn && (pathname === "/login" || pathname.startsWith("/login") || pathname === "/signup" || pathname.startsWith("/signup"))) {
+  if (
+    isLoggedIn &&
+    (pathname === "/login" ||
+      pathname.startsWith("/login") ||
+      pathname === "/signup" ||
+      pathname.startsWith("/signup"))
+  ) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
@@ -39,7 +68,7 @@ export default auth((req) => {
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: [
