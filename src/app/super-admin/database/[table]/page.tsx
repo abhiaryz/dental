@@ -116,7 +116,7 @@ export default function TableDetailPage({
 
   // Start editing a record
   const handleEdit = (record: RecordData) => {
-    setEditingId(record.id);
+    setEditingId(record.id as string);
     setEditingData({ ...record });
   };
 
@@ -488,13 +488,13 @@ export default function TableDetailPage({
                   {/* Existing Records */}
                   {records.map((record) => (
                     <tr
-                      key={record.id}
+                      key={String(record.id ?? Math.random())}
                       className={`hover:bg-slate-50 ${
-                        editingId === record.id ? "bg-yellow-50" : ""
+                        editingId === String(record.id) ? "bg-yellow-50" : ""
                       }`}
                     >
                       <td className="sticky left-0 bg-white px-4 py-3">
-                        {editingId === record.id ? (
+                        {editingId === String(record.id) ? (
                           <div className="flex gap-1">
                             <Button
                               size="sm"

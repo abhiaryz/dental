@@ -33,7 +33,7 @@ export const GET = withSuperAdminAuth(
           // Use dynamic prisma model access
           const modelName =
             table.name.charAt(0).toLowerCase() + table.name.slice(1);
-          const model = (prisma as Record<string, { count?: () => Promise<number> }>)[modelName];
+          const model = (prisma as unknown as Record<string, { count?: () => Promise<number> }>)[modelName];
 
           if (model && typeof model.count === "function") {
             recordCount = await model.count();

@@ -34,6 +34,14 @@ export const patientSchema = z.object({
   bloodGroup: z.string().optional(),
   preferredPaymentMode: z.string().optional(),
   insuranceProvider: z.string().optional(),
+  // Additional fields
+  height: z.number().min(0).max(300).optional().nullable(),
+  weight: z.number().min(0).max(500).optional().nullable(),
+  alternateMobileNumber: z.string().optional().nullable(),
+  previousSurgeries: z.string().optional().nullable(),
+  dentalConcerns: z.string().optional().nullable(),
+  previousDentalWork: z.string().optional().nullable(),
+  sumInsured: z.number().min(0).optional().nullable(),
 });
 
 // Invoice item validation schema
@@ -155,6 +163,7 @@ export const documentUploadSchema = z.object({
       message: "Please select a document type",
     }
   ),
+  url: z.string().url("Invalid URL format").optional(),
   notes: z.string().optional(),
 });
 

@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth, AuthenticatedRequest, getPatientWhereClause } from "@/lib/auth-middleware";
 import { Permissions } from "@/lib/rbac";
+import { documentUploadSchema, validateData } from "@/lib/validation";
+import { sanitizeText } from "@/lib/sanitize";
+import { createErrorResponse } from "@/lib/api-errors";
 
 
 // GET - Fetch all documents for a patient
@@ -19,7 +22,12 @@ export const GET = withAuth(
       }
 
       // Verify patient access based on role
-      const patientWhere = getPatientWhereClause(req.user.id, req.user.role, req.user.isExternal);
+      const patientWhere = getPatientWhereClause(
+        req.user.id, 
+        req.user.role, 
+        req.user.isExternal,
+        req.user.clinicId
+      );
       const patient = await prisma.patient.findFirst({
         where: {
           id: patientId,
@@ -43,11 +51,8 @@ export const GET = withAuth(
 
       return NextResponse.json(documents);
     } catch (error) {
-      console.error("Error fetching documents:", error);
-      return NextResponse.json(
-        { error: "Failed to fetch documents" },
-        { status: 500 }
-      );
+      const errorResponse = createErrorResponse(error, "Failed to fetch documents");
+      return NextResponse.json(errorResponse.body, { status: errorResponse.status });
     }
   },
   {
@@ -60,25 +65,35 @@ export const GET = withAuth(
 export const POST = withAuth(
   async (req: AuthenticatedRequest) => {
     try {
-      const body = await req.json();
+      let body;
+      try {
+        body = await req.json();
+      } catch {
+        return NextResponse.json(
+          { error: "Invalid JSON in request body" },
+          { status: 400 }
+        );
+      }
 
-      // Validate required fields
-      const requiredFields = ["patientId", "name", "type", "url"];
-
-      for (const field of requiredFields) {
-        if (!body[field]) {
-          return NextResponse.json(
-            { error: `${field} is required` },
-            { status: 400 }
-          );
-        }
+      // Validate request body using Zod schema
+      const validation = validateData(documentUploadSchema, body);
+      if (!validation.success) {
+        return NextResponse.json(
+          { error: "Validation failed", details: validation.errors },
+          { status: 400 }
+        );
       }
 
       // Verify patient access based on role
-      const patientWhere = getPatientWhereClause(req.user.id, req.user.role, req.user.isExternal);
+      const patientWhere = getPatientWhereClause(
+        req.user.id, 
+        req.user.role, 
+        req.user.isExternal,
+        req.user.clinicId
+      );
       const patient = await prisma.patient.findFirst({
         where: {
-          id: body.patientId,
+          id: validation.data.patientId,
           ...patientWhere,
         },
       });
@@ -90,17 +105,23 @@ export const POST = withAuth(
         );
       }
 
+      // Sanitize string fields
+      const documentData = {
+        patientId: validation.data.patientId,
+        name: sanitizeText(validation.data.name),
+        type: validation.data.type,
+        url: validation.data.url || body.url, // URL from validated data or fallback
+        notes: validation.data.notes ? sanitizeText(validation.data.notes) : undefined,
+      };
+
       const document = await prisma.document.create({
-        data: body,
+        data: documentData,
       });
 
       return NextResponse.json(document, { status: 201 });
     } catch (error) {
-      console.error("Error creating document:", error);
-      return NextResponse.json(
-        { error: "Failed to create document" },
-        { status: 500 }
-      );
+      const errorResponse = createErrorResponse(error, "Failed to create document");
+      return NextResponse.json(errorResponse.body, { status: errorResponse.status });
     }
   },
   {

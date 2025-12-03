@@ -6,6 +6,7 @@ import { createErrorResponse } from "@/lib/api-errors";
 import { checkRateLimit } from "@/lib/rate-limiter";
 import { createAuditLog, AuditActions } from "@/lib/audit-logger";
 import { appointmentUpdateSchema, validateData } from "@/lib/validation";
+import { sanitizeAppointmentData } from "@/lib/sanitize";
 
 // GET - Fetch a single appointment
 export const GET = withAuth(
@@ -97,11 +98,20 @@ export const PUT = withAuth(
         return NextResponse.json({ error: "Appointment not found or access denied" }, { status: 404 });
       }
 
+      // Sanitize string fields to prevent XSS
+      const sanitizedData = sanitizeAppointmentData(validation.data);
+
+      // Prepare update data
+      const updateData: any = { ...sanitizedData };
+      if (updateData.date) {
+        updateData.date = new Date(updateData.date);
+      }
+
       const appointment = await prisma.appointment.update({
         where: {
           id,
         },
-        data: validation.data,
+        data: updateData,
         include: {
           patient: {
             select: {

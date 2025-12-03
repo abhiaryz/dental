@@ -4,6 +4,8 @@ import { withAuth, AuthenticatedRequest, getPatientWhereClause } from "@/lib/aut
 import { Permissions } from "@/lib/rbac";
 import { createErrorResponse } from "@/lib/api-errors";
 import { checkRateLimit } from "@/lib/rate-limiter";
+import { appointmentSchema, validateData } from "@/lib/validation";
+import { sanitizeAppointmentData } from "@/lib/sanitize";
 
 // GET - Fetch all appointments based on role
 export const GET = withAuth(
@@ -106,23 +108,20 @@ export const POST = withAuth(
         );
       }
 
-      // Validate required fields
-      const requiredFields = ["patientId", "date", "time", "type"];
-
-      for (const field of requiredFields) {
-        if (!body[field]) {
-          return NextResponse.json(
-            { error: `${field} is required` },
-            { status: 400 }
-          );
-        }
+      // Validate request body using Zod schema
+      const validation = validateData(appointmentSchema, body);
+      if (!validation.success) {
+        return NextResponse.json(
+          { error: "Validation failed", details: validation.errors },
+          { status: 400 }
+        );
       }
 
       // Verify patient access based on role with proper clinic isolation
       const patientWhere = getPatientWhereClause(req.user.id, req.user.role, req.user.isExternal, req.user.clinicId);
       const patient = await prisma.patient.findFirst({
         where: {
-          id: body.patientId,
+          id: validation.data.patientId,
           ...patientWhere,
         },
       });
@@ -134,8 +133,18 @@ export const POST = withAuth(
         );
       }
 
+      // Sanitize string fields to prevent XSS
+      const sanitizedData = sanitizeAppointmentData(validation.data);
+
+      // Prepare appointment data
+      const appointmentData: any = {
+        ...sanitizedData,
+        date: new Date(sanitizedData.date),
+        patientId: sanitizedData.patientId,
+      };
+
       const appointment = await prisma.appointment.create({
-        data: body,
+        data: appointmentData,
         include: {
           patient: {
             select: {

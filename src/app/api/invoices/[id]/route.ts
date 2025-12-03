@@ -5,6 +5,7 @@ import { checkPermission } from "@/lib/rbac";
 import { AppError, ErrorCodes, createErrorResponse } from "@/lib/api-errors";
 import { checkRateLimit } from "@/lib/rate-limiter";
 import { invoiceUpdateSchema, validateData } from "@/lib/validation";
+import { sanitizeInvoiceData } from "@/lib/sanitize";
 
 
 // GET - Get single invoice
@@ -107,15 +108,16 @@ export async function PUT(
       throw new AppError("Validation failed", ErrorCodes.VALIDATION_ERROR, 400, validation.errors);
     }
 
-    const validatedData = validation.data;
+    // Sanitize string fields to prevent XSS
+    const sanitizedData = sanitizeInvoiceData(validation.data);
 
     const invoice = await prisma.invoice.update({
       where: { id },
       data: {
-        status: validatedData.status,
-        notes: validatedData.notes,
-        dueDate: validatedData.dueDate ? new Date(validatedData.dueDate) : undefined,
-        paidDate: validatedData.status === "PAID" ? new Date() : undefined,
+        status: sanitizedData.status,
+        notes: sanitizedData.notes,
+        dueDate: sanitizedData.dueDate ? new Date(sanitizedData.dueDate) : undefined,
+        paidDate: sanitizedData.status === "PAID" ? new Date() : undefined,
       },
       include: {
         patient: true,

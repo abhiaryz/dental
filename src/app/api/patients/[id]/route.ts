@@ -4,7 +4,7 @@ import { withAuth, AuthenticatedRequest, verifyPatientAccess } from "@/lib/auth-
 import { Permissions } from "@/lib/rbac";
 import { patientUpdateSchema, validateData } from "@/lib/validation";
 import { sanitizePatientData } from "@/lib/sanitize";
-import { createErrorResponse, AppError, ErrorCodes } from "@/lib/api-errors";
+import { createErrorResponse } from "@/lib/api-errors";
 
 // GET - Fetch a single patient with all related data
 export const GET = withAuth(
@@ -157,13 +157,14 @@ export const DELETE = withAuth(
     try {
       const { id } = await params;
       
-      // Verify patient access based on role
+      // Verify patient access based on role and clinic
       const { error } = await verifyPatientAccess(
         id,
         req.user.id,
         req.user.role,
         req.user.isExternal,
-        prisma
+        prisma,
+        req.user.clinicId
       );
 
       if (error) return error;

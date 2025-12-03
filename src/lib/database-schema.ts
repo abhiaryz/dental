@@ -79,10 +79,11 @@ export function getTableMetadata(tableName: string): TableMetadata | null {
   const fields: FieldMetadata[] = model.fields.map((field) => {
     const isId = field.isId || field.name === "id";
     const isSensitive = SENSITIVE_FIELDS.includes(field.name);
-    const isReadOnly =
+    const isReadOnly = Boolean(
       READ_ONLY_FIELDS.includes(field.name) ||
       field.isGenerated ||
-      field.isUpdatedAt;
+      field.isUpdatedAt
+    );
 
     let enumValues: string[] | undefined;
     if (field.kind === "enum") {
@@ -105,7 +106,7 @@ export function getTableMetadata(tableName: string): TableMetadata | null {
       enumValues,
       relationName: field.relationName || undefined,
       relationToFields: field.relationToFields?.length
-        ? field.relationToFields
+        ? [...field.relationToFields]
         : undefined,
     };
   });

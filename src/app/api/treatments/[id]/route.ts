@@ -5,6 +5,7 @@ import { Permissions } from "@/lib/rbac";
 import { createErrorResponse } from "@/lib/api-errors";
 import { checkRateLimit } from "@/lib/rate-limiter";
 import { treatmentUpdateSchema, validateData } from "@/lib/validation";
+import { sanitizeTreatmentData } from "@/lib/sanitize";
 
 // Helper to build treatment where clause with proper multi-tenancy isolation
 function getTreatmentWhereClause(
@@ -127,12 +128,24 @@ export const PUT = withAuth(
         return NextResponse.json({ error: "Treatment not found or access denied" }, { status: 404 });
       }
 
-      // Use validated data (schema already excludes sensitive fields like userId, patientId)
+      // Sanitize string fields to prevent XSS
+      const sanitizedData = sanitizeTreatmentData(validation.data);
+
+      // Prepare update data
+      const updateData: any = { ...sanitizedData };
+      if (updateData.treatmentDate) {
+        updateData.treatmentDate = new Date(updateData.treatmentDate);
+      }
+      if (updateData.followUpDate) {
+        updateData.followUpDate = updateData.followUpDate ? new Date(updateData.followUpDate) : null;
+      }
+
+      // Use sanitized data (schema already excludes sensitive fields like userId, patientId)
       const treatment = await prisma.treatment.update({
         where: {
           id,
         },
-        data: validation.data,
+        data: updateData,
         include: {
           patient: {
             select: {

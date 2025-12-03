@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { checkPermission } from "@/lib/rbac";
 import { AppError, ErrorCodes, createErrorResponse } from "@/lib/api-errors";
+import { invoiceSchema, validateData } from "@/lib/validation";
+import { sanitizeInvoiceData } from "@/lib/sanitize";
 
 // Generate unique invoice number
 function generateInvoiceNumber(): string {
@@ -152,15 +154,24 @@ export async function POST(request: NextRequest) {
       throw new AppError("You don't have permission to create invoices", ErrorCodes.FORBIDDEN, 403);
     }
 
-    const data = await request.json();
-
-    // Validate required fields
-    if (!data.patientId || !data.items || data.items.length === 0) {
-      throw new AppError("Patient and items are required", ErrorCodes.VALIDATION_ERROR, 400);
+    let data;
+    try {
+      data = await request.json();
+    } catch {
+      throw new AppError("Invalid JSON in request body", ErrorCodes.VALIDATION_ERROR, 400);
     }
 
+    // Validate request body using Zod schema
+    const validation = validateData(invoiceSchema, data);
+    if (!validation.success) {
+      throw new AppError("Validation failed", ErrorCodes.VALIDATION_ERROR, 400, validation.errors);
+    }
+
+    // Sanitize string fields to prevent XSS
+    const sanitizedData = sanitizeInvoiceData(validation.data);
+
     // Calculate amounts
-    const amount = data.items.reduce((sum: number, item: any) => 
+    const amount = sanitizedData.items.reduce((sum: number, item: any) => 
       sum + (item.quantity * item.unitPrice), 0
     );
     const taxAmount = data.taxAmount || 0;
@@ -171,8 +182,8 @@ export async function POST(request: NextRequest) {
     const invoiceNumber = generateInvoiceNumber();
 
     // Set due date (default: 15 days from now)
-    const dueDate = data.dueDate ? new Date(data.dueDate) : new Date();
-    if (!data.dueDate) {
+    const dueDate = sanitizedData.dueDate ? new Date(sanitizedData.dueDate) : new Date();
+    if (!sanitizedData.dueDate) {
       dueDate.setDate(dueDate.getDate() + 15);
     }
 
@@ -180,7 +191,7 @@ export async function POST(request: NextRequest) {
     const invoice = await prisma.invoice.create({
       data: {
         invoiceNumber,
-        patientId: data.patientId,
+        patientId: sanitizedData.patientId,
         treatmentId: data.treatmentId || null,
         amount,
         taxAmount,
@@ -188,11 +199,11 @@ export async function POST(request: NextRequest) {
         totalAmount,
         status: data.status || "PENDING",
         dueDate,
-        notes: data.notes,
+        notes: sanitizedData.notes,
         clinicId: userClinicId,
         createdBy: userId,
         items: {
-          create: data.items.map((item: any) => ({
+          create: sanitizedData.items.map((item: any) => ({
             description: item.description,
             quantity: item.quantity,
             unitPrice: item.unitPrice,

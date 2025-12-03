@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth, AuthenticatedRequest, getPatientWhereClause } from "@/lib/auth-middleware";
 import { Permissions } from "@/lib/rbac";
-import { AppError, ErrorCodes, createErrorResponse } from "@/lib/api-errors";
+import { createErrorResponse } from "@/lib/api-errors";
+import { patientSchema, validateData } from "@/lib/validation";
+import { sanitizePatientData } from "@/lib/sanitize";
 
 // GET - Fetch all patients for the logged-in user based on role
 export const GET = withAuth(
@@ -73,66 +75,51 @@ export const GET = withAuth(
 export const POST = withAuth(
   async (req: AuthenticatedRequest) => {
     try {
-      const body = await req.json();
-
-      // Validate required fields
-      const requiredFields = [
-        "firstName",
-        "lastName",
-        "dateOfBirth",
-        "gender",
-        "mobileNumber",
-        "address",
-        "city",
-        "state",
-        "pinCode",
-      ];
-
-      for (const field of requiredFields) {
-        if (!body[field]) {
-          throw new AppError(
-            `${field} is required`,
-            ErrorCodes.VALIDATION_ERROR,
-            400
-          );
-        }
+      let body;
+      try {
+        body = await req.json();
+      } catch {
+        return NextResponse.json(
+          { error: "Invalid JSON in request body" },
+          { status: 400 }
+        );
       }
 
-      // Convert dateOfBirth to DateTime if it's just a date string
-      if (body.dateOfBirth && typeof body.dateOfBirth === "string") {
-        body.dateOfBirth = new Date(body.dateOfBirth);
+      // Validate request body using Zod schema
+      const validation = validateData(patientSchema, body);
+      if (!validation.success) {
+        return NextResponse.json(
+          { error: "Validation failed", details: validation.errors },
+          { status: 400 }
+        );
       }
 
-      // Extract only the fields that exist in the Patient model
-      const patientData = {
-        firstName: body.firstName,
-        lastName: body.lastName,
-        dateOfBirth: body.dateOfBirth,
-        gender: body.gender,
-        bloodGroup: body.bloodGroup || null,
-        height: body.height ? parseFloat(body.height) : null,
-        weight: body.weight ? parseFloat(body.weight) : null,
-        mobileNumber: body.mobileNumber,
-        alternateMobileNumber: body.alternateMobileNumber || null,
-        email: body.email || null,
-        address: body.address,
-        city: body.city,
-        state: body.state,
-        pinCode: body.pinCode,
-        aadharNumber: body.aadharNumber || null,
-        emergencyContactName: body.emergencyContactName || null,
-        emergencyMobileNumber: body.emergencyMobileNumber || null,
-        relationship: body.relationship || null,
-        medicalHistory: body.medicalHistory || null,
-        dentalHistory: body.dentalHistory || null,
-        allergies: body.allergies || null,
-        currentMedications: body.currentMedications || null,
-        previousSurgeries: body.previousSurgeries || null,
-        dentalConcerns: body.dentalConcerns || null,
-        previousDentalWork: body.previousDentalWork || null,
-        preferredPaymentMode: body.preferredPaymentMode || null,
-        insuranceProvider: body.insuranceProvider || null,
-        sumInsured: body.sumInsured ? parseFloat(body.sumInsured) : null,
+      // Sanitize string fields to prevent XSS
+      const sanitizedData = sanitizePatientData(validation.data);
+
+      // Convert dateOfBirth to DateTime
+      const patientData: any = {
+        ...sanitizedData,
+        dateOfBirth: new Date(sanitizedData.dateOfBirth),
+        bloodGroup: sanitizedData.bloodGroup || null,
+        height: sanitizedData.height ? parseFloat(String(sanitizedData.height)) : null,
+        weight: sanitizedData.weight ? parseFloat(String(sanitizedData.weight)) : null,
+        alternateMobileNumber: sanitizedData.alternateMobileNumber || null,
+        email: sanitizedData.email || null,
+        aadharNumber: sanitizedData.aadharNumber || null,
+        emergencyContactName: sanitizedData.emergencyContactName || null,
+        emergencyMobileNumber: sanitizedData.emergencyMobileNumber || null,
+        relationship: sanitizedData.relationship || null,
+        medicalHistory: sanitizedData.medicalHistory || null,
+        dentalHistory: sanitizedData.dentalHistory || null,
+        allergies: sanitizedData.allergies || null,
+        currentMedications: sanitizedData.currentMedications || null,
+        previousSurgeries: sanitizedData.previousSurgeries || null,
+        dentalConcerns: sanitizedData.dentalConcerns || null,
+        previousDentalWork: sanitizedData.previousDentalWork || null,
+        preferredPaymentMode: sanitizedData.preferredPaymentMode || null,
+        insuranceProvider: sanitizedData.insuranceProvider || null,
+        sumInsured: sanitizedData.sumInsured ? parseFloat(String(sanitizedData.sumInsured)) : null,
         userId: req.user.id,
         clinicId: req.user.clinicId,
         createdByExternal: req.user.isExternal || req.user.role === "EXTERNAL_DOCTOR",
