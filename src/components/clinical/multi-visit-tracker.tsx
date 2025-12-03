@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Calendar, CheckCircle, Clock, XCircle, IndianRupee, Loader2, Edit, Trash2 } from "lucide-react";
+import { Plus, Calendar, CheckCircle, Clock, XCircle, IndianRupee, Loader2 } from "lucide-react";
 import { treatmentVisitsAPI } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
@@ -34,12 +34,8 @@ export function MultiVisitTracker({ treatmentId }: MultiVisitTrackerProps) {
   });
 
   const { toast } = useToast();
-
-  useEffect(() => {
-    fetchVisits();
-  }, [treatmentId]);
-
-  const fetchVisits = async () => {
+  
+  const fetchVisits = useCallback(async () => {
     try {
       setLoading(true);
       const response = await treatmentVisitsAPI.getByTreatment(treatmentId);
@@ -53,7 +49,11 @@ export function MultiVisitTracker({ treatmentId }: MultiVisitTrackerProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [treatmentId, toast]);
+
+  useEffect(() => {
+    fetchVisits();
+  }, [fetchVisits]);
 
   const handleAddVisit = async () => {
     if (!visitData.visitDate) {

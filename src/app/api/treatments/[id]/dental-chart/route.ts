@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { Permissions } from "@/lib/rbac";
 import { AppError, ErrorCodes, createErrorResponse } from "@/lib/api-errors";
 
-// Get dental chart for treatment
+// Get dental chart (selected teeth) for treatment
 export const GET = withAuth(
   async (req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) => {
     try {
@@ -14,7 +14,7 @@ export const GET = withAuth(
         where: { id: treatmentId },
         select: {
           id: true,
-          toothChart: true,
+          selectedTeeth: true,
           patientId: true,
         },
       });
@@ -27,7 +27,8 @@ export const GET = withAuth(
       const patientWhere = getPatientWhereClause(
         req.user.id,
         req.user.role,
-        req.user.isExternal
+        req.user.isExternal,
+        req.user.clinicId
       );
       const patient = await prisma.patient.findFirst({
         where: {
@@ -40,7 +41,10 @@ export const GET = withAuth(
         throw new AppError("Access denied", ErrorCodes.FORBIDDEN, 403);
       }
 
-      const chart = treatment.toothChart ? JSON.parse(treatment.toothChart) : {};
+      // Return selected teeth as chart data
+      const chart = {
+        selectedTeeth: treatment.selectedTeeth || [],
+      };
 
       return NextResponse.json({ chart });
     } catch (error) {
@@ -53,17 +57,30 @@ export const GET = withAuth(
   }
 );
 
-// Update dental chart
+// Update dental chart (selected teeth)
 export const PUT = withAuth(
   async (req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) => {
     try {
       const { id: treatmentId } = await params;
-      const body = await req.json();
-      const { chart } = body;
-
-      if (!chart) {
-        throw new AppError("Chart data is required", ErrorCodes.VALIDATION_ERROR, 400);
+      
+      let body;
+      try {
+        body = await req.json();
+      } catch {
+        throw new AppError("Invalid JSON in request body", ErrorCodes.VALIDATION_ERROR, 400);
       }
+
+      const { chart, selectedTeeth } = body;
+
+      // Accept either chart.selectedTeeth or selectedTeeth directly
+      const teethToSave = chart?.selectedTeeth || selectedTeeth;
+
+      if (!teethToSave || !Array.isArray(teethToSave)) {
+        throw new AppError("Selected teeth data is required and must be an array", ErrorCodes.VALIDATION_ERROR, 400);
+      }
+
+      // Validate teeth values (should be strings)
+      const validatedTeeth = teethToSave.map(String);
 
       // Verify treatment and patient access
       const treatment = await prisma.treatment.findUnique({
@@ -78,7 +95,8 @@ export const PUT = withAuth(
       const patientWhere = getPatientWhereClause(
         req.user.id,
         req.user.role,
-        req.user.isExternal
+        req.user.isExternal,
+        req.user.clinicId
       );
       const patient = await prisma.patient.findFirst({
         where: {
@@ -91,17 +109,19 @@ export const PUT = withAuth(
         throw new AppError("Access denied", ErrorCodes.FORBIDDEN, 403);
       }
 
-      // Update dental chart
+      // Update selected teeth
       const updatedTreatment = await prisma.treatment.update({
         where: { id: treatmentId },
         data: {
-          toothChart: JSON.stringify(chart),
+          selectedTeeth: validatedTeeth,
         },
       });
 
       return NextResponse.json({
         message: "Dental chart updated successfully",
-        chart: JSON.parse(updatedTreatment.toothChart || '{}'),
+        chart: {
+          selectedTeeth: updatedTreatment.selectedTeeth,
+        },
       });
     } catch (error) {
       const errorResponse = createErrorResponse(error, "Failed to update dental chart");
@@ -109,7 +129,6 @@ export const PUT = withAuth(
     }
   },
   {
-    requiredPermissions: [Permissions.TREATMENT_WRITE],
+    requiredPermissions: [Permissions.TREATMENT_UPDATE],
   }
 );
-

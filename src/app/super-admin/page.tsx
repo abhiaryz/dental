@@ -41,6 +41,7 @@ export default function SuperAdminLoginPage() {
       router.push("/super-admin/dashboard");
       router.refresh();
     } catch (err) {
+      console.error("Super admin login failed:", err);
       setError("An error occurred. Please try again.");
       setLoading(false);
     }

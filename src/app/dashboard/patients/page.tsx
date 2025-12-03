@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +25,7 @@ export default function PatientsPage() {
   const [pagination, setPagination] = useState<any>(null);
 
   // Fetch patients
-  const fetchPatients = async () => {
+  const fetchPatients = useCallback(async () => {
     try {
       setLoading(true);
       const data = await patientsAPI.getAll({
@@ -40,11 +40,11 @@ export default function PatientsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, searchTerm]);
 
   useEffect(() => {
-    fetchPatients();
-  }, [page, searchTerm]);
+    void fetchPatients();
+  }, [fetchPatients]);
 
   // Calculate age from date of birth
   const calculateAge = (dateOfBirth: string) => {

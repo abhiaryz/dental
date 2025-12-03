@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth, AuthenticatedRequest, verifyPatientAccess } from "@/lib/auth-middleware";
 import { Permissions } from "@/lib/rbac";
+import { patientUpdateSchema, validateData } from "@/lib/validation";
+import { sanitizePatientData } from "@/lib/sanitize";
+import { createErrorResponse, AppError, ErrorCodes } from "@/lib/api-errors";
 
 // GET - Fetch a single patient with all related data
 export const GET = withAuth(
@@ -85,33 +88,62 @@ export const PUT = withAuth(
     try {
       const { id } = await params;
       
-      // Verify patient access based on role
+      // Verify patient access based on role and clinic
       const { error } = await verifyPatientAccess(
         id,
         req.user.id,
         req.user.role,
         req.user.isExternal,
-        prisma
+        prisma,
+        req.user.clinicId
       );
 
       if (error) return error;
 
-      const body = await req.json();
+      let body;
+      try {
+        body = await req.json();
+      } catch {
+        return NextResponse.json(
+          { error: "Invalid JSON in request body" },
+          { status: 400 }
+        );
+      }
+
+      // Validate request body
+      const validation = validateData(patientUpdateSchema, body);
+      if (!validation.success) {
+        return NextResponse.json(
+          { error: "Validation failed", details: validation.errors },
+          { status: 400 }
+        );
+      }
+
+      // Sanitize string fields to prevent XSS
+      const sanitizedData = sanitizePatientData(validation.data);
+
+      // Convert dateOfBirth to Date if provided
+      const updateData: any = { ...sanitizedData };
+      if (updateData.dateOfBirth && typeof updateData.dateOfBirth === "string") {
+        updateData.dateOfBirth = new Date(updateData.dateOfBirth);
+      }
+
+      // Remove any fields that shouldn't be updated directly
+      delete updateData.userId;
+      delete updateData.clinicId;
+      delete updateData.createdByExternal;
 
       const patient = await prisma.patient.update({
         where: {
           id,
         },
-        data: body,
+        data: updateData,
       });
 
       return NextResponse.json(patient);
     } catch (error) {
-      console.error("Error updating patient:", error);
-      return NextResponse.json(
-        { error: "Failed to update patient" },
-        { status: 500 }
-      );
+      const errorResponse = createErrorResponse(error, "Failed to update patient");
+      return NextResponse.json(errorResponse.body, { status: errorResponse.status });
     }
   },
   {

@@ -2,14 +2,13 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Stethoscope, Loader2, AlertCircle, CheckCircle2, User, Lock, Building2, Shield, Mail } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle2, User, Lock, Building2, Shield, Mail } from "lucide-react";
 
 function EmployeeSignupContent() {
   const router = useRouter();
@@ -35,35 +34,36 @@ function EmployeeSignupContent() {
   } | null>(null);
 
   useEffect(() => {
-    verifyInvitation();
-  }, []);
-
-  const verifyInvitation = async () => {
-    if (!token) {
-      setError("Invalid invitation link. Please contact your clinic administrator.");
-      setVerifying(false);
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/clinic/verify-invitation?token=${token}`);
-      const data = await response.json();
-
-      if (response.ok) {
-        setInvitationData({
-          email: data.email,
-          role: data.role,
-          clinicName: data.clinicName,
-        });
-      } else {
-        setError(data.error || "Invalid or expired invitation");
+    const verifyInvitation = async () => {
+      if (!token) {
+        setError("Invalid invitation link. Please contact your clinic administrator.");
+        setVerifying(false);
+        return;
       }
-    } catch (error) {
-      setError("Failed to verify invitation. Please try again.");
-    } finally {
-      setVerifying(false);
-    }
-  };
+
+      try {
+        const response = await fetch(`/api/clinic/verify-invitation?token=${token}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          setInvitationData({
+            email: data.email,
+            role: data.role,
+            clinicName: data.clinicName,
+          });
+        } else {
+          setError(data.error || "Invalid or expired invitation");
+        }
+      } catch (err) {
+        console.error("Failed to verify invitation:", err);
+        setError("Failed to verify invitation. Please try again.");
+      } finally {
+        setVerifying(false);
+      }
+    };
+
+    void verifyInvitation();
+  }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,7 +105,8 @@ function EmployeeSignupContent() {
       } else {
         setError(data.error || "Failed to accept invitation");
       }
-    } catch (error) {
+    } catch (err) {
+      console.error("Failed to accept invitation:", err);
       setError("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);

@@ -68,6 +68,7 @@ export default function ClinicSignupPage() {
         setError(data.error || "Failed to create clinic");
       }
     } catch (error) {
+      console.error("Error creating clinic:", error);
       setError("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);

@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, useCallback } from 'react';
 import { invoicesAPI } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,17 +21,9 @@ export default function InvoiceDetailPage({ params }: InvoiceDetailProps) {
   const [invoice, setInvoice] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
-  const router = useRouter();
   const { toast } = useToast();
 
-  useEffect(() => {
-    params.then(p => {
-      setInvoiceId(p.id);
-      fetchInvoice(p.id);
-    });
-  }, []);
-
-  const fetchInvoice = async (id: string) => {
+  const fetchInvoice = useCallback(async (id: string) => {
     try {
       setLoading(true);
       const data = await invoicesAPI.getById(id);
@@ -47,7 +38,14 @@ export default function InvoiceDetailPage({ params }: InvoiceDetailProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    void params.then(p => {
+      setInvoiceId(p.id);
+      void fetchInvoice(p.id);
+    });
+  }, [params, fetchInvoice]);
 
   const handleDownload = async () => {
     try {

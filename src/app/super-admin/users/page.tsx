@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Search, 
-  Eye, 
+import {
+  Search,
   UserCog,
   Loader2,
   ChevronLeft,
@@ -38,11 +37,7 @@ export default function UsersPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
 
-  useEffect(() => {
-    fetchUsers();
-  }, [search, roleFilter, page]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -67,7 +62,11 @@ export default function UsersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, roleFilter, search]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const formatDate = (date: string | null) => {
     if (!date) return "Never";

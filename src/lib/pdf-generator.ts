@@ -471,9 +471,6 @@ export const generatePrescriptionPDF = (
     );
   }
 
-  // Generate filename
-  const filename = `Prescription_${patient.lastName}_${treatment.treatmentDate}_${treatment.id}.pdf`;
-  
   // Return the doc object for server-side or save for client-side
   return doc;
 };
@@ -533,6 +530,39 @@ export const generateTreatmentReportPDF = (
   doc.text("TREATMENT HISTORY", 15, yPosition);
   yPosition += 7;
 
+  // Optional Medical History Summary (if provided)
+  if (medicalHistory) {
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text("MEDICAL HISTORY", 15, yPosition);
+    yPosition += 6;
+
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+
+    if (medicalHistory.conditions && medicalHistory.conditions.length > 0) {
+      doc.text(`Conditions: ${medicalHistory.conditions.join(", ")}`, 15, yPosition);
+      yPosition += 4;
+    }
+
+    if (medicalHistory.allergies) {
+      doc.text(`Allergies: ${medicalHistory.allergies}`, 15, yPosition);
+      yPosition += 4;
+    }
+
+    if (medicalHistory.medications) {
+      doc.text(`Medications: ${medicalHistory.medications}`, 15, yPosition);
+      yPosition += 4;
+    }
+
+    if (medicalHistory.previousSurgeries) {
+      doc.text(`Previous Surgeries: ${medicalHistory.previousSurgeries}`, 15, yPosition);
+      yPosition += 4;
+    }
+
+    yPosition += 4;
+  }
+
   const tableData = treatments.map((t) => [
     t.treatmentDate,
     t.treatmentType,
@@ -549,8 +579,6 @@ export const generateTreatmentReportPDF = (
     margin: { left: 15, right: 15 },
   });
 
-  const filename = `Treatment_Report_${patient.lastName}_${new Date().toISOString().split('T')[0]}.pdf`;
-  
   // Return the doc object for server-side or save for client-side
   return doc;
 };
@@ -826,9 +854,6 @@ export const generateInvoicePDF = (
   doc.setFontSize(8);
   doc.text("For support: " + CLINIC_INFO.email + " | " + CLINIC_INFO.phone, 105, yPosition + 11, { align: "center" });
 
-  // Generate filename
-  const filename = `Invoice_${treatment.receiptNumber || treatment.id}_${patient.lastName}_${treatment.treatmentDate}.pdf`;
-  
   // Return the doc object for server-side or save for client-side
   return doc;
 };

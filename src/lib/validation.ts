@@ -11,7 +11,7 @@ export const patientSchema = z.object({
   lastName: z.string().min(1, "Last name is required").max(100),
   dateOfBirth: z.string().min(1, "Date of birth is required"),
   gender: z.enum(["MALE", "FEMALE", "OTHER"], {
-    errorMap: () => ({ message: "Please select a gender" }),
+    message: "Please select a gender",
   }),
   mobileNumber: z
     .string()
@@ -67,7 +67,7 @@ export const paymentSchema = z.object({
     .positive("Amount must be greater than 0")
     .max(1000000, "Amount cannot exceed 1,000,000"),
   paymentMethod: z.enum(["CASH", "CARD", "UPI", "BANK_TRANSFER", "CHEQUE"], {
-    errorMap: () => ({ message: "Please select a payment method" }),
+    message: "Please select a payment method",
   }),
   paymentDate: z.string().min(1, "Payment date is required"),
   notes: z.string().optional(),
@@ -152,7 +152,7 @@ export const documentUploadSchema = z.object({
       "OTHER",
     ],
     {
-      errorMap: () => ({ message: "Please select a document type" }),
+      message: "Please select a document type",
     }
   ),
   notes: z.string().optional(),
@@ -190,10 +190,182 @@ export const appointmentSchema = z.object({
     .optional(),
 });
 
+// ========================================
+// UPDATE SCHEMAS (Partial for PUT requests)
+// ========================================
+
+// Treatment update schema (all fields optional for partial updates)
+export const treatmentUpdateSchema = z.object({
+  treatmentDate: z.string().min(1, "Treatment date is required").optional(),
+  chiefComplaint: z.string().min(1, "Chief complaint is required").optional(),
+  clinicalFindings: z.string().optional(),
+  diagnosis: z.string().min(1, "Diagnosis is required").optional(),
+  treatmentPlan: z.string().min(1, "Treatment plan is required").optional(),
+  prescription: z.string().optional(),
+  cost: z
+    .number()
+    .min(0, "Cost cannot be negative")
+    .max(1000000, "Cost cannot exceed 1,000,000")
+    .optional(),
+  paidAmount: z
+    .number()
+    .min(0, "Paid amount cannot be negative")
+    .optional(),
+  notes: z.string().optional(),
+  selectedTeeth: z.array(z.string()).optional(),
+  followUpDate: z.string().optional().nullable(),
+  followUpNotes: z.string().optional(),
+}).strict();
+
+// Invoice update schema
+export const invoiceUpdateSchema = z.object({
+  dueDate: z.string().optional(),
+  notes: z.string().optional(),
+  status: z.enum(["DRAFT", "PENDING", "PAID", "OVERDUE", "CANCELLED"]).optional(),
+  items: z
+    .array(invoiceItemSchema)
+    .min(1, "At least one item is required")
+    .optional(),
+}).strict();
+
+// Appointment update schema
+export const appointmentUpdateSchema = z.object({
+  date: z.string().min(1, "Appointment date is required").optional(),
+  time: z.string().min(1, "Appointment time is required").optional(),
+  type: z.string().min(1, "Appointment type is required").optional(),
+  notes: z.string().optional(),
+  status: z
+    .enum(["SCHEDULED", "CONFIRMED", "CANCELLED", "COMPLETED", "NO_SHOW"])
+    .optional(),
+}).strict();
+
+// Patient update schema (all fields optional for partial updates)
+export const patientUpdateSchema = z.object({
+  firstName: z.string().min(1, "First name is required").max(100).optional(),
+  lastName: z.string().min(1, "Last name is required").max(100).optional(),
+  dateOfBirth: z.string().min(1, "Date of birth is required").optional(),
+  gender: z.enum(["MALE", "FEMALE", "OTHER"], {
+    message: "Please select a gender",
+  }).optional(),
+  mobileNumber: z
+    .string()
+    .min(10, "Mobile number must be at least 10 digits")
+    .max(15, "Mobile number must be at most 15 digits")
+    .regex(/^\+?[0-9\s-]+$/, "Invalid mobile number format")
+    .optional(),
+  email: z.string().email("Invalid email address").optional().or(z.literal("")),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  pinCode: z.string().optional(),
+  aadharNumber: z.string().optional(),
+  emergencyContactName: z.string().optional(),
+  emergencyMobileNumber: z.string().optional(),
+  relationship: z.string().optional(),
+  medicalHistory: z.string().optional(),
+  dentalHistory: z.string().optional(),
+  currentMedications: z.string().optional(),
+  allergies: z.string().optional(),
+  bloodGroup: z.string().optional(),
+  preferredPaymentMode: z.string().optional(),
+  insuranceProvider: z.string().optional(),
+  height: z.number().min(0).max(300).optional().nullable(),
+  weight: z.number().min(0).max(500).optional().nullable(),
+  alternateMobileNumber: z.string().optional().nullable(),
+  previousSurgeries: z.string().optional().nullable(),
+  dentalConcerns: z.string().optional().nullable(),
+  previousDentalWork: z.string().optional().nullable(),
+  sumInsured: z.number().min(0).optional().nullable(),
+}).strict();
+
+// Inventory item schema
+export const inventoryItemSchema = z.object({
+  name: z.string().min(1, "Name is required").max(200),
+  sku: z.string().optional(),
+  category: z.string().min(1, "Category is required"),
+  quantity: z.number().int().min(0, "Quantity cannot be negative"),
+  minQuantity: z.number().int().min(0, "Minimum quantity cannot be negative"),
+  unit: z.string().min(1, "Unit is required"),
+  unitPrice: z.number().min(0, "Price cannot be negative"),
+  supplierId: z.string().optional(),
+  expiryDate: z.string().optional().nullable(),
+  notes: z.string().optional(),
+});
+
+// Inventory item update schema
+export const inventoryItemUpdateSchema = z.object({
+  name: z.string().min(1, "Name is required").max(200).optional(),
+  sku: z.string().optional(),
+  category: z.string().min(1, "Category is required").optional(),
+  quantity: z.number().int().min(0, "Quantity cannot be negative").optional(),
+  minQuantity: z.number().int().min(0, "Minimum quantity cannot be negative").optional(),
+  unit: z.string().min(1, "Unit is required").optional(),
+  unitPrice: z.number().min(0, "Price cannot be negative").optional(),
+  supplierId: z.string().optional().nullable(),
+  expiryDate: z.string().optional().nullable(),
+  notes: z.string().optional(),
+}).strict();
+
+// Profile update schema
+export const profileUpdateSchema = z.object({
+  name: z.string().min(1, "Name is required").max(100).optional(),
+  email: z.string().email("Invalid email address").optional(),
+  phone: z
+    .string()
+    .min(10, "Phone number must be at least 10 digits")
+    .max(15, "Phone number must be at most 15 digits")
+    .regex(/^\+?[0-9\s-]+$/, "Invalid phone number format")
+    .optional(),
+}).strict();
+
+// Notification preferences schema (matches Prisma model)
+export const notificationPreferencesSchema = z.object({
+  email: z.boolean().optional(),
+  sms: z.boolean().optional(),
+  marketing: z.boolean().optional(),
+  security: z.boolean().optional(),
+}).strict();
+
+// Supplier schema
+export const supplierSchema = z.object({
+  name: z.string().min(1, "Name is required").max(200),
+  contactName: z.string().optional(),
+  email: z.string().email("Invalid email address").optional().or(z.literal("")),
+  phone: z
+    .string()
+    .min(10, "Phone number must be at least 10 digits")
+    .max(15, "Phone number must be at most 15 digits")
+    .regex(/^\+?[0-9\s-]+$/, "Invalid phone number format")
+    .optional()
+    .or(z.literal("")),
+  address: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+// Payment amount schema (for treatment/invoice payments)
+export const paymentAmountSchema = z.object({
+  amount: z
+    .number()
+    .positive("Amount must be greater than 0")
+    .max(10000000, "Amount cannot exceed 10,000,000"),
+});
+
+// Stock adjustment schema
+export const stockAdjustmentSchema = z.object({
+  type: z.enum(["add", "remove", "adjustment"]),
+  quantity: z.number().int().positive("Quantity must be positive"),
+  reason: z.string().min(1, "Reason is required"),
+  reference: z.string().optional(),
+});
+
+// ========================================
+// HELPER FUNCTIONS
+// ========================================
+
 // Helper function to get validation errors in a user-friendly format
 export function getValidationErrors(error: z.ZodError): Record<string, string> {
   const errors: Record<string, string> = {};
-  error.errors.forEach((err) => {
+  error.issues.forEach((err) => {
     const path = err.path.join(".");
     errors[path] = err.message;
   });

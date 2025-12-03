@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { 
@@ -13,7 +13,8 @@ import {
   Shield,
   Loader2,
   Menu,
-  X
+  X,
+  Database
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -34,11 +35,7 @@ export default function SuperAdminLayout({
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
       const response = await fetch("/api/super-admin/auth/me");
       
@@ -55,7 +52,11 @@ export default function SuperAdminLayout({
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   const handleLogout = async () => {
     try {
@@ -83,7 +84,12 @@ export default function SuperAdminLayout({
     {
       name: "Users",
       href: "/super-admin/users",
-      icon: Users, // You need to import Users from lucide-react
+      icon: Users,
+    },
+    {
+      name: "Database",
+      href: "/super-admin/database",
+      icon: Database,
     },
     {
       name: "Analytics",
@@ -133,7 +139,7 @@ export default function SuperAdminLayout({
           {/* Navigation */}
           <nav className="flex-1 space-y-1 p-4">
             {navigation.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
               return (
                 <Link
                   key={item.name}

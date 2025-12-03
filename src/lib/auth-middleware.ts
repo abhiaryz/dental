@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { Role } from "@prisma/client";
-import { hasPermission, hasAnyPermission, hasAllPermissions, Permissions } from "./rbac";
+import { hasAnyPermission, hasAllPermissions, Permissions } from "./rbac";
 
 type Permission = typeof Permissions[keyof typeof Permissions];
 

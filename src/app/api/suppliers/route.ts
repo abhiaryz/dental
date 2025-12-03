@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { checkPermission } from "@/lib/rbac";
+import { createErrorResponse, AppError, ErrorCodes } from "@/lib/api-errors";
+import { checkRateLimit } from "@/lib/rate-limiter";
+import { supplierSchema, validateData } from "@/lib/validation";
 
 
 // GET - List all suppliers
@@ -10,19 +13,19 @@ export async function GET() {
     const session = await auth();
 
     if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new AppError("Unauthorized", ErrorCodes.UNAUTHORIZED, 401);
     }
 
     const userRole = (session.user as any).role;
     const userClinicId = (session.user as any).clinicId;
 
     if (!userClinicId) {
-      return NextResponse.json({ error: "Clinic ID is required" }, { status: 400 });
+      throw new AppError("Clinic ID is required", ErrorCodes.VALIDATION_ERROR, 400);
     }
 
     const canRead = await checkPermission(userRole, "inventory", "read");
     if (!canRead) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+      throw new AppError("Permission denied", ErrorCodes.FORBIDDEN, 403);
     }
 
     const suppliers = await prisma.supplier.findMany({
@@ -43,60 +46,61 @@ export async function GET() {
 
     return NextResponse.json({ suppliers });
   } catch (error) {
-    console.error("Error fetching suppliers:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch suppliers" },
-      { status: 500 }
-    );
-  } finally {
+    const errorResponse = createErrorResponse(error, "Failed to fetch suppliers");
+    return NextResponse.json(errorResponse.body, { status: errorResponse.status });
   }
 }
 
 // POST - Create new supplier
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting for mutation
+    const rateLimit = await checkRateLimit(request, 'api');
+    if (!rateLimit.allowed) {
+      return rateLimit.error || NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
+    }
+
     const session = await auth();
 
     if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new AppError("Unauthorized", ErrorCodes.UNAUTHORIZED, 401);
     }
 
     const userRole = (session.user as any).role;
     const userClinicId = (session.user as any).clinicId;
 
     if (!userClinicId) {
-      return NextResponse.json({ error: "Clinic ID is required" }, { status: 400 });
+      throw new AppError("Clinic ID is required", ErrorCodes.VALIDATION_ERROR, 400);
     }
 
     const canCreate = await checkPermission(userRole, "inventory", "create");
     if (!canCreate) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+      throw new AppError("Permission denied", ErrorCodes.FORBIDDEN, 403);
     }
 
-    const data = await request.json();
+    let data;
+    try {
+      data = await request.json();
+    } catch {
+      throw new AppError("Invalid JSON in request body", ErrorCodes.VALIDATION_ERROR, 400);
+    }
 
-    if (!data.name) {
-      return NextResponse.json(
-        { error: "Supplier name is required" },
-        { status: 400 }
-      );
+    // Validate request body
+    const validation = validateData(supplierSchema, data);
+    if (!validation.success) {
+      throw new AppError("Validation failed", ErrorCodes.VALIDATION_ERROR, 400, validation.errors);
     }
 
     const supplier = await prisma.supplier.create({
       data: {
-        ...data,
+        ...validation.data,
         clinicId: userClinicId,
       },
     });
 
     return NextResponse.json(supplier, { status: 201 });
   } catch (error) {
-    console.error("Error creating supplier:", error);
-    return NextResponse.json(
-      { error: "Failed to create supplier" },
-      { status: 500 }
-    );
-  } finally {
+    const errorResponse = createErrorResponse(error, "Failed to create supplier");
+    return NextResponse.json(errorResponse.body, { status: errorResponse.status });
   }
 }
-

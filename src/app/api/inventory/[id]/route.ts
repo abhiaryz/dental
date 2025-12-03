@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { checkPermission } from "@/lib/rbac";
+import { createErrorResponse, AppError, ErrorCodes } from "@/lib/api-errors";
+import { checkRateLimit } from "@/lib/rate-limiter";
+import { inventoryItemUpdateSchema, validateData } from "@/lib/validation";
 
 
 // GET - Get single inventory item
@@ -14,7 +17,7 @@ export async function GET(
     const session = await auth();
 
     if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new AppError("Unauthorized", ErrorCodes.UNAUTHORIZED, 401);
     }
 
     const userRole = (session.user as any).role;
@@ -22,7 +25,7 @@ export async function GET(
 
     const canRead = await checkPermission(userRole, "inventory", "read");
     if (!canRead) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+      throw new AppError("Permission denied", ErrorCodes.FORBIDDEN, 403);
     }
 
     const item = await prisma.inventoryItem.findFirst({
@@ -42,17 +45,13 @@ export async function GET(
     });
 
     if (!item) {
-      return NextResponse.json({ error: "Item not found" }, { status: 404 });
+      throw new AppError("Item not found", ErrorCodes.NOT_FOUND, 404);
     }
 
     return NextResponse.json(item);
   } catch (error) {
-    console.error("Error fetching inventory item:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch inventory item" },
-      { status: 500 }
-    );
-  } finally {
+    const errorResponse = createErrorResponse(error, "Failed to fetch inventory item");
+    return NextResponse.json(errorResponse.body, { status: errorResponse.status });
   }
 }
 
@@ -62,11 +61,17 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Rate limiting for mutation
+    const rateLimit = await checkRateLimit(request, 'api');
+    if (!rateLimit.allowed) {
+      return rateLimit.error || NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
+    }
+
     const { id } = await params;
     const session = await auth();
 
     if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new AppError("Unauthorized", ErrorCodes.UNAUTHORIZED, 401);
     }
 
     const userRole = (session.user as any).role;
@@ -74,7 +79,7 @@ export async function PUT(
 
     const canUpdate = await checkPermission(userRole, "inventory", "update");
     if (!canUpdate) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+      throw new AppError("Permission denied", ErrorCodes.FORBIDDEN, 403);
     }
 
     // Verify item belongs to clinic
@@ -86,17 +91,29 @@ export async function PUT(
     });
 
     if (!existingItem) {
-      return NextResponse.json({ error: "Item not found" }, { status: 404 });
+      throw new AppError("Item not found", ErrorCodes.NOT_FOUND, 404);
     }
 
-    const data = await request.json();
-    
+    let data;
+    try {
+      data = await request.json();
+    } catch {
+      throw new AppError("Invalid JSON in request body", ErrorCodes.VALIDATION_ERROR, 400);
+    }
+
+    // Validate request body
+    const validation = validateData(inventoryItemUpdateSchema, data);
+    if (!validation.success) {
+      throw new AppError("Validation failed", ErrorCodes.VALIDATION_ERROR, 400, validation.errors);
+    }
+
     // Don't allow direct quantity updates (use stock adjustment endpoint)
-    delete data.quantity;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { quantity: _quantity, ...safeData } = validation.data;
 
     const item = await prisma.inventoryItem.update({
       where: { id },
-      data,
+      data: safeData,
       include: {
         supplier: true,
       },
@@ -104,12 +121,8 @@ export async function PUT(
 
     return NextResponse.json(item);
   } catch (error) {
-    console.error("Error updating inventory item:", error);
-    return NextResponse.json(
-      { error: "Failed to update inventory item" },
-      { status: 500 }
-    );
-  } finally {
+    const errorResponse = createErrorResponse(error, "Failed to update inventory item");
+    return NextResponse.json(errorResponse.body, { status: errorResponse.status });
   }
 }
 
@@ -119,11 +132,17 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Rate limiting for mutation
+    const rateLimit = await checkRateLimit(request, 'api');
+    if (!rateLimit.allowed) {
+      return rateLimit.error || NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
+    }
+
     const { id } = await params;
     const session = await auth();
 
     if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new AppError("Unauthorized", ErrorCodes.UNAUTHORIZED, 401);
     }
 
     const userRole = (session.user as any).role;
@@ -131,7 +150,7 @@ export async function DELETE(
 
     const canDelete = await checkPermission(userRole, "inventory", "delete");
     if (!canDelete) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+      throw new AppError("Permission denied", ErrorCodes.FORBIDDEN, 403);
     }
 
     // Verify item belongs to clinic
@@ -143,7 +162,7 @@ export async function DELETE(
     });
 
     if (!existingItem) {
-      return NextResponse.json({ error: "Item not found" }, { status: 404 });
+      throw new AppError("Item not found", ErrorCodes.NOT_FOUND, 404);
     }
 
     await prisma.inventoryItem.delete({
@@ -152,12 +171,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "Item deleted successfully" });
   } catch (error) {
-    console.error("Error deleting inventory item:", error);
-    return NextResponse.json(
-      { error: "Failed to delete inventory item" },
-      { status: 500 }
-    );
-  } finally {
+    const errorResponse = createErrorResponse(error, "Failed to delete inventory item");
+    return NextResponse.json(errorResponse.body, { status: errorResponse.status });
   }
 }
-

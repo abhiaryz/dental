@@ -4,8 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Stethoscope, Loader2, AlertCircle, CheckCircle2, Mail, Sparkles } from "lucide-react";
+import { Stethoscope, Loader2, AlertCircle, CheckCircle2, Sparkles } from "lucide-react";
 
 function VerifyEmailContent() {
   const router = useRouter();
@@ -15,66 +14,41 @@ function VerifyEmailContent() {
   const [isVerifying, setIsVerifying] = useState(true);
   const [isVerified, setIsVerified] = useState(false);
   const [error, setError] = useState("");
-  const [isResending, setIsResending] = useState(false);
 
   useEffect(() => {
+    const run = async () => {
+      try {
+        const response = await fetch("/api/auth/verify-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          setIsVerified(true);
+          setTimeout(() => {
+            router.push("/login");
+          }, 3000);
+        } else {
+          setError(data.error || "Failed to verify email");
+        }
+      } catch (error) {
+        console.error("Error verifying email:", error);
+        setError("An error occurred. Please try again.");
+      } finally {
+        setIsVerifying(false);
+      }
+    };
+
     if (token) {
-      verifyEmail();
+      void run();
     } else {
       setError("Invalid verification link");
       setIsVerifying(false);
     }
-  }, [token]);
-
-  const verifyEmail = async () => {
-    try {
-      const response = await fetch("/api/auth/verify-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setIsVerified(true);
-        setTimeout(() => {
-          router.push("/login");
-        }, 3000);
-      } else {
-        setError(data.error || "Failed to verify email");
-      }
-    } catch (error) {
-      setError("An error occurred. Please try again.");
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const handleResend = async () => {
-    setIsResending(true);
-    setError("");
-
-    try {
-      const response = await fetch("/api/auth/send-verification", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: "" }), // Will need to collect email
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        alert("Verification email sent! Please check your inbox.");
-      } else {
-        setError(data.error || "Failed to resend verification email");
-      }
-    } catch (error) {
-      setError("An error occurred. Please try again.");
-    } finally {
-      setIsResending(false);
-    }
-  };
+  }, [router, token]);
 
   if (isVerifying) {
     return (

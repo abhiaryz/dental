@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -37,13 +37,8 @@ export function ConsentManager({ patientId, treatmentId }: ConsentManagerProps) 
   const [hasSignature, setHasSignature] = useState(false);
 
   const { toast } = useToast();
-
-  useEffect(() => {
-    fetchConsents();
-    fetchTemplates();
-  }, [patientId, treatmentId]);
-
-  const fetchConsents = async () => {
+  
+  const fetchConsents = useCallback(async () => {
     try {
       setLoading(true);
       const response = await consentsAPI.getAll({
@@ -60,16 +55,21 @@ export function ConsentManager({ patientId, treatmentId }: ConsentManagerProps) 
     } finally {
       setLoading(false);
     }
-  };
+  }, [patientId, treatmentId, toast]);
 
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
     try {
       const response = await consentsAPI.templates.getAll({ isActive: true });
       setTemplates(response.templates || []);
     } catch (error: any) {
       console.error("Failed to fetch templates:", error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchConsents();
+    fetchTemplates();
+  }, [fetchConsents, fetchTemplates]);
 
   // Canvas signature handling
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {

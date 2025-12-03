@@ -31,7 +31,7 @@ export function validatePasswordStrength(password: string): PasswordStrength {
       warning: result.feedback.warning || "",
       suggestions: result.feedback.suggestions || [],
     },
-    crackTime: result.crack_times_display.offline_slow_hashing_1e4_per_second || "unknown",
+    crackTime: String(result.crack_times_display.offline_slow_hashing_1e4_per_second || "unknown"),
     strength: strength.label as any,
     color: strength.color,
     percentage: (result.score / 4) * 100,

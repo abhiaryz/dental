@@ -23,8 +23,9 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const period = searchParams.get("period") || "monthly"; // monthly, quarterly, yearly
-    const year = parseInt(searchParams.get("year") || new Date().getFullYear().toString());
-    const month = searchParams.get("month") ? parseInt(searchParams.get("month")) : null;
+    const year = parseInt(searchParams.get("year") || new Date().getFullYear().toString(), 10);
+    const monthParam = searchParams.get("month");
+    const month = monthParam ? parseInt(monthParam, 10) : null;
 
     // Calculate date range
     let startDate: Date;
@@ -69,10 +70,12 @@ export async function GET(request: NextRequest) {
     // Fetch treatments for the period
     const treatments = await prisma.treatment.findMany({
       where: {
-        clinicId: userClinicId,
         treatmentDate: {
           gte: startDate,
           lte: endDate,
+        },
+        patient: {
+          clinicId: userClinicId,
         },
       },
       include: {
@@ -87,7 +90,10 @@ export async function GET(request: NextRequest) {
 
     // Calculate summary statistics
     const totalRevenue = invoices.reduce((sum, inv) => sum + inv.totalAmount, 0);
-    const totalPaid = invoices.reduce((sum, inv) => sum + inv.paidAmount, 0);
+    const totalPaid = invoices.reduce(
+      (sum, inv) => sum + inv.payments.reduce((pSum, p) => pSum + p.amount, 0),
+      0
+    );
     const totalPending = totalRevenue - totalPaid;
 
     const invoicesByStatus = {
@@ -100,8 +106,8 @@ export async function GET(request: NextRequest) {
     const paymentsByMethod: Record<string, number> = {};
     invoices.forEach(invoice => {
       invoice.payments.forEach(payment => {
-        paymentsByMethod[payment.paymentMethod] = 
-          (paymentsByMethod[payment.paymentMethod] || 0) + payment.amount;
+        const method = payment.method;
+        paymentsByMethod[method] = (paymentsByMethod[method] || 0) + payment.amount;
       });
     });
 
@@ -121,7 +127,10 @@ export async function GET(request: NextRequest) {
         monthlyBreakdown.push({
           month: monthStart.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
           revenue: monthInvoices.reduce((sum, inv) => sum + inv.totalAmount, 0),
-          paid: monthInvoices.reduce((sum, inv) => sum + inv.paidAmount, 0),
+          paid: monthInvoices.reduce(
+            (sum, inv) => sum + inv.payments.reduce((pSum, p) => pSum + p.amount, 0),
+            0
+          ),
         });
       }
     }
@@ -148,15 +157,18 @@ export async function GET(request: NextRequest) {
       invoicesByStatus,
       paymentsByMethod,
       monthlyBreakdown,
-      invoices: invoices.map(inv => ({
-        id: inv.id,
-        invoiceNumber: inv.invoiceNumber,
-        date: inv.createdAt,
-        patientName: `${inv.patient.firstName} ${inv.patient.lastName}`,
-        amount: inv.totalAmount,
-        paid: inv.paidAmount,
-        status: inv.status,
-      })),
+      invoices: invoices.map(inv => {
+        const paidAmount = inv.payments.reduce((sum, p) => sum + p.amount, 0);
+        return {
+          id: inv.id,
+          invoiceNumber: inv.invoiceNumber,
+          date: inv.createdAt,
+          patientName: `${inv.patient.firstName} ${inv.patient.lastName}`,
+          amount: inv.totalAmount,
+          paid: paidAmount,
+          status: inv.status,
+        };
+      }),
       treatments: treatments.map(t => ({
         id: t.id,
         date: t.treatmentDate,

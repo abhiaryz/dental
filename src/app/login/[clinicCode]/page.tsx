@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Input } from "@/components/ui/input";
@@ -92,7 +93,7 @@ export default function ClinicLoginPage({ params }: ClinicLoginPageProps) {
         router.push("/dashboard");
         router.refresh();
       }
-    } catch (error) {
+    } catch {
       setError("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
@@ -122,7 +123,7 @@ export default function ClinicLoginPage({ params }: ClinicLoginPageProps) {
       } else {
         setError(data.error || "Failed to resend verification email");
       }
-    } catch (error) {
+    } catch {
       setError("An error occurred. Please try again.");
     } finally {
       setIsResending(false);
@@ -195,9 +196,11 @@ export default function ClinicLoginPage({ params }: ClinicLoginPageProps) {
           <CardHeader className="text-center pb-6 border-b bg-primary/5">
             {clinic.logo && (
               <div className="relative inline-block mb-3">
-                <img 
-                  src={clinic.logo} 
-                  alt={clinic.name} 
+                <Image
+                  src={clinic.logo}
+                  alt={clinic.name}
+                  width={64}
+                  height={64}
                   className="w-16 h-16 mx-auto rounded-lg object-cover shadow-md"
                 />
               </div>

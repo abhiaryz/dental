@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Save } from "lucide-react";
 import { dentalChartAPI } from "@/lib/api";
@@ -37,12 +36,8 @@ export function DentalChart({ treatmentId }: DentalChartProps) {
   const [saving, setSaving] = useState(false);
   const [selectedTooth, setSelectedTooth] = useState<number | null>(null);
   const { toast } = useToast();
-
-  useEffect(() => {
-    fetchChart();
-  }, [treatmentId]);
-
-  const fetchChart = async () => {
+  
+  const fetchChart = useCallback(async () => {
     try {
       setLoading(true);
       const response = await dentalChartAPI.get(treatmentId);
@@ -56,7 +51,11 @@ export function DentalChart({ treatmentId }: DentalChartProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [treatmentId, toast]);
+
+  useEffect(() => {
+    fetchChart();
+  }, [fetchChart]);
 
   const handleSave = async () => {
     try {

@@ -2,9 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Activity,
@@ -12,11 +10,8 @@ import {
   CalendarPlus,
   HeartPulse,
   IndianRupee,
-  MessageSquare,
   PackageSearch,
   Pill,
-  ShieldCheck,
-  Sparkles,
   TrendingUp,
   Users,
   UserPlus,
@@ -76,45 +71,22 @@ const quickActions = [
 export default function DashboardHome() {
   const [analytics, setAnalytics] = useState<DashboardAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
-  const [autoRefresh, setAutoRefresh] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   // Initial fetch
   useEffect(() => {
     fetchAnalytics();
   }, []);
 
-  // Auto-refresh effect
-  useEffect(() => {
-    if (!autoRefresh) return;
-
-    const interval = setInterval(() => {
-      fetchAnalytics(true); // Silent refresh (no loading spinner)
-    }, 30000); // Refresh every 30 seconds
-
-    return () => clearInterval(interval);
-  }, [autoRefresh]);
-
   const fetchAnalytics = async (silent = false) => {
     try {
       if (!silent) setLoading(true);
       const data = await analyticsAPI.getOverview();
       setAnalytics(data);
-      setLastUpdated(new Date());
     } catch (error) {
       console.error("Error fetching analytics:", error);
     } finally {
       if (!silent) setLoading(false);
     }
-  };
-
-  const getTimeAgo = (date: Date) => {
-    const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
-    if (seconds < 60) return `${seconds}s ago`;
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    return `${hours}h ago`;
   };
 
   if (loading) {

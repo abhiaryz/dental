@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import NextImage from "next/image";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Image, Upload, X, Eye, Trash2, Download, Filter, Loader2 } from "lucide-react";
+import { Image as ImageIcon, Upload, Eye, Trash2, Download, Filter, Loader2 } from "lucide-react";
 import { clinicalImagesAPI } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
@@ -56,19 +57,7 @@ export function ClinicalImagesGallery({ patientId, treatmentId }: ClinicalImages
 
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchImages();
-  }, [patientId, treatmentId]);
-
-  useEffect(() => {
-    if (filterType === "all") {
-      setFilteredImages(images);
-    } else {
-      setFilteredImages(images.filter((img) => img.type === filterType));
-    }
-  }, [filterType, images]);
-
-  const fetchImages = async () => {
+  const fetchImages = useCallback(async () => {
     try {
       setLoading(true);
       const response = await clinicalImagesAPI.getAll({
@@ -86,7 +75,19 @@ export function ClinicalImagesGallery({ patientId, treatmentId }: ClinicalImages
     } finally {
       setLoading(false);
     }
-  };
+  }, [patientId, treatmentId, toast]);
+
+  useEffect(() => {
+    void fetchImages();
+  }, [fetchImages]);
+
+  useEffect(() => {
+    if (filterType === "all") {
+      setFilteredImages(images);
+    } else {
+      setFilteredImages(images.filter((img) => img.type === filterType));
+    }
+  }, [filterType, images]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -203,7 +204,7 @@ export function ClinicalImagesGallery({ patientId, treatmentId }: ClinicalImages
       {filteredImages.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <Image className="size-12 text-muted-foreground mb-4" />
+            <ImageIcon className="size-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground">No clinical images found</p>
             <Button className="mt-4" onClick={() => setShowUploadDialog(true)}>
               <Upload className="mr-2 size-4" />
@@ -216,10 +217,11 @@ export function ClinicalImagesGallery({ patientId, treatmentId }: ClinicalImages
           {filteredImages.map((image) => (
             <Card key={image.id} className="overflow-hidden group relative">
               <div className="relative aspect-square bg-muted">
-                <img
+                <NextImage
                   src={image.fileUrl}
-                  alt={image.title}
-                  className="w-full h-full object-cover"
+                  alt={image.title || "Clinical image"}
+                  fill
+                  className="object-cover"
                 />
                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                   <Button
@@ -363,9 +365,11 @@ export function ClinicalImagesGallery({ patientId, treatmentId }: ClinicalImages
           {selectedImage && (
             <div className="space-y-4">
               <div className="bg-black rounded-lg overflow-hidden">
-                <img
+                <NextImage
                   src={selectedImage.fileUrl}
-                  alt={selectedImage.title}
+                  alt={selectedImage.title || "Clinical image"}
+                  width={1200}
+                  height={800}
                   className="w-full h-auto max-h-[500px] object-contain"
                 />
               </div>

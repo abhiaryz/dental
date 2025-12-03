@@ -2,13 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Building2, 
-  Users, 
-  DollarSign, 
-  TrendingUp, 
+import {
+  Building2,
+  Users,
+  DollarSign,
+  TrendingUp,
   TrendingDown,
-  Activity,
   Loader2
 } from "lucide-react";
 

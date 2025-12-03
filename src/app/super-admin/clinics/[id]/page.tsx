@@ -1,21 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { use } from "react";
+import { use, useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  ArrowLeft, 
-  Loader2, 
-  Ban, 
+import {
+  ArrowLeft,
+  Loader2,
+  Ban,
   CheckCircle,
   Users,
   Building2,
-  Mail,
-  Calendar,
   DollarSign,
   Activity
 } from "lucide-react";
@@ -53,7 +49,6 @@ interface Clinic {
 
 export default function ClinicDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
-  const router = useRouter();
   const [clinic, setClinic] = useState<Clinic | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
@@ -63,39 +58,39 @@ export default function ClinicDetailPage({ params }: { params: Promise<{ id: str
   const [mrr, setMrr] = useState("");
   const [billingEmail, setBillingEmail] = useState("");
 
-  useEffect(() => {
-    fetchClinicDetails();
-  }, [resolvedParams.id]);
-
-  const fetchClinicDetails = async () => {
+  const fetchClinicDetails = useCallback(async () => {
     try {
       const response = await fetch(`/api/super-admin/clinics/${resolvedParams.id}`);
-      
+
       if (!response.ok) {
-         throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const text = await response.text();
       if (!text) {
-         throw new Error("Empty response received");
+        throw new Error("Empty response received");
       }
 
       const data = JSON.parse(text);
-      
+
       if (data.clinic) {
         setClinic(data.clinic);
         setSubscriptionStatus(data.clinic.subscriptionStatus || "ACTIVE");
         setMrr((data.clinic.mrr || 0).toString());
         setBillingEmail(data.clinic.billingEmail || "");
       } else {
-         throw new Error(data.error || "Failed to load clinic data");
+        throw new Error(data.error || "Failed to load clinic data");
       }
     } catch (error) {
       console.error("Failed to fetch clinic details:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [resolvedParams.id]);
+
+  useEffect(() => {
+    void fetchClinicDetails();
+  }, [fetchClinicDetails]);
 
   const handleUpdate = async () => {
     if (!clinic) return;

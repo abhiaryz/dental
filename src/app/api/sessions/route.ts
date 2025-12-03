@@ -14,10 +14,10 @@ export async function GET() {
 
     const userId = (session.user as any).id;
 
-    // Get all sessions for the user
+    // Get all sessions for the user, most recent expiry first
     const sessions = await prisma.session.findMany({
       where: { userId },
-      orderBy: { createdAt: "desc" },
+      orderBy: { expires: "desc" },
     });
 
     return NextResponse.json({ sessions });

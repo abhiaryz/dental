@@ -13,7 +13,6 @@ async function handler(
       where: { id },
       data: {
         isActive: true,
-        subscriptionStatus: "ACTIVE",
       },
     });
 

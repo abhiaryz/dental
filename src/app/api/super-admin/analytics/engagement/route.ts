@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { withSuperAdminAuth, AuthenticatedSuperAdminRequest } from "@/lib/super-admin-auth";
+import { withSuperAdminAuth } from "@/lib/super-admin-auth";
 import { prisma } from "@/lib/prisma";
 
 async function handler() {
@@ -73,12 +73,12 @@ async function handler() {
     });
     const avgPatientsPerClinic = activeClinics > 0 ? totalPatients / activeClinics : 0;
 
-    // Feature adoption: Dental charts
+    // Feature adoption: Dental charts (approximated by clinics with patients having treatments)
     const clinicsWithDentalCharts = await prisma.clinic.count({
       where: {
         patients: {
           some: {
-            dentalCharts: {
+            treatments: {
               some: {},
             },
           },
@@ -87,28 +87,14 @@ async function handler() {
     });
 
     // Feature adoption: Treatment templates
-    const clinicsWithTemplates = await prisma.clinic.count({
-      where: {
-        users: {
-          some: {
-            treatments: {
-              some: {
-                templateId: {
-                  not: null,
-                },
-              },
-            },
-          },
-        },
-      },
-    });
+    // Note: Treatment templates are not modeled in the current schema.
+    // For now, we report 0 clinics using templates until the feature is implemented.
+    const clinicsWithTemplates = 0;
 
     // Feature adoption: Patient portal
-    const patientsWithPortalAccess = await prisma.patientPortalAccess.count({
-      where: {
-        isActive: true,
-      },
-    });
+    // Note: Patient portal access is not modeled in the current schema.
+    // For now, we assume 0 patients with portal access until the feature is implemented.
+    const patientsWithPortalAccess = 0;
 
     // Engagement trend (patients created per month, last 12 months)
     const patientTrend = [];

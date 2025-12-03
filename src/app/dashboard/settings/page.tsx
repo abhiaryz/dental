@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,26 +49,26 @@ export default function SettingsPage() {
   });
 
   useEffect(() => {
-    fetchProfile();
-  }, []);
+    const fetchProfile = async () => {
+      try {
+        setProfileLoading(true);
+        const data = await settingsAPI.getProfile();
+        setProfile(data);
+        setName(data.name || "");
+        setEmail(data.email || "");
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to load profile",
+          variant: "destructive",
+        });
+      } finally {
+        setProfileLoading(false);
+      }
+    };
 
-  const fetchProfile = async () => {
-    try {
-      setProfileLoading(true);
-      const data = await settingsAPI.getProfile();
-      setProfile(data);
-      setName(data.name || "");
-      setEmail(data.email || "");
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to load profile",
-        variant: "destructive",
-      });
-    } finally {
-      setProfileLoading(false);
-    }
-  };
+    void fetchProfile();
+  }, [toast]);
 
   const handleSaveProfile = async () => {
     try {
@@ -418,9 +419,11 @@ export default function SettingsPage() {
                     <label className="text-sm font-medium">Clinic Logo</label>
                     {clinic?.logo && (
                       <div className="mb-2">
-                        <img 
-                          src={clinic.logo} 
-                          alt="Clinic Logo" 
+                        <Image
+                          src={clinic.logo}
+                          alt="Clinic Logo"
+                          width={80}
+                          height={80}
                           className="h-20 w-20 object-contain border rounded"
                         />
                       </div>

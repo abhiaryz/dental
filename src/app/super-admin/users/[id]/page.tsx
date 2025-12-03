@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState, use } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,7 +29,6 @@ interface User {
 
 export default function UserDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
-  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -48,12 +46,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
   const [clinics, setClinics] = useState<{ id: string; name: string; clinicCode: string }[]>([]);
   const [loadingClinics, setLoadingClinics] = useState(false);
 
-  useEffect(() => {
-    fetchUser();
-    fetchClinics(); // Fetch clinics when component mounts
-  }, [resolvedParams.id]);
-
-  const fetchClinics = async () => {
+  const fetchClinics = useCallback(async () => {
     setLoadingClinics(true);
     try {
       // Fetch minimal clinic data for dropdown
@@ -66,9 +59,9 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
     } finally {
       setLoadingClinics(false);
     }
-  };
+  }, []);
 
-  const fetchUser = async () => {
+  const fetchUser = useCallback(async () => {
     try {
       const response = await fetch(`/api/super-admin/users/${resolvedParams.id}`);
       
@@ -97,7 +90,12 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
     } finally {
       setLoading(false);
     }
-  };
+  }, [resolvedParams.id]);
+
+  useEffect(() => {
+    fetchUser();
+    fetchClinics();
+  }, [fetchUser, fetchClinics]);
 
   const handleSave = async () => {
     setSaving(true);

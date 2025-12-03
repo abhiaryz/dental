@@ -72,7 +72,7 @@ export async function GET(
       instructions: treatment.notes || "Follow post-treatment care instructions.",
       affectedTeeth: treatment.selectedTeeth,
       followupDate: treatment.followUpDate?.toLocaleDateString(),
-      followupNotes: treatment.followUpNotes,
+      followupNotes: treatment.followUpNotes || undefined,
     };
 
     const medicalHistory = {

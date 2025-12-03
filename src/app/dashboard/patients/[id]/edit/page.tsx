@@ -15,6 +15,17 @@ import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { patientsAPI } from "@/lib/api";
 
+const conditions = [
+  "Diabetes",
+  "Hypertension",
+  "Heart Disease",
+  "Asthma",
+  "Allergies",
+  "Bleeding Disorders",
+  "HIV/AIDS",
+  "Hepatitis",
+];
+
 export default function EditPatientPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { id } = use(params);
@@ -31,38 +42,29 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
     insurance: true,
   });
 
-  const conditions = [
-    "Diabetes",
-    "Hypertension",
-    "Heart Disease",
-    "Asthma",
-    "Allergies",
-    "Bleeding Disorders",
-    "HIV/AIDS",
-    "Hepatitis",
-  ];
-
   useEffect(() => {
-    fetchPatient();
-  }, [id]);
+    const fetchPatient = async () => {
+      try {
+        setLoading(true);
+        const data = await patientsAPI.getById(id);
+        setPatient(data);
 
-  const fetchPatient = async () => {
-    try {
-      setLoading(true);
-      const data = await patientsAPI.getById(id);
-      setPatient(data);
-      
-      // Parse medical conditions from medical history
-      if (data.medicalHistory) {
-        const conditionsArray = data.medicalHistory.split(", ").filter((c: string) => conditions.includes(c));
-        setMedicalConditions(conditionsArray);
+        // Parse medical conditions from medical history
+        if (data.medicalHistory) {
+          const conditionsArray = data.medicalHistory
+            .split(", ")
+            .filter((c: string) => conditions.includes(c));
+          setMedicalConditions(conditionsArray);
+        }
+      } catch (err: any) {
+        setError(err.message || "Failed to load patient");
+      } finally {
+        setLoading(false);
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to load patient");
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    void fetchPatient();
+  }, [id]);
 
   const toggleCondition = (condition: string) => {
     setMedicalConditions((prev) =>

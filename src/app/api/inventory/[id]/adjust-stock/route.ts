@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { checkPermission } from "@/lib/rbac";
+import { createErrorResponse, AppError, ErrorCodes } from "@/lib/api-errors";
+import { checkRateLimit } from "@/lib/rate-limiter";
+import { stockAdjustmentSchema, validateData } from "@/lib/validation";
 
 
 // POST - Adjust stock quantity
@@ -10,11 +13,17 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Rate limiting for mutation
+    const rateLimit = await checkRateLimit(request, 'api');
+    if (!rateLimit.allowed) {
+      return rateLimit.error || NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
+    }
+
     const { id } = await params;
     const session = await auth();
 
     if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new AppError("Unauthorized", ErrorCodes.UNAUTHORIZED, 401);
     }
 
     const userId = (session.user as any).id;
@@ -23,7 +32,7 @@ export async function POST(
 
     const canUpdate = await checkPermission(userRole, "inventory", "update");
     if (!canUpdate) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+      throw new AppError("Permission denied", ErrorCodes.FORBIDDEN, 403);
     }
 
     // Verify item belongs to clinic
@@ -35,28 +44,35 @@ export async function POST(
     });
 
     if (!item) {
-      return NextResponse.json({ error: "Item not found" }, { status: 404 });
+      throw new AppError("Item not found", ErrorCodes.NOT_FOUND, 404);
     }
 
-    const { type, quantity, reason, reference } = await request.json();
-
-    if (!type || !quantity) {
-      return NextResponse.json(
-        { error: "Type and quantity are required" },
-        { status: 400 }
-      );
+    let data;
+    try {
+      data = await request.json();
+    } catch {
+      throw new AppError("Invalid JSON in request body", ErrorCodes.VALIDATION_ERROR, 400);
     }
 
-    if (!["IN", "OUT", "ADJUSTMENT", "EXPIRED", "DAMAGED"].includes(type)) {
-      return NextResponse.json(
-        { error: "Invalid movement type" },
-        { status: 400 }
-      );
+    // Validate request body
+    const validation = validateData(stockAdjustmentSchema, data);
+    if (!validation.success) {
+      throw new AppError("Validation failed", ErrorCodes.VALIDATION_ERROR, 400, validation.errors);
     }
+
+    const { type, quantity, reason, reference } = validation.data;
+
+    // Map adjustment type to stock movement type
+    const movementTypeMap: Record<string, string> = {
+      add: "IN",
+      remove: "OUT",
+      adjustment: "ADJUSTMENT",
+    };
+    const movementType = movementTypeMap[type];
 
     // Calculate new quantity
     let newQuantity = item.quantity;
-    if (type === "IN" || type === "ADJUSTMENT") {
+    if (type === "add" || type === "adjustment") {
       newQuantity += quantity;
     } else {
       newQuantity -= quantity;
@@ -64,10 +80,7 @@ export async function POST(
 
     // Ensure quantity doesn't go negative
     if (newQuantity < 0) {
-      return NextResponse.json(
-        { error: "Insufficient stock" },
-        { status: 400 }
-      );
+      throw new AppError("Insufficient stock", ErrorCodes.VALIDATION_ERROR, 400);
     }
 
     // Update item and create stock movement in a transaction
@@ -82,7 +95,7 @@ export async function POST(
       prisma.stockMovement.create({
         data: {
           itemId: id,
-          type,
+          type: movementType,
           quantity,
           previousQty: item.quantity,
           newQty: newQuantity,
@@ -98,12 +111,7 @@ export async function POST(
       movement,
     });
   } catch (error) {
-    console.error("Error adjusting stock:", error);
-    return NextResponse.json(
-      { error: "Failed to adjust stock" },
-      { status: 500 }
-    );
-  } finally {
+    const errorResponse = createErrorResponse(error, "Failed to adjust stock");
+    return NextResponse.json(errorResponse.body, { status: errorResponse.status });
   }
 }
-

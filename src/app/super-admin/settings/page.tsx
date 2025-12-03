@@ -89,6 +89,7 @@ export default function SettingsPage() {
       setNewPassword("");
       setConfirmPassword("");
     } catch (error) {
+      console.error("Error updating super admin password:", error);
       setPasswordError("An error occurred. Please try again.");
     } finally {
       setUpdating(false);

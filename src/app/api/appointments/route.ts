@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { withAuth, AuthenticatedRequest, getPatientWhereClause } from "@/lib/auth-middleware";
 import { Permissions } from "@/lib/rbac";
 import { createErrorResponse } from "@/lib/api-errors";
+import { checkRateLimit } from "@/lib/rate-limiter";
 
 // GET - Fetch all appointments based on role
 export const GET = withAuth(
@@ -17,8 +18,8 @@ export const GET = withAuth(
       const limit = parseInt(searchParams.get("limit") || "10");
       const skip = (page - 1) * limit;
 
-      // Build patient filter based on user role
-      const patientWhere = getPatientWhereClause(req.user.id, req.user.role, req.user.isExternal);
+      // Build patient filter based on user role with proper clinic isolation
+      const patientWhere = getPatientWhereClause(req.user.id, req.user.role, req.user.isExternal, req.user.clinicId);
 
       const where: any = {
         patient: patientWhere,
@@ -89,7 +90,21 @@ export const GET = withAuth(
 export const POST = withAuth(
   async (req: AuthenticatedRequest) => {
     try {
-      const body = await req.json();
+      // Rate limiting for mutation
+      const rateLimit = await checkRateLimit(req as any, 'api');
+      if (!rateLimit.allowed) {
+        return rateLimit.error || NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
+      }
+
+      let body;
+      try {
+        body = await req.json();
+      } catch {
+        return NextResponse.json(
+          { error: "Invalid JSON in request body" },
+          { status: 400 }
+        );
+      }
 
       // Validate required fields
       const requiredFields = ["patientId", "date", "time", "type"];
@@ -103,8 +118,8 @@ export const POST = withAuth(
         }
       }
 
-      // Verify patient access based on role
-      const patientWhere = getPatientWhereClause(req.user.id, req.user.role, req.user.isExternal);
+      // Verify patient access based on role with proper clinic isolation
+      const patientWhere = getPatientWhereClause(req.user.id, req.user.role, req.user.isExternal, req.user.clinicId);
       const patient = await prisma.patient.findFirst({
         where: {
           id: body.patientId,

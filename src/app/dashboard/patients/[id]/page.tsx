@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useCallback, useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,27 +15,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { 
-  ArrowLeft, 
-  Edit, 
-  FileText, 
-  Phone, 
-  Mail, 
-  MapPin, 
-  Calendar, 
+import {
+  ArrowLeft,
+  Edit,
+  FileText,
+  Phone,
+  Mail,
+  MapPin,
+  Calendar,
   Activity,
   User,
   Heart,
-  Pill,
-  ClipboardList,
   Clock,
   TrendingUp,
   Shield,
   Loader2,
   Upload,
-  Eye,
-  Download,
-  Trash2
+  Download
 } from "lucide-react";
 import Link from "next/link";
 import { patientsAPI } from "@/lib/api";
@@ -60,9 +56,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { ClinicalImagesGallery } from "@/components/clinical/clinical-images-gallery";
 import { ConsentManager } from "@/components/clinical/consent-manager";
-import { DentalChart } from "@/components/clinical/dental-chart";
-import { PrescriptionGenerator } from "@/components/clinical/prescription-generator";
-import { MultiVisitTracker } from "@/components/clinical/multi-visit-tracker";
 
 export default function PatientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -80,11 +73,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
   const [documentType, setDocumentType] = useState("OTHER");
   const [documentNotes, setDocumentNotes] = useState("");
 
-  useEffect(() => {
-    fetchPatient();
-  }, [id]);
-
-  const fetchPatient = async () => {
+  const fetchPatient = useCallback(async () => {
     try {
       setLoading(true);
       const data = await patientsAPI.getById(id);
@@ -94,7 +83,11 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchPatient();
+  }, [fetchPatient]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

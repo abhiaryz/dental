@@ -1,137 +1,204 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { withAuth, AuthenticatedRequest } from "@/lib/auth-middleware";
+import { Permissions } from "@/lib/rbac";
+import { createErrorResponse } from "@/lib/api-errors";
+import { checkRateLimit } from "@/lib/rate-limiter";
+import { treatmentUpdateSchema, validateData } from "@/lib/validation";
 
+// Helper to build treatment where clause with proper multi-tenancy isolation
+function getTreatmentWhereClause(
+  treatmentId: string,
+  userId: string,
+  userRole: string,
+  isExternal: boolean,
+  clinicId?: string | null
+) {
+  const where: any = { id: treatmentId };
+
+  // Individual doctors only see their own treatments
+  if (isExternal || userRole === "EXTERNAL_DOCTOR") {
+    where.userId = userId;
+  } else {
+    // Clinic users can only see treatments for patients in their clinic
+    if (clinicId) {
+      where.patient = {
+        clinicId: clinicId,
+        createdByExternal: false,
+      };
+    }
+  }
+
+  return where;
+}
 
 // GET - Fetch a single treatment
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const session = await auth();
-    
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const GET = withAuth(
+  async (req: AuthenticatedRequest, context: { params: Promise<{ id: string }> }) => {
+    try {
+      const { id } = await context.params;
 
-    const treatment = await prisma.treatment.findFirst({
-      where: {
+      // Build where clause with proper multi-tenancy isolation
+      const where = getTreatmentWhereClause(
         id,
-        userId: (session.user as any).id,
-      },
-      include: {
-        patient: true,
-      },
-    });
+        req.user.id,
+        req.user.role,
+        req.user.isExternal,
+        req.user.clinicId
+      );
 
-    if (!treatment) {
-      return NextResponse.json({ error: "Treatment not found" }, { status: 404 });
+      const treatment = await prisma.treatment.findFirst({
+        where,
+        include: {
+          patient: true,
+        },
+      });
+
+      if (!treatment) {
+        return NextResponse.json({ error: "Treatment not found" }, { status: 404 });
+      }
+
+      return NextResponse.json(treatment);
+    } catch (error) {
+      const errorResponse = createErrorResponse(error, "Failed to fetch treatment");
+      return NextResponse.json(errorResponse.body, { status: errorResponse.status });
     }
-
-    return NextResponse.json(treatment);
-  } catch (error) {
-    console.error("Error fetching treatment:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch treatment" },
-      { status: 500 }
-    );
+  },
+  {
+    requiredPermissions: [Permissions.TREATMENT_READ],
   }
-}
+);
 
 // PUT - Update a treatment
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const session = await auth();
-    
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const PUT = withAuth(
+  async (req: AuthenticatedRequest, context: { params: Promise<{ id: string }> }) => {
+    try {
+      // Rate limiting for mutation
+      const rateLimit = await checkRateLimit(req as any, 'api');
+      if (!rateLimit.allowed) {
+        return rateLimit.error || NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
+      }
 
-    const body = await request.json();
+      const { id } = await context.params;
 
-    // Check if treatment exists and belongs to user
-    const existingTreatment = await prisma.treatment.findFirst({
-      where: {
+      let body;
+      try {
+        body = await req.json();
+      } catch {
+        return NextResponse.json(
+          { error: "Invalid JSON in request body" },
+          { status: 400 }
+        );
+      }
+
+      // Validate request body
+      const validation = validateData(treatmentUpdateSchema, body);
+      if (!validation.success) {
+        return NextResponse.json(
+          { error: "Validation failed", details: validation.errors },
+          { status: 400 }
+        );
+      }
+
+      // Build where clause with proper multi-tenancy isolation
+      const where = getTreatmentWhereClause(
         id,
-        userId: (session.user as any).id,
-      },
-    });
+        req.user.id,
+        req.user.role,
+        req.user.isExternal,
+        req.user.clinicId
+      );
 
-    if (!existingTreatment) {
-      return NextResponse.json({ error: "Treatment not found" }, { status: 404 });
-    }
-
-    const treatment = await prisma.treatment.update({
-      where: {
-        id,
-      },
-      data: body,
-      include: {
-        patient: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            mobileNumber: true,
+      // Check if treatment exists and user has access
+      const existingTreatment = await prisma.treatment.findFirst({
+        where,
+        include: {
+          patient: {
+            select: {
+              id: true,
+              clinicId: true,
+              createdByExternal: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    return NextResponse.json(treatment);
-  } catch (error) {
-    console.error("Error updating treatment:", error);
-    return NextResponse.json(
-      { error: "Failed to update treatment" },
-      { status: 500 }
-    );
+      if (!existingTreatment) {
+        return NextResponse.json({ error: "Treatment not found or access denied" }, { status: 404 });
+      }
+
+      // Use validated data (schema already excludes sensitive fields like userId, patientId)
+      const treatment = await prisma.treatment.update({
+        where: {
+          id,
+        },
+        data: validation.data,
+        include: {
+          patient: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              mobileNumber: true,
+            },
+          },
+        },
+      });
+
+      return NextResponse.json(treatment);
+    } catch (error) {
+      const errorResponse = createErrorResponse(error, "Failed to update treatment");
+      return NextResponse.json(errorResponse.body, { status: errorResponse.status });
+    }
+  },
+  {
+    requiredPermissions: [Permissions.TREATMENT_UPDATE],
   }
-}
+);
 
 // DELETE - Delete a treatment
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const session = await auth();
-    
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const DELETE = withAuth(
+  async (req: AuthenticatedRequest, context: { params: Promise<{ id: string }> }) => {
+    try {
+      // Rate limiting for mutation
+      const rateLimit = await checkRateLimit(req as any, 'api');
+      if (!rateLimit.allowed) {
+        return rateLimit.error || NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
+      }
 
-    // Check if treatment exists and belongs to user
-    const existingTreatment = await prisma.treatment.findFirst({
-      where: {
+      const { id } = await context.params;
+
+      // Build where clause with proper multi-tenancy isolation
+      const where = getTreatmentWhereClause(
         id,
-        userId: (session.user as any).id,
-      },
-    });
+        req.user.id,
+        req.user.role,
+        req.user.isExternal,
+        req.user.clinicId
+      );
 
-    if (!existingTreatment) {
-      return NextResponse.json({ error: "Treatment not found" }, { status: 404 });
+      // Check if treatment exists and user has access
+      const existingTreatment = await prisma.treatment.findFirst({
+        where,
+      });
+
+      if (!existingTreatment) {
+        return NextResponse.json({ error: "Treatment not found or access denied" }, { status: 404 });
+      }
+
+      await prisma.treatment.delete({
+        where: {
+          id,
+        },
+      });
+
+      return NextResponse.json({ message: "Treatment deleted successfully" });
+    } catch (error) {
+      const errorResponse = createErrorResponse(error, "Failed to delete treatment");
+      return NextResponse.json(errorResponse.body, { status: errorResponse.status });
     }
-
-    await prisma.treatment.delete({
-      where: {
-        id,
-      },
-    });
-
-    return NextResponse.json({ message: "Treatment deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting treatment:", error);
-    return NextResponse.json(
-      { error: "Failed to delete treatment" },
-      { status: 500 }
-    );
+  },
+  {
+    requiredPermissions: [Permissions.TREATMENT_DELETE],
   }
-}
-
+);

@@ -44,58 +44,60 @@ export default function AddTreatmentPage({ params }: { params: Promise<{ id: str
 
   useEffect(() => {
     if (status === "loading") return;
-    
-    params.then(p => {
-      setPatientId(p.id);
-      fetchData(p.id);
-    });
-  }, [params, status]);
 
-  const fetchData = async (id: string) => {
-    try {
-      setLoading(true);
-      
-      // Fetch patient details
-      const patientData = await patientsAPI.getById(id);
-      setPatient(patientData);
-      
-      const user = session?.user as any;
-      
-      // If user belongs to a clinic, fetch employees (doctors)
-      if (user?.clinicId) {
-        try {
-          const employeesData = await employeesAPI.getAll();
-          // Filter only doctors (employees with role DOCTOR or DENTIST)
-          const doctorsList = employeesData.employees?.filter((emp: any) => 
-            emp.role === 'DOCTOR' || emp.role === 'DENTIST'
-          ) || [];
-          setDoctors(doctorsList);
-        } catch (error) {
-          console.error("Failed to fetch employees:", error);
-          // Don't block the page if fetching doctors fails, but user might be blocked from submitting
-          // if validation requires a doctor selected.
+    const fetchData = async (id: string) => {
+      try {
+        setLoading(true);
+
+        // Fetch patient details
+        const patientData = await patientsAPI.getById(id);
+        setPatient(patientData);
+
+        const user = session?.user as any;
+
+        // If user belongs to a clinic, fetch employees (doctors)
+        if (user?.clinicId) {
+          try {
+            const employeesData = await employeesAPI.getAll();
+            // Filter only doctors (employees with role DOCTOR or DENTIST)
+            const doctorsList =
+              employeesData.employees?.filter(
+                (emp: any) => emp.role === "DOCTOR" || emp.role === "DENTIST"
+              ) || [];
+            setDoctors(doctorsList);
+          } catch (error) {
+            console.error("Failed to fetch employees:", error);
+            // Don't block the page if fetching doctors fails, but user might be blocked from submitting
+            // if validation requires a doctor selected.
+          }
+        } else if (user) {
+          // If no clinic (External Doctor), the current user is the doctor
+          setDoctors([
+            {
+              id: user.id,
+              name: user.name || "Doctor",
+              role: user.role,
+            },
+          ]);
+          setSelectedDoctor(user.id);
         }
-      } else if (user) {
-        // If no clinic (External Doctor), the current user is the doctor
-        setDoctors([{
-          id: user.id,
-          name: user.name || "Doctor",
-          role: user.role
-        }]);
-        setSelectedDoctor(user.id);
+      } catch (err: any) {
+        setError(err.message || "Failed to load data");
+        toast({
+          title: "Error",
+          description: err.message || "Failed to load patient and doctors",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
       }
-      
-    } catch (err: any) {
-      setError(err.message || "Failed to load data");
-      toast({
-        title: "Error",
-        description: err.message || "Failed to load patient and doctors",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    params.then((p) => {
+      setPatientId(p.id);
+      void fetchData(p.id);
+    });
+  }, [params, session, status, toast]);
 
   // Tooth numbering system (FDI notation)
   const upperTeeth = [
@@ -285,15 +287,26 @@ export default function AddTreatmentPage({ params }: { params: Promise<{ id: str
               </div>
               <div className="space-y-2">
                 <Label htmlFor="doctor">Treating Doctor *</Label>
-                <Select required>
+                <Select
+                  required
+                  value={selectedDoctor}
+                  onValueChange={setSelectedDoctor}
+                >
                   <SelectTrigger id="doctor">
                     <SelectValue placeholder="Select doctor" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="dr-sharma">Dr. Sharma</SelectItem>
-                    <SelectItem value="dr-patel">Dr. Patel</SelectItem>
-                    <SelectItem value="dr-kumar">Dr. Kumar</SelectItem>
-                    <SelectItem value="dr-singh">Dr. Singh</SelectItem>
+                    {doctors.length > 0 ? (
+                      doctors.map((doctor) => (
+                        <SelectItem key={doctor.id} value={doctor.id}>
+                          {doctor.name || "Doctor"}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-doctor" disabled>
+                        No doctors available
+                      </SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -301,7 +314,11 @@ export default function AddTreatmentPage({ params }: { params: Promise<{ id: str
 
             <div className="space-y-2">
               <Label htmlFor="treatmentType">Treatment Type *</Label>
-              <Select required>
+              <Select
+                required
+                value={selectedTreatmentType}
+                onValueChange={setSelectedTreatmentType}
+              >
                 <SelectTrigger id="treatmentType">
                   <SelectValue placeholder="Select treatment type" />
                 </SelectTrigger>

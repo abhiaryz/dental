@@ -1,72 +1,105 @@
 import { NextResponse } from "next/server";
-import { withSuperAdminAuth, AuthenticatedSuperAdminRequest } from "@/lib/super-admin-auth";
+import { withSuperAdminAuth } from "@/lib/super-admin-auth";
 import { prisma } from "@/lib/prisma";
 
 async function handler() {
   try {
-    // Get MRR by clinic type
-    const mrrByType = await prisma.clinic.groupBy({
-      by: ["type"],
-      where: {
-        subscriptionStatus: "ACTIVE",
-      },
-      _sum: {
-        mrr: true,
-      },
-      _count: true,
-    });
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    // Get total revenue (sum of all MRR)
-    const totalRevenue = await prisma.clinic.aggregate({
-      where: {
-        subscriptionStatus: "ACTIVE",
-      },
-      _sum: {
-        mrr: true,
-      },
-    });
-
-    // Get average MRR per clinic
+    // Active clinics (isActive flag in schema)
     const activeClinics = await prisma.clinic.count({
+      where: { isActive: true },
+    });
+
+    // Paid invoices this month (used as proxy for MRR)
+    const paidInvoicesThisMonth = await prisma.invoice.findMany({
       where: {
-        subscriptionStatus: "ACTIVE",
+        status: "PAID",
+        createdAt: {
+          gte: startOfMonth,
+        },
+      },
+      include: {
+        clinic: true,
       },
     });
 
-    const avgMRR = activeClinics > 0 ? (totalRevenue._sum.mrr || 0) / activeClinics : 0;
+    const totalMRR = paidInvoicesThisMonth.reduce(
+      (sum, inv) => sum + inv.totalAmount,
+      0
+    );
 
-    // Get top 10 clinics by MRR
-    const topClinics = await prisma.clinic.findMany({
-      where: {
-        subscriptionStatus: "ACTIVE",
-      },
-      select: {
-        id: true,
-        name: true,
-        clinicCode: true,
-        mrr: true,
-        subscriptionStartDate: true,
-      },
-      orderBy: {
-        mrr: "desc",
-      },
-      take: 10,
+    // Group revenue by clinic type
+    const mrrByTypeMap = new Map<
+      string,
+      { type: string; mrr: number; count: number }
+    >();
+
+    paidInvoicesThisMonth.forEach((inv) => {
+      const type = inv.clinic?.type || "UNKNOWN";
+      const entry = mrrByTypeMap.get(type) || { type, mrr: 0, count: 0 };
+      entry.mrr += inv.totalAmount;
+      entry.count += 1;
+      mrrByTypeMap.set(type, entry);
     });
 
-    // Calculate ARR (Annual Recurring Revenue)
-    const arr = (totalRevenue._sum.mrr || 0) * 12;
+    const mrrByType = Array.from(mrrByTypeMap.values());
+
+    // Top 10 clinics by revenue this month
+    const revenueByClinic = new Map<
+      string,
+      {
+        id: string;
+        name: string;
+        clinicCode: string;
+        revenue: number;
+        firstInvoiceDate?: Date;
+      }
+    >();
+
+    paidInvoicesThisMonth.forEach((inv) => {
+      if (!inv.clinic) return;
+      const existing = revenueByClinic.get(inv.clinic.id) || {
+        id: inv.clinic.id,
+        name: inv.clinic.name,
+        clinicCode: inv.clinic.clinicCode,
+        revenue: 0,
+        firstInvoiceDate: inv.createdAt,
+      };
+      existing.revenue += inv.totalAmount;
+      if (
+        !existing.firstInvoiceDate ||
+        inv.createdAt < existing.firstInvoiceDate
+      ) {
+        existing.firstInvoiceDate = inv.createdAt;
+      }
+      revenueByClinic.set(inv.clinic.id, existing);
+    });
+
+    const topClinics = Array.from(revenueByClinic.values())
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 10)
+      .map((c) => ({
+        id: c.id,
+        name: c.name,
+        clinicCode: c.clinicCode,
+        mrr: c.revenue,
+        subscriptionStartDate: c.firstInvoiceDate || null,
+      }));
+
+    // Calculate ARR (Annual Recurring Revenue) as 12x current month paid revenue
+    const arr = totalMRR * 12;
+
+    const avgMRR = activeClinics > 0 ? totalMRR / activeClinics : 0;
 
     return NextResponse.json({
       revenue: {
-        totalMRR: totalRevenue._sum.mrr || 0,
+        totalMRR,
         arr,
         avgMRR,
         activeClinics,
-        mrrByType: mrrByType.map((item) => ({
-          type: item.type,
-          mrr: item._sum.mrr || 0,
-          count: item._count,
-        })),
+        mrrByType,
         topClinics,
       },
     });

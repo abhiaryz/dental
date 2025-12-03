@@ -50,7 +50,7 @@ import {
   Printer,
   Loader2,
   Trash2,
-  X
+  X,
 } from "lucide-react";
 import { invoicesAPI, patientsAPI } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
@@ -70,6 +70,7 @@ interface Invoice {
   patientName: string;
   invoiceNumber: string;
   amount: number;
+  paidAmount?: number;
   status: "paid" | "pending" | "overdue";
   date: string;
   dueDate: string;
@@ -88,10 +89,8 @@ interface Payment {
 
 export default function FinancePage() {
   const router = useRouter();
-  // const [searchTerm, setSearchTerm] = useState("");
-  // const [selectedPeriod, setSelectedPeriod] = useState("month");
-  const [invoices, setInvoices] = useState<any[]>([]);
-  const [payments, setPayments] = useState<any[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>({});
   const { toast } = useToast();
@@ -138,18 +137,8 @@ export default function FinancePage() {
     month: new Date().getMonth() + 1,
     quarter: 1,
   });
-
-  useEffect(() => {
-    fetchInvoices();
-    fetchPatients();
-  }, []);
-
-  // Refetch when filters change
-  useEffect(() => {
-    fetchInvoices();
-  }, [filters]);
-
-  const fetchInvoices = async () => {
+  
+  const fetchInvoices = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -211,9 +200,9 @@ export default function FinancePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, toast]);
 
-  const fetchPatients = async () => {
+  const fetchPatients = useCallback(async () => {
     try {
       const data = await patientsAPI.getAll({ limit: 100 });
       if (data.patients) {
@@ -222,7 +211,12 @@ export default function FinancePage() {
     } catch (error) {
       console.error("Error fetching patients:", error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void fetchInvoices();
+    void fetchPatients();
+  }, [fetchInvoices, fetchPatients]);
 
   const handleCreateInvoice = async () => {
     try {
@@ -454,13 +448,13 @@ export default function FinancePage() {
     try {
       setReportLoading(true);
       const params = new URLSearchParams({
-        period: reportPeriod.type,
+        period,
         year: reportPeriod.year.toString(),
       });
 
-      if (reportPeriod.type === 'monthly') {
+      if (period === 'monthly') {
         params.append('month', reportPeriod.month.toString());
-      } else if (reportPeriod.type === 'quarterly') {
+      } else if (period === 'quarterly') {
         params.append('quarter', reportPeriod.quarter.toString());
       }
 
@@ -1339,6 +1333,7 @@ export default function FinancePage() {
                   setInvoiceFormData({ ...invoiceFormData, patientId: value });
                   if (invoiceErrors.patientId) {
                     const { patientId, ...rest } = invoiceErrors;
+                    void patientId;
                     setInvoiceErrors(rest);
                   }
                 }}
@@ -1550,6 +1545,7 @@ export default function FinancePage() {
                   setPaymentFormData({ ...paymentFormData, amount: e.target.value });
                   if (paymentErrors.amount) {
                     const { amount, ...rest } = paymentErrors;
+                    void amount;
                     setPaymentErrors(rest);
                   }
                 }}
@@ -1569,6 +1565,7 @@ export default function FinancePage() {
                   setPaymentFormData({ ...paymentFormData, paymentMethod: value });
                   if (paymentErrors.paymentMethod) {
                     const { paymentMethod, ...rest } = paymentErrors;
+                    void paymentMethod;
                     setPaymentErrors(rest);
                   }
                 }}
@@ -1613,6 +1610,7 @@ export default function FinancePage() {
                   setPaymentFormData({ ...paymentFormData, paymentDate: e.target.value });
                   if (paymentErrors.paymentDate) {
                     const { paymentDate, ...rest } = paymentErrors;
+                    void paymentDate;
                     setPaymentErrors(rest);
                   }
                 }}

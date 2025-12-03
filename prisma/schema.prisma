@@ -97,6 +97,9 @@ model User {
   invoicesCreated     Invoice[]
   paymentsRecorded    Payment[]
   stockMovements      StockMovement[]
+  notificationPreference NotificationPreference?
+  notifications       Notification[]
+  prescriptionPDFsGenerated PrescriptionPDF[] @relation("GeneratedBy")
 
   @@index([username])
   @@index([clinicId])
@@ -199,6 +202,7 @@ model Patient {
   createdByExternal     Boolean       @default(false)
   clinic                Clinic?       @relation(fields: [clinicId], references: [id], onDelete: Cascade)
   invoices              Invoice[]
+  prescriptionPDFs      PrescriptionPDF[]
 
   @@index([userId])
   @@index([mobileNumber])
@@ -229,6 +233,7 @@ model Treatment {
   clinicalImages   ClinicalImage[]
   consents         PatientConsent[]
   invoices         Invoice[]
+  prescriptionPDFs PrescriptionPDF[]
 
   @@index([patientId])
   @@index([userId])
@@ -530,4 +535,60 @@ model StockMovement {
   @@index([itemId])
   @@index([userId])
   @@index([createdAt])
+}
+
+model NotificationPreference {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  email     Boolean  @default(true)
+  sms       Boolean  @default(true)
+  marketing Boolean  @default(false)
+  security  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  message   String
+  link      String?
+  metadata  String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+model PrescriptionPDF {
+  id          String    @id @default(cuid())
+  treatmentId String?
+  patientId   String
+  pdfUrl      String
+  medications String
+  instructions String?
+  generatedBy String
+  generatedAt DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  treatment   Treatment? @relation(fields: [treatmentId], references: [id], onDelete: SetNull)
+  patient     Patient     @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  generatedByUser User    @relation("GeneratedBy", fields: [generatedBy], references: [id], onDelete: Cascade)
+
+  @@index([treatmentId])
+  @@index([patientId])
+  @@index([generatedBy])
+  @@index([generatedAt])
 }

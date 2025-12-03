@@ -1,6 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { createErrorResponse, AppError, ErrorCodes } from "@/lib/api-errors";
+import { checkRateLimit } from "@/lib/rate-limiter";
+import { notificationPreferencesSchema, validateData } from "@/lib/validation";
 
 
 // GET - Get notification preferences
@@ -9,7 +12,7 @@ export async function GET() {
     const session = await auth();
 
     if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new AppError("Unauthorized", ErrorCodes.UNAUTHORIZED, 401);
     }
 
     const userId = (session.user as any).id;
@@ -27,44 +30,53 @@ export async function GET() {
 
     return NextResponse.json(preferences);
   } catch (error) {
-    console.error("Error fetching notification preferences:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch preferences" },
-      { status: 500 }
-    );
-  } finally {
+    const errorResponse = createErrorResponse(error, "Failed to fetch preferences");
+    return NextResponse.json(errorResponse.body, { status: errorResponse.status });
   }
 }
 
 // PUT - Update notification preferences
 export async function PUT(request: NextRequest) {
   try {
+    // Rate limiting for mutation
+    const rateLimit = await checkRateLimit(request, 'api');
+    if (!rateLimit.allowed) {
+      return rateLimit.error || NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
+    }
+
     const session = await auth();
 
     if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new AppError("Unauthorized", ErrorCodes.UNAUTHORIZED, 401);
     }
 
     const userId = (session.user as any).id;
-    const data = await request.json();
+
+    let data;
+    try {
+      data = await request.json();
+    } catch {
+      throw new AppError("Invalid JSON in request body", ErrorCodes.VALIDATION_ERROR, 400);
+    }
+
+    // Validate request body
+    const validation = validateData(notificationPreferencesSchema, data);
+    if (!validation.success) {
+      throw new AppError("Validation failed", ErrorCodes.VALIDATION_ERROR, 400, validation.errors);
+    }
 
     const preferences = await prisma.notificationPreference.upsert({
       where: { userId },
-      update: data,
+      update: validation.data,
       create: {
         userId,
-        ...data,
+        ...validation.data,
       },
     });
 
     return NextResponse.json(preferences);
   } catch (error) {
-    console.error("Error updating notification preferences:", error);
-    return NextResponse.json(
-      { error: "Failed to update preferences" },
-      { status: 500 }
-    );
-  } finally {
+    const errorResponse = createErrorResponse(error, "Failed to update preferences");
+    return NextResponse.json(errorResponse.body, { status: errorResponse.status });
   }
 }
-

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,11 +40,7 @@ export default function ClinicsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
 
-  useEffect(() => {
-    fetchClinics();
-  }, [search, statusFilter, page]);
-
-  const fetchClinics = async () => {
+  const fetchClinics = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -72,7 +68,11 @@ export default function ClinicsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, search, statusFilter]);
+
+  useEffect(() => {
+    fetchClinics();
+  }, [fetchClinics]);
 
   const handleSuspend = async (clinicId: string) => {
     if (!confirm("Are you sure you want to suspend this clinic?")) return;

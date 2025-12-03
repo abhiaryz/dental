@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,13 +18,11 @@ import {
   Loader2,
   AlertCircle,
   CheckCircle2,
-  ArrowLeft,
   ArrowRight,
   Upload,
   X,
   Plus,
   Mail,
-  UserPlus,
   Sparkles,
   Phone,
   MapPin,
@@ -175,6 +173,7 @@ function OnboardingContent() {
         setError(data.error || "Failed to create clinic");
       }
     } catch (error) {
+      console.error("Error during step 1 clinic setup:", error);
       setError("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
@@ -226,6 +225,7 @@ function OnboardingContent() {
         setError(data.error || "Failed to update clinic");
       }
     } catch (error) {
+      console.error("Error during step 2 clinic update:", error);
       setError("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
@@ -269,6 +269,7 @@ function OnboardingContent() {
       // Redirect to dashboard
       router.push("/dashboard");
     } catch (error) {
+      console.error("Error during step 3 invitations/onboarding completion:", error);
       setError("An error occurred. Please try again.");
       setIsLoading(false);
     }
@@ -408,7 +409,7 @@ function OnboardingContent() {
               />
             </div>
 
-            {steps.map((s, index) => {
+            {steps.map((s) => {
               const Icon = s.icon;
               const isCompleted = step > s.number;
               const isCurrent = step === s.number;
@@ -633,10 +634,13 @@ function OnboardingContent() {
                     <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
                       {step2Data.logoPreview && (
                         <div className="relative group mx-auto sm:mx-0">
-                          <img
+                          <Image
                             src={step2Data.logoPreview}
                             alt="Logo preview"
+                            width={96}
+                            height={96}
                             className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl object-cover border-2 border-primary/20 shadow-md"
+                            unoptimized
                           />
                           <button
                             type="button"

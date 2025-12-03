@@ -37,7 +37,7 @@ export async function createNotification(data: NotificationData) {
     });
 
     // Send email if user has email notifications enabled
-    if (preferences?.emailNotifications && user?.email) {
+    if (preferences?.email && user?.email) {
       await sendEmailNotification({
         to: user.email,
         name: user.name || "User",

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { checkPermission } from "@/lib/rbac";
+import { createErrorResponse, AppError, ErrorCodes } from "@/lib/api-errors";
+import { checkRateLimit } from "@/lib/rate-limiter";
+import { paymentSchema, validateData } from "@/lib/validation";
 
 
 // POST - Record payment for invoice
@@ -10,11 +13,17 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Rate limiting for mutation
+    const rateLimit = await checkRateLimit(request, 'api');
+    if (!rateLimit.allowed) {
+      return rateLimit.error || NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
+    }
+
     const { id } = await params;
     const session = await auth();
 
     if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new AppError("Unauthorized", ErrorCodes.UNAUTHORIZED, 401);
     }
 
     const userId = (session.user as any).id;
@@ -23,7 +32,7 @@ export async function POST(
 
     const canCreate = await checkPermission(userRole, "billing", "create");
     if (!canCreate) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+      throw new AppError("Permission denied", ErrorCodes.FORBIDDEN, 403);
     }
 
     // Verify invoice exists and belongs to clinic
@@ -38,75 +47,75 @@ export async function POST(
     });
 
     if (!invoice) {
-      return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+      throw new AppError("Invoice not found", ErrorCodes.NOT_FOUND, 404);
     }
 
-    const data = await request.json();
-
-    // Validate required fields
-    if (!data.amount || !data.paymentMethod) {
-      return NextResponse.json(
-        { error: "Amount and payment method are required" },
-        { status: 400 }
-      );
+    let data;
+    try {
+      data = await request.json();
+    } catch {
+      throw new AppError("Invalid JSON in request body", ErrorCodes.VALIDATION_ERROR, 400);
     }
+
+    // Validate request body
+    const validation = validateData(paymentSchema, data);
+    if (!validation.success) {
+      throw new AppError("Validation failed", ErrorCodes.VALIDATION_ERROR, 400, validation.errors);
+    }
+
+    const validatedData = validation.data;
 
     // Calculate total paid so far
     const totalPaid = invoice.payments.reduce((sum, p) => sum + p.amount, 0);
-    
-    const newTotalPaid = totalPaid + data.amount;
+    const newTotalPaid = totalPaid + validatedData.amount;
 
     // Check if payment exceeds invoice amount
     if (newTotalPaid > invoice.totalAmount) {
-      return NextResponse.json(
-        { error: "Payment amount exceeds invoice total" },
-        { status: 400 }
-      );
+      throw new AppError("Payment amount exceeds invoice total", ErrorCodes.VALIDATION_ERROR, 400);
     }
 
-    // Create payment
-    const payment = await prisma.payment.create({
-      data: {
-        invoiceId: id,
-        amount: data.amount,
-        method: data.paymentMethod,
-        paymentDate: data.paymentDate ? new Date(data.paymentDate) : new Date(),
-        reference: data.reference || data.transactionId,
-        notes: data.notes,
-        recordedBy: userId,
-      },
-    });
-
-    // Update invoice status if fully paid
-    let updatedStatus = invoice.status;
-    if (newTotalPaid >= invoice.totalAmount && data.status === "COMPLETED") {
-      updatedStatus = "PAID";
-      
-      await prisma.invoice.update({
-        where: { id },
+    // Use transaction for atomic operation
+    const result = await prisma.$transaction(async (tx) => {
+      // Create payment
+      const payment = await tx.payment.create({
         data: {
-          status: "PAID",
-          paidDate: new Date(),
+          invoiceId: id,
+          amount: validatedData.amount,
+          method: validatedData.paymentMethod,
+          paymentDate: validatedData.paymentDate ? new Date(validatedData.paymentDate) : new Date(),
+          notes: validatedData.notes,
+          recordedBy: userId,
         },
       });
-    }
+
+      // Update invoice status if fully paid
+      let updatedStatus = invoice.status;
+      if (newTotalPaid >= invoice.totalAmount) {
+        updatedStatus = "PAID";
+        
+        await tx.invoice.update({
+          where: { id },
+          data: {
+            status: "PAID",
+            paidDate: new Date(),
+          },
+        });
+      }
+
+      return { payment, updatedStatus };
+    });
 
     return NextResponse.json({
-      payment,
+      payment: result.payment,
       invoice: {
         ...invoice,
-        status: updatedStatus,
+        status: result.updatedStatus,
       },
       totalPaid: newTotalPaid,
       remaining: invoice.totalAmount - newTotalPaid,
     }, { status: 201 });
   } catch (error) {
-    console.error("Error recording payment:", error);
-    return NextResponse.json(
-      { error: "Failed to record payment" },
-      { status: 500 }
-    );
-  } finally {
+    const errorResponse = createErrorResponse(error, "Failed to record payment");
+    return NextResponse.json(errorResponse.body, { status: errorResponse.status });
   }
 }
-

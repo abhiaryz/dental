@@ -62,7 +62,7 @@ export default function IndividualLoginPage() {
         router.push("/dashboard");
         router.refresh();
       }
-    } catch (error) {
+    } catch {
       setError("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
@@ -88,7 +88,7 @@ export default function IndividualLoginPage() {
       } else {
         setError(data.error || "Failed to resend verification email");
       }
-    } catch (error) {
+    } catch {
       setError("An error occurred. Please try again.");
     } finally {
       setIsResending(false);

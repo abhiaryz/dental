@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Stethoscope, Building2, User, Users, ArrowRight, Sparkles, CheckCircle } from "lucide-react";
+import { Stethoscope, Building2, User, ArrowRight, Sparkles, CheckCircle } from "lucide-react";
 
 export default function SignupPage() {
   const router = useRouter();

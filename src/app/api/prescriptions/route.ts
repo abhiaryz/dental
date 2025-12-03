@@ -138,10 +138,10 @@ export const POST = withAuth(
 
       // Patient Info
       doc.setFontSize(12);
-      doc.setFont(undefined, 'bold');
+      doc.setFont('helvetica', 'bold');
       doc.text("PRESCRIPTION", 20, 45);
       
-      doc.setFont(undefined, 'normal');
+      doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
       doc.text(`Patient: ${patient.firstName} ${patient.lastName}`, 20, 55);
       doc.text(`Age: ${new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear()} yrs`, 20, 62);
@@ -176,9 +176,9 @@ export const POST = withAuth(
       const finalY = (doc as any).lastAutoTable.finalY || 120;
       
       if (instructions) {
-        doc.setFont(undefined, 'bold');
+        doc.setFont('helvetica', 'bold');
         doc.text("Instructions:", 20, finalY + 15);
-        doc.setFont(undefined, 'normal');
+        doc.setFont('helvetica', 'normal');
         const instructionLines = doc.splitTextToSize(instructions, pageWidth - 40);
         doc.text(instructionLines, 20, finalY + 22);
       }
@@ -223,7 +223,7 @@ export const POST = withAuth(
     }
   },
   {
-    requiredPermissions: [Permissions.TREATMENT_WRITE],
+    requiredPermissions: [Permissions.PRESCRIPTION_CREATE],
   }
 );
 

@@ -1,119 +1,63 @@
 import { NextResponse } from "next/server";
-import { withAuth, AuthenticatedRequest, getPatientWhereClause } from "@/lib/auth-middleware";
-import { prisma } from "@/lib/prisma";
+import { withAuth, AuthenticatedRequest } from "@/lib/auth-middleware";
 import { Permissions } from "@/lib/rbac";
-import { AppError, ErrorCodes, createErrorResponse } from "@/lib/api-errors";
 
-// Update visit
-export const PATCH = withAuth(
-  async (req: AuthenticatedRequest, { params }: { params: Promise<{ id: string; visitId: string }> }) => {
-    try {
-      const { visitId } = await params;
-      const body = await req.json();
-
-      // Verify visit exists and user has access
-      const visit = await prisma.treatmentVisit.findUnique({
-        where: { id: visitId },
-        include: {
-          treatment: {
-            include: {
-              patient: true,
-            },
-          },
-        },
-      });
-
-      if (!visit) {
-        throw new AppError("Visit not found", ErrorCodes.NOT_FOUND, 404);
-      }
-
-      // Verify patient access
-      const patientWhere = getPatientWhereClause(
-        req.user.id,
-        req.user.role,
-        req.user.isExternal
-      );
-      const patient = await prisma.patient.findFirst({
-        where: {
-          id: visit.treatment.patientId,
-          ...patientWhere,
-        },
-      });
-
-      if (!patient) {
-        throw new AppError("Access denied", ErrorCodes.FORBIDDEN, 403);
-      }
-
-      const updatedVisit = await prisma.treatmentVisit.update({
-        where: { id: visitId },
-        data: body,
-      });
-
-      return NextResponse.json({
-        message: "Visit updated successfully",
-        visit: updatedVisit,
-      });
-    } catch (error) {
-      const errorResponse = createErrorResponse(error, "Failed to update visit");
-      return NextResponse.json(errorResponse.body, { status: errorResponse.status });
-    }
+// Get a single visit - Feature not yet implemented
+export const GET = withAuth(
+  async (_req: AuthenticatedRequest, { params }: { params: Promise<{ id: string; visitId: string }> }) => {
+    const { id: treatmentId, visitId } = await params;
+    
+    // TreatmentVisit model not yet available in schema
+    return NextResponse.json(
+      { 
+        error: "Multi-visit tracking feature is not yet available",
+        treatmentId,
+        visitId,
+      },
+      { status: 501 }
+    );
   },
   {
-    requiredPermissions: [Permissions.TREATMENT_WRITE],
+    requiredPermissions: [Permissions.TREATMENT_READ],
   }
 );
 
-// Delete visit
+// Update a visit - Feature not yet implemented
+export const PUT = withAuth(
+  async (_req: AuthenticatedRequest, { params }: { params: Promise<{ id: string; visitId: string }> }) => {
+    const { id: treatmentId, visitId } = await params;
+    
+    // TreatmentVisit model not yet available in schema
+    return NextResponse.json(
+      { 
+        error: "Multi-visit tracking feature is not yet available",
+        treatmentId,
+        visitId,
+      },
+      { status: 501 }
+    );
+  },
+  {
+    requiredPermissions: [Permissions.TREATMENT_UPDATE],
+  }
+);
+
+// Delete a visit - Feature not yet implemented
 export const DELETE = withAuth(
-  async (req: AuthenticatedRequest, { params }: { params: Promise<{ id: string; visitId: string }> }) => {
-    try {
-      const { visitId } = await params;
-
-      // Verify visit exists and user has access
-      const visit = await prisma.treatmentVisit.findUnique({
-        where: { id: visitId },
-        include: {
-          treatment: {
-            include: {
-              patient: true,
-            },
-          },
-        },
-      });
-
-      if (!visit) {
-        throw new AppError("Visit not found", ErrorCodes.NOT_FOUND, 404);
-      }
-
-      // Verify patient access
-      const patientWhere = getPatientWhereClause(
-        req.user.id,
-        req.user.role,
-        req.user.isExternal
-      );
-      const patient = await prisma.patient.findFirst({
-        where: {
-          id: visit.treatment.patientId,
-          ...patientWhere,
-        },
-      });
-
-      if (!patient) {
-        throw new AppError("Access denied", ErrorCodes.FORBIDDEN, 403);
-      }
-
-      await prisma.treatmentVisit.delete({
-        where: { id: visitId },
-      });
-
-      return NextResponse.json({ message: "Visit deleted successfully" });
-    } catch (error) {
-      const errorResponse = createErrorResponse(error, "Failed to delete visit");
-      return NextResponse.json(errorResponse.body, { status: errorResponse.status });
-    }
+  async (_req: AuthenticatedRequest, { params }: { params: Promise<{ id: string; visitId: string }> }) => {
+    const { id: treatmentId, visitId } = await params;
+    
+    // TreatmentVisit model not yet available in schema
+    return NextResponse.json(
+      { 
+        error: "Multi-visit tracking feature is not yet available",
+        treatmentId,
+        visitId,
+      },
+      { status: 501 }
+    );
   },
   {
     requiredPermissions: [Permissions.TREATMENT_DELETE],
   }
 );
-

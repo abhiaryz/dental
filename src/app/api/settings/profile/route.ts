@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { createAuditLog, AuditActions } from "@/lib/audit-logger";
+import { createErrorResponse, AppError, ErrorCodes } from "@/lib/api-errors";
+import { checkRateLimit } from "@/lib/rate-limiter";
+import { profileUpdateSchema, validateData } from "@/lib/validation";
 
 
 // GET - Get user profile
@@ -10,7 +13,7 @@ export async function GET() {
     const session = await auth();
     
     if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new AppError("Unauthorized", ErrorCodes.UNAUTHORIZED, 401);
     }
 
     const user = await prisma.user.findUnique({
@@ -28,30 +31,43 @@ export async function GET() {
     });
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      throw new AppError("User not found", ErrorCodes.NOT_FOUND, 404);
     }
 
     return NextResponse.json(user);
   } catch (error) {
-    console.error("Error fetching profile:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch profile" },
-      { status: 500 }
-    );
+    const errorResponse = createErrorResponse(error, "Failed to fetch profile");
+    return NextResponse.json(errorResponse.body, { status: errorResponse.status });
   }
 }
 
 // PUT - Update user profile
 export async function PUT(request: NextRequest) {
   try {
+    // Rate limiting for mutation
+    const rateLimit = await checkRateLimit(request, 'api');
+    if (!rateLimit.allowed) {
+      return rateLimit.error || NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
+    }
+
     const session = await auth();
     
     if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new AppError("Unauthorized", ErrorCodes.UNAUTHORIZED, 401);
     }
 
-    const body = await request.json();
-    const { name, image } = body;
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      throw new AppError("Invalid JSON in request body", ErrorCodes.VALIDATION_ERROR, 400);
+    }
+
+    // Validate request body
+    const validation = validateData(profileUpdateSchema, body);
+    if (!validation.success) {
+      throw new AppError("Validation failed", ErrorCodes.VALIDATION_ERROR, 400, validation.errors);
+    }
 
     const userId = (session.user as any).id;
 
@@ -59,10 +75,7 @@ export async function PUT(request: NextRequest) {
       where: {
         id: userId,
       },
-      data: {
-        ...(name && { name }),
-        ...(image && { image }),
-      },
+      data: validation.data,
       select: {
         id: true,
         name: true,
@@ -86,11 +99,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json(user);
   } catch (error) {
-    console.error("Error updating profile:", error);
-    return NextResponse.json(
-      { error: "Failed to update profile" },
-      { status: 500 }
-    );
+    const errorResponse = createErrorResponse(error, "Failed to update profile");
+    return NextResponse.json(errorResponse.body, { status: errorResponse.status });
   }
 }
-

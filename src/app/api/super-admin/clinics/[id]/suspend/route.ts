@@ -13,7 +13,6 @@ async function handler(
       where: { id },
       data: {
         isActive: false,
-        subscriptionStatus: "SUSPENDED",
       },
     });
 

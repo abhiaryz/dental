@@ -65,7 +65,7 @@ function LoginForm() {
         router.push("/dashboard");
         router.refresh();
       }
-    } catch (error) {
+    } catch {
       setError("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
@@ -91,7 +91,7 @@ function LoginForm() {
       } else {
         setError(data.error || "Failed to resend verification email");
       }
-    } catch (error) {
+    } catch {
       setError("An error occurred. Please try again.");
     } finally {
       setIsResending(false);

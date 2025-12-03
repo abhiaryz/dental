@@ -75,10 +75,7 @@ export default function AppointmentsPage() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  
-  // Calendar view state
   const [currentDate, setCurrentDate] = useState(new Date());
-  // const [calendarView, setCalendarView] = useState<"month" | "week">("week");
 
   // Form state
   const [formData, setFormData] = useState({
@@ -118,8 +115,8 @@ export default function AppointmentsPage() {
   }, []);
 
   useEffect(() => {
-    fetchAppointments();
-    fetchPatients();
+    void fetchAppointments();
+    void fetchPatients();
   }, [fetchAppointments, fetchPatients]);
 
   const handleCreate = async () => {

@@ -6,7 +6,6 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -14,7 +13,7 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
-import { Home, BarChart3, Settings, Users, CalendarClock, PackageSearch, MessageSquarePlus, MessageSquare, MoreHorizontal, DollarSign, UserCog, Cuboid } from "lucide-react";
+import { Home, BarChart3, Settings, Users, CalendarClock, PackageSearch, DollarSign, UserCog, Cuboid } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";

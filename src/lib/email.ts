@@ -11,6 +11,31 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// Generic email interface
+export interface SendEmailOptions {
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+}
+
+// Generic send email function
+export async function sendEmail(options: SendEmailOptions) {
+  try {
+    const result = await transporter.sendMail({
+      from: process.env.SMTP_FROM_EMAIL || "noreply@aidcircle.in",
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+      text: options.text,
+    });
+    return result;
+  } catch (error) {
+    console.error("Error sending email:", error);
+    throw error;
+  }
+}
+
 export interface InvitationEmailData {
   to: string;
   clinicName: string;

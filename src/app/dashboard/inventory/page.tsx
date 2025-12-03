@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +40,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, PackagePlus, Package, PackageCheck, AlertTriangle, PackageX, Loader2, Edit, Trash2, Plus, Minus, FileText } from "lucide-react";
+import { Search, PackagePlus, Package, PackageCheck, AlertTriangle, PackageX, Loader2, Edit, Trash2, Plus, Minus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface InventoryItem {
@@ -110,17 +110,12 @@ export default function InventoryPage() {
 
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchInventory();
-    fetchSuppliers();
-  }, []);
-
-  const fetchInventory = async () => {
+  const fetchInventory = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch("/api/inventory");
       const data = await response.json();
-      
+
       if (response.ok) {
         setItems(data.items || []);
         setStats(data.stats || {});
@@ -136,20 +131,25 @@ export default function InventoryPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const fetchSuppliers = async () => {
+  const fetchSuppliers = useCallback(async () => {
     try {
       const response = await fetch("/api/suppliers");
       const data = await response.json();
-      
+
       if (response.ok) {
         setSuppliers(data.suppliers || []);
       }
     } catch (error) {
       console.error("Error fetching suppliers:", error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void fetchInventory();
+    void fetchSuppliers();
+  }, [fetchInventory, fetchSuppliers]);
 
   const handleCreate = async () => {
     try {

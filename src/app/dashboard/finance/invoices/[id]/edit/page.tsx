@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { invoicesAPI, patientsAPI } from '@/lib/api';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,14 +35,7 @@ export default function InvoiceEditPage({ params }: InvoiceEditProps) {
   const router = useRouter();
   const { toast } = useToast();
 
-  useEffect(() => {
-    params.then(p => {
-      setInvoiceId(p.id);
-      fetchData(p.id);
-    });
-  }, []);
-
-  const fetchData = async (id: string) => {
+  const fetchData = useCallback(async (id: string) => {
     try {
       setLoading(true);
       const [invoiceData, patientsData] = await Promise.all([
@@ -74,7 +67,14 @@ export default function InvoiceEditPage({ params }: InvoiceEditProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    void params.then(p => {
+      setInvoiceId(p.id);
+      void fetchData(p.id);
+    });
+  }, [params, fetchData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

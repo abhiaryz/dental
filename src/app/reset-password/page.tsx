@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -25,12 +25,8 @@ function ResetPasswordContent() {
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  useEffect(() => {
-    verifyToken();
-  }, [token]);
-
-  const verifyToken = async () => {
+  
+  const verifyToken = useCallback(async () => {
     if (!token) {
       setError("Invalid or missing reset token");
       setIsVerifying(false);
@@ -47,11 +43,16 @@ function ResetPasswordContent() {
         setError(data.error || "Invalid or expired reset token");
       }
     } catch (error) {
+      console.error("Failed to verify reset token:", error);
       setError("Failed to verify reset token. Please try again.");
     } finally {
       setIsVerifying(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    void verifyToken();
+  }, [verifyToken]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,6 +93,7 @@ function ResetPasswordContent() {
         setError(data.error || "Failed to reset password. Please try again.");
       }
     } catch (error) {
+      console.error("Error resetting password:", error);
       setError("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);

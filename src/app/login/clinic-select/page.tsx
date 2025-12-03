@@ -32,7 +32,7 @@ export default function ClinicSelectPage() {
       } else {
         setError("Clinic not found. Please check your clinic code.");
       }
-    } catch (error) {
+    } catch {
       setError("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);

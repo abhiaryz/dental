@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { checkPermission } from "@/lib/rbac";
 import { AppError, ErrorCodes, createErrorResponse } from "@/lib/api-errors";
+import { checkRateLimit } from "@/lib/rate-limiter";
+import { invoiceUpdateSchema, validateData } from "@/lib/validation";
 
 
 // GET - Get single invoice
@@ -60,6 +62,12 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Rate limiting for mutation
+    const rateLimit = await checkRateLimit(request, 'api');
+    if (!rateLimit.allowed) {
+      return rateLimit.error || NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
+    }
+
     const { id } = await params;
     const session = await auth();
 
@@ -86,15 +94,28 @@ export async function PUT(
       throw new AppError("Invoice not found", ErrorCodes.NOT_FOUND, 404);
     }
 
-    const data = await request.json();
+    let data;
+    try {
+      data = await request.json();
+    } catch {
+      throw new AppError("Invalid JSON in request body", ErrorCodes.VALIDATION_ERROR, 400);
+    }
+
+    // Validate request body
+    const validation = validateData(invoiceUpdateSchema, data);
+    if (!validation.success) {
+      throw new AppError("Validation failed", ErrorCodes.VALIDATION_ERROR, 400, validation.errors);
+    }
+
+    const validatedData = validation.data;
 
     const invoice = await prisma.invoice.update({
       where: { id },
       data: {
-        status: data.status,
-        notes: data.notes,
-        dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
-        paidDate: data.status === "PAID" ? new Date() : undefined,
+        status: validatedData.status,
+        notes: validatedData.notes,
+        dueDate: validatedData.dueDate ? new Date(validatedData.dueDate) : undefined,
+        paidDate: validatedData.status === "PAID" ? new Date() : undefined,
       },
       include: {
         patient: true,
@@ -117,6 +138,12 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Rate limiting for mutation
+    const rateLimit = await checkRateLimit(request, 'api');
+    if (!rateLimit.allowed) {
+      return rateLimit.error || NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
+    }
+
     const { id } = await params;
     const session = await auth();
 
@@ -153,4 +180,3 @@ export async function DELETE(
     return NextResponse.json(errorResponse.body, { status: errorResponse.status });
   }
 }
-

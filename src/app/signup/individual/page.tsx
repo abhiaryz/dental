@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,7 +75,8 @@ export default function IndividualSignupPage() {
       } else {
         setError(data.error || "An error occurred during signup");
       }
-    } catch (error) {
+    } catch (err) {
+      console.error("Failed to sign up individual account:", err);
       setError("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);

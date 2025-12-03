@@ -3,15 +3,14 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
-  ArrowLeft, 
-  Edit, 
-  FileText, 
-  Download, 
-  Printer, 
+import {
+  ArrowLeft,
+  FileText,
+  Download,
+  Printer,
   Receipt,
   Activity,
   IndianRupee,
@@ -68,20 +67,20 @@ export default function TreatmentDetailPage({
   const [invoiceErrors, setInvoiceErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    fetchTreatment();
-  }, [params.treatmentId]);
+    const fetchTreatment = async () => {
+      try {
+        setLoading(true);
+        const data = await treatmentsAPI.getById(params.treatmentId);
+        setTreatment(data);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const fetchTreatment = async () => {
-    try {
-      setLoading(true);
-      const data = await treatmentsAPI.getById(params.treatmentId);
-      setTreatment(data);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    void fetchTreatment();
+  }, [params.treatmentId]);
 
   const handleDownloadReport = async () => {
     try {
@@ -190,7 +189,7 @@ export default function TreatmentDetailPage({
         })),
       };
 
-      const newInvoice = await invoicesAPI.create(invoiceData);
+      await invoicesAPI.create(invoiceData);
 
       toast({
         title: "Success",
