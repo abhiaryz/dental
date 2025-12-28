@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { withAuth, AuthenticatedRequest, getPatientWhereClause } from "@/lib/auth-middleware";
+import { withAuth, AuthenticatedRequest } from "@/lib/auth-middleware";
 import { cacheQuery, getCacheKey, CACHE_CONFIG } from "@/lib/query-cache";
 
-// GET - Global search across patients, appointments, invoices, treatments
+// GET - Global search across invoices
 export const GET = withAuth(
   async (req: AuthenticatedRequest) => {
     try {
@@ -13,156 +13,41 @@ export const GET = withAuth(
       if (!query || query.trim().length < 2) {
         return NextResponse.json({
           patients: [],
-          appointments: [],
           invoices: [],
-          treatments: [],
         });
       }
 
       const searchQuery = query.trim();
 
-      // Build where clause based on user role and clinic
-      const whereClause = getPatientWhereClause(
-        req.user.id,
-        req.user.role,
-        req.user.isExternal,
-        req.user.clinicId
-      );
-
       // Cache search results (common queries benefit from caching)
-      const cacheKey = getCacheKey('search', req.user.clinicId || req.user.id, searchQuery);
+      const cacheKey = getCacheKey('search', req.user.id, searchQuery);
       const result = await cacheQuery(
         cacheKey,
         async () => {
-          // Search patients
-          const patients = await prisma.patient.findMany({
-        where: {
-          ...whereClause,
-          OR: [
-            { firstName: { contains: searchQuery, mode: "insensitive" } },
-            { lastName: { contains: searchQuery, mode: "insensitive" } },
-            { mobileNumber: { contains: searchQuery } },
-            { email: { contains: searchQuery, mode: "insensitive" } },
-          ],
-        },
-        take: 5,
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          mobileNumber: true,
-        },
-      });
-
-      // Search appointments
-      const appointments = await prisma.appointment.findMany({
-        where: {
-          patient: whereClause,
-          OR: [
-            {
-              patient: {
-                OR: [
-                  { firstName: { contains: searchQuery, mode: "insensitive" } },
-                  { lastName: { contains: searchQuery, mode: "insensitive" } },
-                ],
-              },
+          // Search invoices
+          const invoices = await prisma.invoice.findMany({
+            where: {
+              OR: [
+                { invoiceNumber: { contains: searchQuery, mode: "insensitive" } },
+              ],
             },
-            { type: { contains: searchQuery, mode: "insensitive" } },
-          ],
-        },
-        take: 5,
-        select: {
-          id: true,
-          date: true,
-          time: true,
-          type: true,
-          status: true,
-          patient: {
+            take: 5,
             select: {
               id: true,
-              firstName: true,
-              lastName: true,
+              invoiceNumber: true,
+              totalAmount: true,
+              status: true,
             },
-          },
-        },
-        orderBy: { date: "desc" },
-      });
-
-      // Search invoices
-      const invoices = await prisma.invoice.findMany({
-        where: {
-          patient: whereClause,
-          OR: [
-            { invoiceNumber: { contains: searchQuery, mode: "insensitive" } },
-            {
-              patient: {
-                OR: [
-                  { firstName: { contains: searchQuery, mode: "insensitive" } },
-                  { lastName: { contains: searchQuery, mode: "insensitive" } },
-                ],
-              },
-            },
-          ],
-        },
-        take: 5,
-        select: {
-          id: true,
-          invoiceNumber: true,
-          totalAmount: true,
-          status: true,
-          patient: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-            },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-      });
-
-      // Search treatments
-      const treatments = await prisma.treatment.findMany({
-        where: {
-          patient: whereClause,
-          OR: [
-            { diagnosis: { contains: searchQuery, mode: "insensitive" } },
-            { treatmentPlan: { contains: searchQuery, mode: "insensitive" } },
-            {
-              patient: {
-                OR: [
-                  { firstName: { contains: searchQuery, mode: "insensitive" } },
-                  { lastName: { contains: searchQuery, mode: "insensitive" } },
-                ],
-              },
-            },
-          ],
-        },
-        take: 5,
-        select: {
-          id: true,
-          diagnosis: true,
-          treatmentDate: true,
-          patient: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-            },
-          },
-        },
-        orderBy: { treatmentDate: "desc" },
-      });
+            orderBy: { createdAt: "desc" },
+          });
 
           return {
-            patients,
-            appointments,
+            patients: [],
             invoices,
-            treatments,
           };
         },
         CACHE_CONFIG.SHORT, // 1 minute cache for search results
-        [`search-${req.user.clinicId || req.user.id}`]
+        [`search-${req.user.id}`]
       );
 
       return NextResponse.json(result);

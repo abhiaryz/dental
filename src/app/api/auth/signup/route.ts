@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { sendVerificationEmail } from "@/lib/email";
-import { createAuditLog, AuditActions } from "@/lib/audit-logger";
 import { getClientIdentifier } from "@/lib/rate-limiter";
 
 
@@ -32,9 +31,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate role if provided
-    const validRoles: Role[] = ["ADMIN", "CLINIC_DOCTOR", "HYGIENIST", "RECEPTIONIST", "EXTERNAL_DOCTOR"];
-    const userRole: Role = role && validRoles.includes(role) ? role : "CLINIC_DOCTOR";
+    // Validate role if provided (default to USER)
+    const validRoles: Role[] = ["ADMIN", "USER"];
+    const userRole: Role = role && validRoles.includes(role) ? role : "USER";
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -51,9 +50,6 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Determine if user is external
-    const isExternal = userRole === "EXTERNAL_DOCTOR";
-
     // Create user
     const user = await prisma.user.create({
       data: {
@@ -61,7 +57,6 @@ export async function POST(request: NextRequest) {
         email,
         password: hashedPassword,
         role: userRole,
-        isExternal,
         emailVerified: null, // Will be set after verification
       },
     });
@@ -84,15 +79,6 @@ export async function POST(request: NextRequest) {
       to: email,
       verificationToken,
       userName: name,
-    });
-
-    // Create audit log
-    await createAuditLog({
-      userId: user.id,
-      action: AuditActions.USER_SIGNUP,
-      ipAddress: clientId,
-      userAgent: request.headers.get("user-agent") || undefined,
-      metadata: { role: userRole, isExternal },
     });
 
     return NextResponse.json(

@@ -106,7 +106,7 @@ function LoginForm() {
           <div className="text-sm text-center">
             <span className="text-muted-foreground">Don't have an account? </span>
             <Link href="/signup" className="text-primary hover:underline font-semibold transition-colors touch-manipulation">
-              Create one now
+              Sign up
             </Link>
           </div>
         }
@@ -117,7 +117,7 @@ function LoginForm() {
             label="Email Address"
             type="email"
             icon={<Mail className="size-4" />}
-            placeholder="admin@DentaEdge.com"
+            placeholder="john@example.com"
             value={email}
             onChange={setEmail}
             required

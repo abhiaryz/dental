@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { createAuditLog, AuditActions } from "@/lib/audit-logger";
 import { createErrorResponse, AppError, ErrorCodes } from "@/lib/api-errors";
 import { checkRateLimit } from "@/lib/rate-limiter";
 import { profileUpdateSchema, validateData } from "@/lib/validation";
@@ -84,17 +83,6 @@ export async function PUT(request: NextRequest) {
         role: true,
         createdAt: true,
       },
-    });
-
-    // Audit log
-    await createAuditLog({
-      userId,
-      action: AuditActions.PROFILE_UPDATED,
-      entityType: "user",
-      entityId: userId,
-      ipAddress: request.headers.get("x-forwarded-for") || "unknown",
-      userAgent: request.headers.get("user-agent") || undefined,
-      metadata: { updatedFields: Object.keys(body) },
     });
 
     return NextResponse.json(user);

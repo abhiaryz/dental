@@ -27,7 +27,6 @@ export default function PrivacyPolicyPage() {
             <p>We collect information you provide directly to us, including:</p>
             <ul>
               <li>Account information (name, email, password)</li>
-              <li>Clinic information (name, address, contact details)</li>
               <li>Patient records and medical information</li>
               <li>Usage data and analytics</li>
             </ul>

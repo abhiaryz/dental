@@ -30,7 +30,6 @@ const navLinks = [
 ];
 
 const stats = [
-  { value: "500+", label: "Clinics Onboarded" },
   { value: "50,000+", label: "Patient Records" },
   { value: "99.9%", label: "Uptime" },
   { value: "24/7", label: "Support" },

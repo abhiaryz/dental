@@ -5,7 +5,11 @@ import { checkRateLimit } from "@/lib/rate-limiter";
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, username, clinicCode } = await request.json();
+    const { email } = await request.json();
+
+    if (!email) {
+      return NextResponse.json({ error: "Email is required" }, { status: 400 });
+    }
 
     // Check rate limiting
     const rateLimit = await checkRateLimit(request, 'auth');
@@ -14,21 +18,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Find user
-    let user;
-    if (email) {
-      user = await prisma.user.findUnique({
-        where: { email },
-      });
-    } else if (username && clinicCode) {
-      user = await prisma.user.findFirst({
-        where: {
-          username,
-          clinic: {
-            clinicCode: clinicCode.toUpperCase(),
-          },
-        },
-      });
-    }
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
 
     if (!user) {
       return NextResponse.json({

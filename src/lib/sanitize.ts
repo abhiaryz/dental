@@ -97,34 +97,10 @@ export function sanitizeObject<T extends Record<string, unknown>>(
  * Fields that should be sanitized in various models
  */
 export const SANITIZE_FIELDS = {
-  patient: ['firstName', 'lastName', 'address', 'medicalHistory', 'dentalHistory', 'allergies', 'notes'],
-  treatment: ['chiefComplaint', 'clinicalFindings', 'diagnosis', 'treatmentPlan', 'prescription', 'notes', 'followUpNotes'],
-  appointment: ['notes', 'type'],
   invoice: ['notes'],
   inventory: ['name', 'notes'],
   supplier: ['name', 'contactName', 'address', 'notes'],
 } as const;
-
-/**
- * Sanitize treatment data
- */
-export function sanitizeTreatmentData<T extends Record<string, unknown>>(data: T): T {
-  return sanitizeObject(data, SANITIZE_FIELDS.treatment as unknown as (keyof T)[]);
-}
-
-/**
- * Sanitize patient data
- */
-export function sanitizePatientData<T extends Record<string, unknown>>(data: T): T {
-  return sanitizeObject(data, SANITIZE_FIELDS.patient as unknown as (keyof T)[]);
-}
-
-/**
- * Sanitize appointment data
- */
-export function sanitizeAppointmentData<T extends Record<string, unknown>>(data: T): T {
-  return sanitizeObject(data, SANITIZE_FIELDS.appointment as unknown as (keyof T)[]);
-}
 
 /**
  * Sanitize invoice data

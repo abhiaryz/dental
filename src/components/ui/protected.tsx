@@ -161,13 +161,9 @@ export function useUserRole(): Role | null {
 }
 
 /**
- * Hook to check if user is external doctor
+ * Hook to check if user is external doctor (deprecated - no longer used)
  */
 export function useIsExternalDoctor(): boolean {
-  const { data: session } = useSession();
-  
-  if (!session?.user) return false;
-  
-  return (session.user as any).isExternal === true || (session.user as any).role === "EXTERNAL_DOCTOR";
+  return false; // No longer used with simplified roles
 }
 

@@ -13,12 +13,6 @@ export const GET = withAuth(
         select: {
           id: true,
           invoiceNumber: true,
-          patient: {
-            select: {
-              firstName: true,
-              lastName: true,
-            },
-          },
         },
       });
 
@@ -29,7 +23,6 @@ export const GET = withAuth(
       return NextResponse.json({
         id: invoice.id,
         invoiceNumber: invoice.invoiceNumber,
-        patientName: `${invoice.patient.firstName} ${invoice.patient.lastName}`,
       });
     } catch (error) {
       console.error("Error fetching invoice breadcrumb:", error);

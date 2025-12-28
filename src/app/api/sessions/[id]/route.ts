@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
-import { createAuditLog, AuditActions } from "@/lib/audit-logger";
 import { getClientIdentifier } from "@/lib/rate-limiter";
 
 
@@ -38,16 +37,6 @@ export async function DELETE(
     // Delete the session
     await prisma.session.delete({
       where: { id },
-    });
-
-    // Create audit log
-    await createAuditLog({
-      userId,
-      action: AuditActions.SESSION_REVOKED,
-      entityType: "session",
-      entityId: id,
-      ipAddress: clientId,
-      userAgent: request.headers.get("user-agent") || undefined,
     });
 
     return NextResponse.json({

@@ -23,11 +23,6 @@ export function BreadcrumbNav() {
     if (entityData[segment]) {
       const entity = entityData[segment];
       
-      // For treatments, show diagnosis
-      if (entity.name && segments[index - 1] === "treatment") {
-        return entity.name;
-      }
-      
       // For invoices, show invoice number
       if (entity.invoiceNumber) {
         return `Invoice #${entity.invoiceNumber}`;
@@ -40,9 +35,7 @@ export function BreadcrumbNav() {
     }
     
     // Special handling for known segments
-    if (segment === "add-treatment") return "Add Treatment";
     if (segment === "edit") return "Edit";
-    if (segment === "treatment") return "Treatment";
     if (segment === "invoices") return "Invoices";
     
     // Replace hyphens with spaces and capitalize

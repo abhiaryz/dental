@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { createAuditLog, AuditActions } from "@/lib/audit-logger";
 import { getClientIdentifier } from "@/lib/rate-limiter";
 import { sendWelcomeEmail } from "@/lib/email";
 
@@ -39,9 +38,6 @@ export async function POST(request: NextRequest) {
     const user = await prisma.user.update({
       where: { email: verificationToken.email },
       data: { emailVerified: new Date() },
-      include: {
-        clinic: true,
-      },
     });
 
     // Delete the used verification token
@@ -49,21 +45,10 @@ export async function POST(request: NextRequest) {
       where: { id: verificationToken.id },
     });
 
-    // Create audit log
-    await createAuditLog({
-      userId: user.id,
-      action: AuditActions.EMAIL_VERIFIED,
-      ipAddress: clientId,
-      userAgent: request.headers.get("user-agent") || undefined,
-    });
-
     // Send welcome email
     await sendWelcomeEmail({
       to: user.email!,
       userName: user.name || "User",
-      isClinic: !!user.clinicId,
-      clinicName: user.clinic?.name,
-      clinicCode: user.clinic?.clinicCode,
     });
 
     return NextResponse.json({

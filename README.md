@@ -1,7 +1,6 @@
 # 🏥 DentaEdge - Dental Clinic Management SaaS Platform
 
 [![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)]()
-[![Tests](https://img.shields.io/badge/Tests-234%20Passing-success)]()
 [![TypeScript](https://img.shields.io/badge/TypeScript-100%25-blue)]()
 [![Next.js](https://img.shields.io/badge/Next.js-15-black)]()
 
@@ -19,7 +18,7 @@
 - 🔒 **Enterprise Security** - RBAC with 5 roles, 60+ permissions
 - 👑 **Super Admin Portal** - SaaS management dashboard
 - 📱 **Mobile Responsive** - Works perfectly on all devices
-- ✅ **Production Ready** - 234 passing tests, fully documented
+- ✅ **Production Ready** - Fully documented
 - 🚀 **Modern Stack** - Next.js 15, TypeScript, Prisma, PostgreSQL
 
 ---
@@ -152,18 +151,13 @@ Explore the **[`/docs`](docs/)** directory for 20+ detailed guides covering ever
 
 ### Security & Utilities
 - **bcryptjs** - Password hashing
-- **rate-limiter-flexible** - Rate limiting (with Redis fallback)
-- **@upstash/redis** - Distributed caching and rate limiting
+- **rate-limiter-flexible** - Rate limiting (in-memory)
 - **@vercel/edge-config** - Read-only configuration
 - **zxcvbn** - Password strength
 - **Zod** - Input validation
 - **Resend** - Email delivery
 - **jsPDF** - PDF generation
 
-### Testing
-- **Jest** - Testing framework
-- **Testing Library** - React testing
-- **Supertest** - API testing
 
 ---
 
@@ -174,7 +168,6 @@ Explore the **[`/docs`](docs/)** directory for 20+ detailed guides covering ever
 | Lines of Code | 25,000+ |
 | API Endpoints | 70+ |
 | Database Models | 25 |
-| Test Cases | 234 (passing) |
 | UI Components | 24 |
 | Documentation Files | 20+ |
 | User Roles | 5 |
@@ -182,23 +175,6 @@ Explore the **[`/docs`](docs/)** directory for 20+ detailed guides covering ever
 
 ---
 
-## 🧪 Testing
-
-```bash
-# Run all tests
-npm test
-
-# Watch mode
-npm run test:watch
-
-# Coverage report
-npm run test:coverage
-
-# CI mode
-npm run test:ci
-```
-
-**Test Results:** ✅ 234 tests passing
 
 ---
 
@@ -236,7 +212,6 @@ dashboard/
 │   ├── app/
 │   │   ├── api/                    # API Routes (70+ endpoints)
 │   │   ├── dashboard/             # Main application
-│   │   ├── super-admin/           # Super admin portal
 │   │   ├── login/                 # Authentication pages
 │   │   └── signup/                # Registration pages
 │   ├── components/
@@ -252,7 +227,6 @@ dashboard/
 ├── prisma/
 │   ├── schema.prisma              # Database schema
 │   └── migrations/                # Database migrations
-├── __tests__/                     # Test suite (234 tests)
 ├── docs/                          # Documentation (20+ files)
 ├── scripts/                       # Utility scripts
 └── public/                        # Static assets
@@ -352,13 +326,11 @@ IMPERSONATION_SECRET="..."
 # App
 NEXT_PUBLIC_APP_URL="https://your-domain.com"
 
-# Redis & Caching (Optional but recommended)
+# Edge Config (Optional)
 EDGE_CONFIG="https://edge-config.vercel.com/..."
-UPSTASH_REDIS_REST_URL="https://your-redis.upstash.io"
-UPSTASH_REDIS_REST_TOKEN="your-redis-token"
 ```
 
-> **Note:** Redis and Edge Config are optional. The system will fall back to in-memory caching if not configured. See [Redis & Edge Config Setup](docs/REDIS_EDGE_CONFIG_SETUP.md) for details.
+> **Note:** Edge Config is optional. The system uses Next.js built-in caching and in-memory rate limiting.
 
 ### Build & Deploy
 
@@ -378,24 +350,7 @@ npm start
 
 ---
 
-## 📈 Roadmap
 
-### Phase 1: Essential (1-2 months)
-- [ ] Payment gateway integration (Razorpay/Stripe)
-- [ ] Automated email/SMS reminders
-- [ ] Advanced reporting
-
-### Phase 2: Growth (3-6 months)
-- [ ] Public appointment booking
-- [ ] Patient portal
-- [ ] 2FA for super admins
-- [ ] Referral program
-
-### Phase 3: Enterprise (6-12 months)
-- [ ] White-label options
-- [ ] Mobile apps (iOS/Android)
-- [ ] Multi-currency support
-- [ ] AI-powered features
 
 ---
 
@@ -448,7 +403,6 @@ Built with modern open-source technologies:
 | **Authorization** | ✅ Complete |
 | **Multi-Tenancy** | ✅ Complete |
 | **Super Admin** | ✅ Complete |
-| **Testing** | ✅ 234 tests passing |
 | **Documentation** | ✅ Comprehensive |
 | **Mobile Responsive** | ✅ Complete |
 | **Production Ready** | ✅ Yes |

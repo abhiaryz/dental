@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { Home, BarChart3, Settings, Users, CalendarClock, PackageSearch, DollarSign, UserCog, Cuboid } from "lucide-react";
+import { Home, Settings, Users, CalendarClock } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
@@ -82,81 +82,7 @@ export function AppSidebar({ className }: { className?: string }) {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild 
-                  isActive={pathname === "/dashboard/appointments" || pathname.startsWith("/dashboard/appointments/")}
-                  className="group/item"
-                >
-                  <Link href="/dashboard/appointments">
-                    <CalendarClock className="transition-transform group-hover/item:scale-110" />
-                    <span>{t('appointments')}</span>
-                    {(pathname === "/dashboard/appointments" || pathname.startsWith("/dashboard/appointments/")) && (
-                      <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
-                    )}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild 
-                  isActive={pathname === "/dashboard/inventory" || pathname.startsWith("/dashboard/inventory/")}
-                  className="group/item"
-                >
-                  <Link href="/dashboard/inventory">
-                    <PackageSearch className="transition-transform group-hover/item:scale-110" />
-                    <span>{t('inventory')}</span>
-                    {(pathname === "/dashboard/inventory" || pathname.startsWith("/dashboard/inventory/")) && (
-                      <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
-                    )}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild 
-                  isActive={pathname === "/dashboard/analytics" || pathname.startsWith("/dashboard/analytics/")}
-                  className="group/item"
-                >
-                  <Link href="/dashboard/analytics">
-                    <BarChart3 className="transition-transform group-hover/item:scale-110" />
-                    <span>{t('analytics')}</span>
-                    {(pathname === "/dashboard/analytics" || pathname.startsWith("/dashboard/analytics/")) && (
-                      <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
-                    )}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild 
-                  isActive={pathname === "/dashboard/finance" || pathname.startsWith("/dashboard/finance/")}
-                  className="group/item"
-                >
-                  <Link href="/dashboard/finance">
-                    <DollarSign className="transition-transform group-hover/item:scale-110" />
-                    <span>{t('finance')}</span>
-                    {(pathname === "/dashboard/finance" || pathname.startsWith("/dashboard/finance/")) && (
-                      <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
-                    )}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild 
-                  isActive={pathname === "/dashboard/employees" || pathname.startsWith("/dashboard/employees/")}
-                  className="group/item"
-                >
-                  <Link href="/dashboard/employees">
-                    <UserCog className="transition-transform group-hover/item:scale-110" />
-                    <span>{t('employees')}</span>
-                    {(pathname === "/dashboard/employees" || pathname.startsWith("/dashboard/employees/")) && (
-                      <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
-                    )}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+
               <SidebarMenuItem>
                 <SidebarMenuButton 
                   asChild 
@@ -167,21 +93,6 @@ export function AppSidebar({ className }: { className?: string }) {
                     <Settings className="transition-transform group-hover/item:scale-110" />
                     <span>{t('settings')}</span>
                     {(pathname === "/dashboard/settings" || pathname.startsWith("/dashboard/settings/")) && (
-                      <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
-                    )}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild 
-                  isActive={pathname === "/dashboard/dental-explorer" || pathname.startsWith("/dashboard/dental-explorer/")}
-                  className="group/item"
-                >
-                  <Link href="/dashboard/dental-explorer">
-                    <Cuboid className="transition-transform group-hover/item:scale-110" />
-                    <span>{t('dental_explorer')}</span>
-                    {(pathname === "/dashboard/dental-explorer" || pathname.startsWith("/dashboard/dental-explorer/")) && (
                       <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
                     )}
                   </Link>

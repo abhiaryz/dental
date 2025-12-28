@@ -23,28 +23,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, username, clinicCode } = await request.json();
+    const { email } = await request.json();
 
-    if (!email && !username) {
-      return NextResponse.json({ error: "Email or username is required" }, { status: 400 });
+    if (!email) {
+      return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
-    // Check if user exists (by email or username)
-    let user;
-    if (email) {
-      user = await prisma.user.findUnique({
-        where: { email },
-      });
-    } else if (username && clinicCode) {
-      user = await prisma.user.findFirst({
-        where: {
-          username,
-          clinic: {
-            clinicCode: clinicCode.toUpperCase(),
-          },
-        },
-      });
-    }
+    // Check if user exists
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
 
     if (!user) {
       // For security, don't reveal if email exists

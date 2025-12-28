@@ -1,5 +1,5 @@
-import { Cache } from './redis';
-import { unstable_cache } from 'next/cache';
+import { Cache } from './cache';
+import { revalidateTag } from 'next/cache';
 
 /**
  * Cache configuration for different query types
@@ -23,9 +23,8 @@ export function getCacheKey(prefix: string, ...parts: (string | number | null | 
 }
 
 /**
- * Cache database query result with Redis
- * Falls back to Next.js unstable_cache if Redis is not available
- * FIX: Uses Cache.getOrSet for cache stampede protection
+ * Cache database query result using Next.js cache
+ * Uses Cache.getOrSet for cache stampede protection
  */
 export async function cacheQuery<T>(
   key: string,
@@ -34,55 +33,28 @@ export async function cacheQuery<T>(
   tags?: string[]
 ): Promise<T> {
   // Use getOrSet which has cache stampede protection built-in
-  const data = await Cache.getOrSet(key, fetcher, ttlSeconds);
-
-  // Also use Next.js cache for server-side rendering (if tags provided)
-  if (tags && tags.length > 0) {
-    try {
-      const cachedFetcher = unstable_cache(
-        async () => data,
-        [key],
-        {
-          revalidate: ttlSeconds,
-          tags,
-        }
-      );
-      await cachedFetcher();
-    } catch (error) {
-      // Next.js cache errors shouldn't break the request
-      console.warn('Next.js cache error (non-critical):', error);
-    }
-  }
-
-  return data;
+  return await Cache.getOrSet(key, fetcher, ttlSeconds, tags);
 }
 
 /**
- * Invalidate cache by pattern
+ * Invalidate cache by tag
+ * Note: Pattern-based invalidation is not supported with Next.js cache.
+ * Use specific cache tags instead of patterns.
  */
-export async function invalidateCache(pattern: string): Promise<void> {
-  await Cache.invalidatePattern(pattern);
+export async function invalidateCache(tag: string): Promise<void> {
+  revalidateTag(tag);
 }
 
 /**
- * Invalidate clinic-specific caches
- */
-export async function invalidateClinicCache(clinicId: string): Promise<void> {
-  await Promise.all([
-    Cache.invalidatePattern(`analytics:*:${clinicId}:*`),
-    Cache.invalidatePattern(`patient:*:${clinicId}:*`),
-    Cache.invalidatePattern(`appointment:*:${clinicId}:*`),
-    Cache.invalidatePattern(`treatment:*:${clinicId}:*`),
-  ]);
-}
-
-/**
- * Invalidate user-specific caches
+ * Invalidate user-specific caches by tag
+ * Note: Pattern-based invalidation is not supported.
+ * Use specific cache tags that were used when caching the data.
  */
 export async function invalidateUserCache(userId: string): Promise<void> {
+  // Invalidate by tags that should have been used when caching
   await Promise.all([
-    Cache.invalidatePattern(`analytics:*:${userId}:*`),
-    Cache.invalidatePattern(`user:*:${userId}:*`),
+    revalidateTag(`analytics-user-${userId}`),
+    revalidateTag(`user-${userId}`),
   ]);
 }
 
@@ -91,7 +63,6 @@ export async function invalidateUserCache(userId: string): Promise<void> {
  */
 export async function cacheAnalytics<T>(
   userId: string,
-  clinicId: string | null | undefined,
   dateFilter: any,
   fetcher: () => Promise<T>,
   ttlSeconds: number = CACHE_CONFIG.SHORT
@@ -100,7 +71,6 @@ export async function cacheAnalytics<T>(
   const key = getCacheKey(
     'analytics',
     userId,
-    clinicId || 'no-clinic',
     dateFilterKey
   );
 
@@ -108,45 +78,8 @@ export async function cacheAnalytics<T>(
     key,
     fetcher,
     ttlSeconds,
-    [`analytics-${clinicId || userId}`, `analytics-user-${userId}`]
+    [`analytics-user-${userId}`]
   );
 }
 
-/**
- * Cache wrapper for patient queries
- */
-export async function cachePatientQuery<T>(
-  patientId: string,
-  clinicId: string | null | undefined,
-  fetcher: () => Promise<T>,
-  ttlSeconds: number = CACHE_CONFIG.MEDIUM
-): Promise<T> {
-  const key = getCacheKey('patient', patientId, clinicId || 'no-clinic');
-  return cacheQuery(key, fetcher, ttlSeconds, [`patient-${patientId}`, `clinic-${clinicId}`]);
-}
-
-/**
- * Cache wrapper for appointment queries
- */
-export async function cacheAppointmentQuery<T>(
-  params: {
-    clinicId?: string | null;
-    patientId?: string;
-    startDate?: string;
-    endDate?: string;
-    status?: string;
-  },
-  fetcher: () => Promise<T>,
-  ttlSeconds: number = CACHE_CONFIG.SHORT
-): Promise<T> {
-  const key = getCacheKey(
-    'appointment',
-    params.clinicId || 'no-clinic',
-    params.patientId || 'all',
-    params.startDate || 'all',
-    params.endDate || 'all',
-    params.status || 'all'
-  );
-  return cacheQuery(key, fetcher, ttlSeconds, [`appointment-${params.clinicId || 'all'}`]);
-}
 

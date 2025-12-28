@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { createAuditLog, AuditActions } from "@/lib/audit-logger";
 import { getClientIdentifier } from "@/lib/rate-limiter";
 
 
@@ -63,14 +62,6 @@ export async function POST(request: NextRequest) {
       });
 
       return { user };
-    });
-
-    // Create audit log
-    await createAuditLog({
-      userId: result.user.id,
-      action: AuditActions.PASSWORD_RESET_COMPLETED,
-      ipAddress: clientId,
-      userAgent: request.headers.get("user-agent") || undefined,
     });
 
     return NextResponse.json({

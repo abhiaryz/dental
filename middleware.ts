@@ -27,8 +27,6 @@ export default async function middleware(req: NextRequest) {
   if (
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/clinic") ||
-    pathname.startsWith("/api/super-admin") ||
-    pathname.startsWith("/super-admin") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon.ico") ||
     pathname.match(/\.(ico|png|jpg|jpeg|svg|css|js|woff|woff2|ttf|eot)$/)

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendPasswordResetEmail } from "@/lib/email";
-import { createAuditLog, AuditActions } from "@/lib/audit-logger";
 import { passwordResetLimiter, getClientIdentifier, checkRateLimit } from "@/lib/rate-limiter";
 import crypto from "crypto";
 
@@ -76,14 +75,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    // Create audit log
-    await createAuditLog({
-      userId: user.id,
-      action: AuditActions.PASSWORD_RESET_REQUESTED,
-      ipAddress: clientId,
-      userAgent: request.headers.get("user-agent") || undefined,
-    });
 
     return NextResponse.json({
       message: "If an account exists with this email, you will receive a password reset link.",

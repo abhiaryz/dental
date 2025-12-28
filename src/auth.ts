@@ -3,7 +3,6 @@ import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { createAuditLog, AuditActions } from "@/lib/audit-logger";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma) as any,
@@ -13,55 +12,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email" },
-        username: { label: "Username", type: "text" },
         password: { label: "Password", type: "password" },
-        clinicCode: { label: "Clinic Code", type: "text" },
       },
       async authorize(credentials) {
-        if (!credentials?.password) {
+        if (!credentials?.password || !credentials?.email) {
           return null;
         }
 
-        let user;
-
-        // Check if logging in with clinic code (clinic employee)
-        if (credentials.clinicCode && credentials.username) {
-          // Clinic employee login with username + clinicCode
-          user = await prisma.user.findFirst({
-            where: {
-              username: credentials.username as string,
-              clinic: {
-                clinicCode: (credentials.clinicCode as string).toUpperCase(),
-                isActive: true,
-              },
-            },
-            include: {
-              clinic: {
-                select: {
-                  id: true,
-                  name: true,
-                  clinicCode: true,
-                },
-              },
-            },
-          });
-        } else if (credentials.email) {
-          // Individual practitioner or email-based login
-          user = await prisma.user.findUnique({
-            where: { email: credentials.email as string },
-            include: {
-              clinic: {
-                select: {
-                  id: true,
-                  name: true,
-                  clinicCode: true,
-                },
-              },
-            },
-          });
-        } else {
-          return null;
-        }
+        // Simple email-based login
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email as string },
+        });
 
         if (!user || !user.password) {
           return null;
@@ -86,13 +47,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         );
 
         if (!isPasswordValid) {
-          // Log failed attempt
-          await createAuditLog({
-            userId: user.id,
-            action: AuditActions.USER_LOGIN_FAILED,
-            metadata: { reason: "Invalid password" },
-          });
-          
           // Increment failed attempts
           const newAttempts = user.failedLoginAttempts + 1;
           const updateData: any = { failedLoginAttempts: newAttempts };
@@ -121,28 +75,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           },
         });
 
-        // Log successful login
-        await createAuditLog({
-          userId: user.id,
-          action: AuditActions.USER_LOGIN,
-        });
-
         return {
           id: user.id,
           email: user.email,
           name: user.name,
           role: user.role,
-          isExternal: user.isExternal,
-          clinicId: user.clinicId,
-          clinicName: user.clinic?.name,
-          clinicCode: user.clinic?.clinicCode,
         };
       },
     }),
   ],
   pages: {
-    signIn: "/login/clinic-select",
-    error: "/login/clinic-select",
+    signIn: "/login",
+    error: "/login",
   },
   session: {
     strategy: "jwt",
@@ -199,10 +143,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id;
         token.role = (user as any).role;
-        token.isExternal = (user as any).isExternal;
-        token.clinicId = (user as any).clinicId;
-        token.clinicName = (user as any).clinicName;
-        token.clinicCode = (user as any).clinicCode;
       }
       return token;
     },
@@ -210,10 +150,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         (session.user as any).id = token.id;
         (session.user as any).role = token.role;
-        (session.user as any).isExternal = token.isExternal;
-        (session.user as any).clinicId = token.clinicId;
-        (session.user as any).clinicName = token.clinicName;
-        (session.user as any).clinicCode = token.clinicCode;
       }
       return session;
     },

@@ -1,25 +1,30 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import {
   Activity,
-  Calendar,
-  CalendarPlus,
   HeartPulse,
-  IndianRupee,
-  PackageSearch,
-  Pill,
-  TrendingUp,
   Users,
   UserPlus
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { DashboardAnalytics } from "@/lib/analytics-server";
+// Simplified analytics interface
+interface DashboardAnalytics {
+  overview: {
+    totalRevenue: number;
+    totalPatients: number;
+    pendingAmount: number;
+  };
+  activityFeed: Array<{
+    type: string;
+    title: string;
+    description: string;
+    time: string;
+  }>;
+}
 
 const quickActions = [
   {
@@ -27,22 +32,6 @@ const quickActions = [
     description: "Create a new patient profile and share intake forms instantly.",
     href: "/dashboard/patients/add",
     icon: UserPlus,
-    iconBg: "bg-sky-100",
-    iconColor: "text-sky-600"
-  },
-  {
-    title: "Schedule visit",
-    description: "Fill chair-time gaps with smart scheduling suggestions.",
-    href: "/dashboard/appointments",
-    icon: CalendarPlus,
-    iconBg: "bg-emerald-100",
-    iconColor: "text-emerald-600"
-  },
-  {
-    title: "Inventory audit",
-    description: "Review stock alerts, expiries, and procurement tasks.",
-    href: "/dashboard/inventory",
-    icon: Pill,
     iconBg: "bg-sky-100",
     iconColor: "text-sky-600"
   }
@@ -57,26 +46,11 @@ export function DashboardContent({ analytics }: DashboardContentProps) {
 
   const overview = analytics.overview;
   const activityFeed = analytics.activityFeed;
-  const weeklyData = analytics.weeklyVisits;
-  const treatmentDistribution = analytics.treatmentDistribution;
 
   const overviewMetrics = [
     {
-      title: "Collections",
-      value: `₹${(overview.totalRevenue || 0).toLocaleString()}`,
-      change: "+12.5%",
-      changeLabel: "vs last month",
-      icon: IndianRupee,
-      iconBg: "bg-sky-100",
-      iconColor: "text-sky-600",
-      accent: "from-sky-500/15 to-sky-500/5",
-      href: "/dashboard/finance?status=paid"
-    },
-    {
       title: "Active Patients",
       value: (overview.totalPatients || 0).toString(),
-      change: "+12 new",
-      changeLabel: "this month",
       icon: Users,
       iconBg: "bg-emerald-100",
       iconColor: "text-emerald-600",
@@ -84,26 +58,13 @@ export function DashboardContent({ analytics }: DashboardContentProps) {
       href: "/dashboard/patients"
     },
     {
-      title: "Today's Appointments",
-      value: (overview.todayAppointments || 0).toString(),
-      change: "3 pending",
-      changeLabel: "9 completed",
-      icon: Calendar,
+      title: "Total Revenue",
+      value: `₹${(overview.totalRevenue || 0).toLocaleString()}`,
+      icon: Activity,
       iconBg: "bg-sky-100",
       iconColor: "text-sky-600",
       accent: "from-sky-400/15 to-slate-100",
-      href: "/dashboard/appointments?date=today"
-    },
-    {
-      title: "Active Treatments",
-      value: (overview.totalTreatments || 0).toString(),
-      change: "Schedule on track",
-      changeLabel: "3 due follow-ups",
-      icon: HeartPulse,
-      iconBg: "bg-emerald-100",
-      iconColor: "text-emerald-600",
-      accent: "from-emerald-400/15 to-slate-100",
-      href: "/dashboard/patients"
+      href: "/dashboard/finance/invoices"
     }
   ];
 
@@ -129,30 +90,8 @@ export function DashboardContent({ analytics }: DashboardContentProps) {
         </Button>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
-        <div className="relative -mx-4 sm:mx-0">
-          <div className="overflow-x-auto px-4 sm:px-0 pb-2 scrollbar-hide">
-            <TabsList className="inline-flex sm:w-full justify-start gap-2 rounded-2xl bg-card/80 p-2 shadow-md min-w-max">
-              <TabsTrigger
-                value="overview"
-                className="gap-2 rounded-xl px-3 sm:px-4 py-2 text-sm sm:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all"
-              >
-                <Activity className="h-4 w-4 shrink-0" /> 
-                <span>Overview</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="quick-stats"
-                className="gap-2 rounded-xl px-3 sm:px-4 py-2 text-sm sm:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all"
-              >
-                <TrendingUp className="h-4 w-4 shrink-0" /> 
-                <span>Performance</span>
-              </TabsTrigger>
-            </TabsList>
-          </div>
-        </div>
-
-        <TabsContent value="overview" className="space-y-4 sm:space-y-6">
-          <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="space-y-4 sm:space-y-6">
+        <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 xl:grid-cols-4">
             {overviewMetrics.map((metric) => (
               <Link key={metric.title} href={metric.href} className="block h-full">
                 <Card 
@@ -178,17 +117,13 @@ export function DashboardContent({ analytics }: DashboardContentProps) {
                         <metric.icon className={cn("h-4 w-4 sm:h-5 sm:w-5", metric.iconColor)} />
                       </div>
                     </div>
-                    <div className="mt-3 sm:mt-4 flex flex-wrap items-center gap-2 text-xs">
-                      <Badge className="rounded-full bg-emerald-100 text-emerald-700 text-[10px] sm:text-xs">{metric.change}</Badge>
-                      <span className="text-muted-foreground text-[10px] sm:text-xs truncate">{metric.changeLabel}</span>
-                    </div>
                   </div>
                 </Card>
               </Link>
             ))}
-          </div>
+        </div>
 
-          <div className="grid gap-4 sm:gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-[1.2fr_0.8fr]">
             <Card className="border-border bg-card/90 shadow-xl overflow-hidden">
               <CardHeader className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between p-4 sm:p-6">
                 <div>
@@ -236,10 +171,6 @@ export function DashboardContent({ analytics }: DashboardContentProps) {
                       switch (type) {
                         case "PATIENT_REGISTERED":
                           return { icon: Users, accent: "bg-emerald-100", iconColor: "text-emerald-600" };
-                        case "TREATMENT_COMPLETED":
-                          return { icon: Calendar, accent: "bg-sky-100", iconColor: "text-sky-600" };
-                        case "INVOICE_PAID":
-                          return { icon: PackageSearch, accent: "bg-emerald-100", iconColor: "text-emerald-600" };
                         default:
                           return { icon: Activity, accent: "bg-slate-100", iconColor: "text-muted-foreground" };
                       }
@@ -267,62 +198,8 @@ export function DashboardContent({ analytics }: DashboardContentProps) {
                 )}
               </CardContent>
             </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="quick-stats" className="grid gap-6 lg:grid-cols-2">
-          <Card className="border-border bg-card/90 shadow-xl">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-sky-600" />
-                <CardTitle className="text-xl text-foreground">Weekly production</CardTitle>
-              </div>
-              <CardDescription>Patient visits over the last seven days.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex h-52 items-end justify-between gap-3">
-                {weeklyData.map((value, index) => (
-                  <div key={index} className="flex flex-1 flex-col items-center gap-2">
-                    <div
-                      className="w-full rounded-t-2xl bg-gradient-to-t from-sky-400 to-emerald-400"
-                      style={{ height: `${Math.min((value / 20) * 100, 100)}%` }}
-                    />
-                    <span className="text-xs font-medium text-muted-foreground">
-                      {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][index]}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border bg-card/90 shadow-xl">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Activity className="h-5 w-5 text-emerald-600" />
-                <CardTitle className="text-xl text-foreground">Treatment mix</CardTitle>
-              </div>
-              <CardDescription>Share of treatment categories for the current month.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              {treatmentDistribution.map((item) => (
-                <div key={item.label} className="space-y-2">
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span className="font-medium text-foreground">{item.label}</span>
-                    <span className="font-semibold text-foreground">{item.value}%</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-muted">
-                    <div
-                      className={`h-full rounded-full bg-gradient-to-r ${item.color}`}
-                      style={{ width: `${item.value}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
     </main>
   );
 }
